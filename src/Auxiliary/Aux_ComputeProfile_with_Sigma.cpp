@@ -1,6 +1,6 @@
 #include "GAMER.h"
 
-extern void SetTempIntPara( const int lv, const int Sg_Current, const double PrepTime, const double Time0, const double Time1,
+extern void SetTempIntPara( const int lv, const int Sg_0, const double PrepTime, const double Time0, const double Time1,
                             bool &IntTime, int &Sg, int &Sg_IntT, real &Weighting, real &Weighting_IntT );
 
 
@@ -42,9 +42,10 @@ extern void SetTempIntPara( const int lv, const int Sg_Current, const double Pre
 //                                        Data[empty_bin]=Data_Sigma[empty_bin]=Weight[empty_bin]=NCell[empty_bin]=0
 //                TVarBitIdx  : Bitwise indices of target variables for computing the profiles
 //                              --> Supported indices (defined in Macro.h):
-//                                     HYDRO : _DENS, _MOMX, _MOMY, _MOMZ, _ENGY, _VELR, _PRES, _EINT_DER
-//                                             [, _ENPY, _EINT, _POTE]
-//                                     ELBDM : _DENS, _REAL, _IMAG [, _POTE]
+//                                     HYDRO        : _DENS, _MOMX, _MOMY, _MOMZ, _ENGY, _VELR, _PRES, _EINT
+//                                                    [, _DUAL, _POTE]
+//                                     ELBDM_WAVE   : _DENS, _REAL, _IMAG [, _POTE]
+//                                     ELBDM_HYBRID : _DENS [, _POTE]
 //                              --> For a passive scalar with an integer field index FieldIdx returned by AddField(),
 //                                  one can convert it to a bitwise field index by BIDX(FieldIdx)
 //                NProf       : Number of Profile_with_Sigma_t objects in Prof
@@ -117,6 +118,10 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
 
    if ( MinLv > MaxLv )
       Aux_Error( ERROR_INFO, "MinLv (%d) > MaxLv (%d) !!\n", MinLv, MaxLv );
+
+   if ( PatchType != PATCH_LEAF  &&  PatchType != PATCH_NONLEAF  &&
+        PatchType != PATCH_BOTH  &&  PatchType != PATCH_LEAF_PLUS_MAXNONLEAF )
+      Aux_Error( ERROR_INFO, "incorrect PatchType (%d) !!\n", PatchType );
 #  endif
 
 
@@ -141,6 +146,18 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
       if ( TVarBitIdx[p] & _POTE )   InclPot = true;
 #  endif
 
+// check whether phase field is accessed in hybrid scheme
+// currently computing the profile of the phase field is not supported
+#  if ( MODEL == ELBDM && ELBDM_SCHEME == ELBDM_HYBRID)
+   bool UsePhaseStub = false;
+   for (int p=0; p<NProf; p++)
+      if ( TVarBitIdx[p] & _PHAS ||  TVarBitIdx[p] & _STUB ) UsePhaseStub = true;
+
+   if ( UsePhaseStub )
+      for (int lv=MinLv; lv<=MaxLv; lv++)
+         if ( !amr->use_wave_flag[lv] )
+            Aux_Error( ERROR_INFO, "Retrieving PHAS and STUB to compute profile in hybrid scheme is not supported !!\n" );
+#  endif // #  if ( MODEL == ELBDM && ELBDM_SCHEME == ELBDM_HYBRID)
 
 // initialize the profile objects
    for (int p=0; p<NProf; p++)
@@ -190,10 +207,10 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
    double ***OMP_Data=NULL, ***OMP_Data_Sigma=NULL, ***OMP_Weight=NULL;
    long   ***OMP_NCell=NULL;
 
-   Aux_AllocateArray3D( OMP_Data,         NProf, NT, Prof[0]->NBin );
-   Aux_AllocateArray3D( OMP_Data_Sigma,   NProf, NT, Prof[0]->NBin );
-   Aux_AllocateArray3D( OMP_Weight,       NProf, NT, Prof[0]->NBin );
-   Aux_AllocateArray3D( OMP_NCell,        NProf, NT, Prof[0]->NBin );
+   Aux_AllocateArray3D( OMP_Data,       NProf, NT, Prof[0]->NBin );
+   Aux_AllocateArray3D( OMP_Data_Sigma, NProf, NT, Prof[0]->NBin );
+   Aux_AllocateArray3D( OMP_Weight,     NProf, NT, Prof[0]->NBin );
+   Aux_AllocateArray3D( OMP_NCell,      NProf, NT, Prof[0]->NBin );
 
 
 // collect profile data in this rank
@@ -215,10 +232,10 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
       for (int p=0; p<NProf; p++)
       for (int b=0; b<Prof[0]->NBin; b++)
       {
-         OMP_Data        [p][TID][b] = 0.0;
-         OMP_Data_Sigma  [p][TID][b] = 0.0;
-         OMP_Weight      [p][TID][b] = 0.0;
-         OMP_NCell       [p][TID][b] = 0;
+         OMP_Data      [p][TID][b] = 0.0;
+         OMP_Data_Sigma[p][TID][b] = 0.0;
+         OMP_Weight    [p][TID][b] = 0.0;
+         OMP_NCell     [p][TID][b] = 0;
       }
 
 //    allocate passive scalar arrays
@@ -257,20 +274,24 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
          if ( PrepTime >= 0.0 )
          {
 //          fluid
-            SetTempIntPara( lv, amr->FluSg[lv], PrepTime, amr->FluSgTime[lv][0], amr->FluSgTime[lv][1],
+            const int FluSg0 = amr->FluSg[lv];
+            SetTempIntPara( lv, FluSg0, PrepTime, amr->FluSgTime[lv][FluSg0], amr->FluSgTime[lv][1-FluSg0],
                             FluIntTime, FluSg, FluSg_IntT, FluWeighting, FluWeighting_IntT );
 
 //          magnetic field
 #           ifdef MHD
-            SetTempIntPara( lv, amr->MagSg[lv], PrepTime, amr->MagSgTime[lv][0], amr->MagSgTime[lv][1],
+            const int MagSg0 = amr->MagSg[lv];
+            SetTempIntPara( lv, MagSg0, PrepTime, amr->MagSgTime[lv][MagSg0], amr->MagSgTime[lv][1-MagSg0],
                             MagIntTime, MagSg, MagSg_IntT, MagWeighting, MagWeighting_IntT );
 #           endif
 
 //          potential
 #           ifdef GRAVITY
-            if ( InclPot )
-               SetTempIntPara( lv, amr->PotSg[lv], PrepTime, amr->PotSgTime[lv][0], amr->PotSgTime[lv][1],
-                               PotIntTime, PotSg, PotSg_IntT, PotWeighting, PotWeighting_IntT );
+            if ( InclPot ) {
+            const int PotSg0 = amr->PotSg[lv];
+            SetTempIntPara( lv, PotSg0, PrepTime, amr->PotSgTime[lv][PotSg0], amr->PotSgTime[lv][1-PotSg0],
+                            PotIntTime, PotSg, PotSg_IntT, PotWeighting, PotWeighting_IntT );
+            }
 #           endif
          }
 
@@ -470,7 +491,7 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
                            }
                            break;
 
-                           case _EINT_DER:
+                           case _EINT:
                            {
                               const real Weight = dv;
                               const real Dens   = FluidPtr[DENS][k][j][i];
@@ -480,11 +501,11 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
 
 #                             if   ( DUAL_ENERGY == DE_ENPY )
                               const bool CheckMinPres_No = false;
-                              const real Enpy = FluidPtr[ENPY][k][j][i];
-                              const real Pres = Hydro_DensEntropy2Pres( Dens, Enpy, EoS_AuxArray_Flt[1],
-                                                                        CheckMinPres_No, NULL_REAL );
+                              const real Enpy = FluidPtr[DUAL][k][j][i];
+                              const real Pres = Hydro_DensDual2Pres( Dens, Enpy, EoS_AuxArray_Flt[1],
+                                                                     CheckMinPres_No, NULL_REAL );
                               const real Eint = EoS_DensPres2Eint_CPUPtr( Dens, Pres, Passive, EoS_AuxArray_Flt,
-                                                                          EoS_AuxArray_Int, h_EoS_Table, NULL );
+                                                                          EoS_AuxArray_Int, h_EoS_Table );
 #                             elif ( DUAL_ENERGY == DE_EINT )
 #                             error : DE_EINT is NOT supported yet !!
 #                             endif
@@ -543,7 +564,7 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
                } // if ( r2 < r_max2 )
             }}} // i,j,k
          } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-      } // for (int lv=lv_min; lv<=lv_max; lv++)
+      } // for (int lv=MinLv; lv<=MaxLv; lv++)
 
 #     if ( MODEL == HYDRO )
       delete [] Passive;         Passive      = NULL;
@@ -558,19 +579,19 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
    {
       for (int b=0; b<Prof[0]->NBin; b++)
       {
-         Prof[p]->Data        [b]  = OMP_Data        [p][0][b];
-         Prof[p]->Data_Sigma  [b]  = OMP_Data_Sigma  [p][0][b];
-         Prof[p]->Weight      [b]  = OMP_Weight      [p][0][b];
-         Prof[p]->NCell       [b]  = OMP_NCell       [p][0][b];
+         Prof[p]->Data        [b]  = OMP_Data      [p][0][b];
+         Prof[p]->Data_Sigma  [b]  = OMP_Data_Sigma[p][0][b];
+         Prof[p]->Weight      [b]  = OMP_Weight    [p][0][b];
+         Prof[p]->NCell       [b]  = OMP_NCell     [p][0][b];
       }
 
       for (int t=1; t<NT; t++)
       for (int b=0; b<Prof[0]->NBin; b++)
       {
-         Prof[p]->Data        [b] += OMP_Data        [p][t][b];
-         Prof[p]->Data_Sigma  [b] += OMP_Data_Sigma  [p][t][b];
-         Prof[p]->Weight      [b] += OMP_Weight      [p][t][b];
-         Prof[p]->NCell       [b] += OMP_NCell       [p][t][b];
+         Prof[p]->Data        [b] += OMP_Data      [p][t][b];
+         Prof[p]->Data_Sigma  [b] += OMP_Data_Sigma[p][t][b];
+         Prof[p]->Weight      [b] += OMP_Weight    [p][t][b];
+         Prof[p]->NCell       [b] += OMP_NCell     [p][t][b];
       }
    }
 
@@ -587,18 +608,18 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
    {
       if ( MPI_Rank == 0 )
       {
-         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Data,         Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Data_Sigma,   Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Weight,       Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->NCell ,       Prof[p]->NBin, MPI_LONG,   MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Data,       Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Data_Sigma, Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->Weight,     Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( MPI_IN_PLACE,    Prof[p]->NCell ,     Prof[p]->NBin, MPI_LONG,   MPI_SUM, 0, MPI_COMM_WORLD );
       }
 
       else
       {
-         MPI_Reduce( Prof[p]->Data,       NULL,              Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( Prof[p]->Data_Sigma, NULL,              Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( Prof[p]->Weight,     NULL,              Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
-         MPI_Reduce( Prof[p]->NCell,      NULL,              Prof[p]->NBin, MPI_LONG,   MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( Prof[p]->Data,       NULL,            Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( Prof[p]->Data_Sigma, NULL,            Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( Prof[p]->Weight,     NULL,            Prof[p]->NBin, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+         MPI_Reduce( Prof[p]->NCell,      NULL,            Prof[p]->NBin, MPI_LONG,   MPI_SUM, 0, MPI_COMM_WORLD );
       }
    }
 #  endif
@@ -627,10 +648,10 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
 // broadcast data to all ranks
    for (int p=0; p<NProf; p++)
    {
-      MPI_Bcast( Prof[p]->Data,         Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-      MPI_Bcast( Prof[p]->Data_Sigma,   Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-      MPI_Bcast( Prof[p]->Weight,       Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
-      MPI_Bcast( Prof[p]->NCell,        Prof[p]->NBin, MPI_LONG,   0, MPI_COMM_WORLD );
+      MPI_Bcast( Prof[p]->Data,       Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      MPI_Bcast( Prof[p]->Data_Sigma, Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      MPI_Bcast( Prof[p]->Weight,     Prof[p]->NBin, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      MPI_Bcast( Prof[p]->NCell,      Prof[p]->NBin, MPI_LONG,   0, MPI_COMM_WORLD );
    }
 
 
@@ -655,11 +676,11 @@ void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double C
 
             for (int p=0; p<NProf; p++)
             {
-               Prof[p]->Radius      [b_up_ms] = Prof[p]->Radius      [b_up];
-               Prof[p]->Data        [b_up_ms] = Prof[p]->Data        [b_up];
-               Prof[p]->Data_Sigma  [b_up_ms] = Prof[p]->Data_Sigma  [b_up];
-               Prof[p]->Weight      [b_up_ms] = Prof[p]->Weight      [b_up];
-               Prof[p]->NCell       [b_up_ms] = Prof[p]->NCell       [b_up];
+               Prof[p]->Radius    [b_up_ms] = Prof[p]->Radius    [b_up];
+               Prof[p]->Data      [b_up_ms] = Prof[p]->Data      [b_up];
+               Prof[p]->Data_Sigma[b_up_ms] = Prof[p]->Data_Sigma[b_up];
+               Prof[p]->Weight    [b_up_ms] = Prof[p]->Weight    [b_up];
+               Prof[p]->NCell     [b_up_ms] = Prof[p]->NCell     [b_up];
             }
          }
 

@@ -1,6 +1,6 @@
 #include "GAMER.h"
 
-extern void SetTempIntPara( const int lv, const int Sg_Current, const double PrepTime, const double Time0, const double Time1,
+extern void SetTempIntPara( const int lv, const int Sg0, const double PrepTime, const double Time0, const double Time1,
                             bool &IntTime, int &Sg, int &Sg_IntT, real &Weighting, real &Weighting_IntT );
 
 
@@ -9,7 +9,7 @@ extern void SetTempIntPara( const int lv, const int Sg_Current, const double Pre
 // Description :  Interpolate the initial density for a given radius
 //
 // Note        :  1. Use only linear interpolation
-//                2. When invoking in Aux_ComputeCorrelation function, the prof_init is always assumed to be in linear bin, so the bin_index 
+//                2. When invoking in Aux_ComputeCorrelation function, the prof_init is always assumed to be in linear bin, so the bin_index
 //                   passed-in is also estimated based on linear bin; to use this function for non-linear bin, user need to compute bin_index
 //                   accordingly
 //
@@ -30,7 +30,7 @@ void InterpolateMeanAndStd(real *mean_inter, real *std_inter, const Profile_with
       int bin_index_right = bin_index+1;
       delta_r             = prof_init[0]->Radius[bin_index_right] - prof_init[0]->Radius[bin_index];
       x                   = (r - prof_init[0]->Radius[bin_index]) / delta_r;
-//    check x
+//    check x 
       if (x<(real)(0.0))
          Aux_Error( ERROR_INFO, "x (%14.7e) < 0.0 !! index = %d ; r = %14.7e ; left-hand point = %14.7e ; right-hand point = %14.7e \n", x , bin_index, r, prof_init[0]->Radius[bin_index], prof_init[0]->Radius[bin_index_right] );
       else if (x>(real)(1.0))
@@ -58,7 +58,7 @@ void InterpolateMeanAndStd(real *mean_inter, real *std_inter, const Profile_with
          int bin_index_left  = bin_index-1;
          delta_r             = prof_init[0]->Radius[bin_index] - prof_init[0]->Radius[bin_index_left];
          x                   = (r - prof_init[0]->Radius[bin_index_left]) / delta_r;
-//       check x
+//       check x 
          if (x<(real)(0.0))
             Aux_Error( ERROR_INFO, "x (%14.7e) < 0.0 !! index = %d ; r = %14.7e ; left-hand point = %14.7e ; right-hand point = %14.7e \n", x , bin_index, r, prof_init[0]->Radius[bin_index_left], prof_init[0]->Radius[bin_index] );
          else if (x>(real)(1.0))
@@ -80,7 +80,7 @@ void InterpolateMeanAndStd(real *mean_inter, real *std_inter, const Profile_with
 //
 // Note        :  1. Results will be stored in the input "Correlation" object
 //                   --> Correlation->Radius[]: Radial coordinate at each bin
-//                       Correlation->Data  []: Correlation Profile data at each bin
+//                       Correlation->Data  []: Correlation profile data at each bin
 //                       Correlation->Weight[]: Total weighting at each bin
 //                       Correlation->NCell []: Number of cells at each bin
 //                       Correlation->NBin    : Total number of bins
@@ -185,8 +185,9 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
    if ( MinLv > MaxLv )
       Aux_Error( ERROR_INFO, "MinLv (%d) > MaxLv (%d) !!\n", MinLv, MaxLv );
 
-   if ( NProf != NCOMP_PASSIVE )
-      Aux_Error( ERROR_INFO, "NProf (%d) != NCOMP_PASSIVE (%d) !!\n", NProf, NCOMP_PASSIVE );
+   if ( PatchType != PATCH_LEAF  &&  PatchType != PATCH_NONLEAF  &&
+        PatchType != PATCH_BOTH  &&  PatchType != PATCH_LEAF_PLUS_MAXNONLEAF )
+      Aux_Error( ERROR_INFO, "incorrect PatchType (%d) !!\n", PatchType );
 #  endif
    if ( NProf != NCOMP_PASSIVE )
       Aux_Error( ERROR_INFO, "NProf(%d) != NCOMP_PASSIVE(%d) !! Currently only support NProf = NCOMP_PASSIVE for computing correlation !!\n", NProf, NCOMP_PASSIVE );
@@ -218,6 +219,18 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
       if ( TVarBitIdx[p] & _POTE )   InclPot = true;
 #  endif
 
+// check whether phase field is accessed in hybrid scheme
+// currently computing the profile of the phase field is not supported
+#  if ( MODEL == ELBDM && ELBDM_SCHEME == ELBDM_HYBRID)
+   bool UsePhaseStub = false;
+   for (int p=0; p<NProf; p++)
+      if ( TVarBitIdx[p] & _PHAS ||  TVarBitIdx[p] & _STUB ) UsePhaseStub = true;
+
+   if ( UsePhaseStub )
+      for (int lv=MinLv; lv<=MaxLv; lv++)
+         if ( !amr->use_wave_flag[lv] )
+            Aux_Error( ERROR_INFO, "Retrieving PHAS and STUB to compute profile in hybrid scheme is not supported !!\n" );
+#  endif // #  if ( MODEL == ELBDM && ELBDM_SCHEME == ELBDM_HYBRID)
 
 // initialize the profile objects
    for (int p=0; p<NProf; p++)
@@ -336,21 +349,25 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
          if ( PrepTime >= 0.0 )
          {
 //          fluid
-            SetTempIntPara( lv, amr->FluSg[lv], PrepTime, amr->FluSgTime[lv][0], amr->FluSgTime[lv][1],
+            const int FluSg0 = amr->FluSg[lv];
+            SetTempIntPara( lv, FluSg0, PrepTime, amr->FluSgTime[lv][FluSg0], amr->FluSgTime[lv][1-FluSg0],
                             FluIntTime, FluSg, FluSg_IntT, FluWeighting, FluWeighting_IntT );
 
 //          magnetic field
 #           ifdef MHD
-            SetTempIntPara( lv, amr->MagSg[lv], PrepTime, amr->MagSgTime[lv][0], amr->MagSgTime[lv][1],
+            const int MagSg0 = amr->MagSg[lv];
+            SetTempIntPara( lv, MagSg0, PrepTime, amr->MagSgTime[lv][MagSg0], amr->MagSgTime[lv][1-MagSg0],
                             MagIntTime, MagSg, MagSg_IntT, MagWeighting, MagWeighting_IntT );
 #           endif
 
-/*          does not support _POTE yet
+/*
+//          does not support _POTE yet
 //          potential
 #           ifdef GRAVITY
-            if ( InclPot )
-               SetTempIntPara( lv, amr->PotSg[lv], PrepTime, amr->PotSgTime[lv][0], amr->PotSgTime[lv][1],
-                               PotIntTime, PotSg, PotSg_IntT, PotWeighting, PotWeighting_IntT );
+            if ( InclPot ) {
+            const int PotSg0 = amr->PotSg[lv];
+            SetTempIntPara( lv, PotSg0, PrepTime, amr->PotSgTime[lv][PotSg0], amr->PotSgTime[lv][1-PotSg0],
+                            PotIntTime, PotSg, PotSg_IntT, PotWeighting, PotWeighting_IntT );
 #           endif
 */
          }
@@ -576,7 +593,7 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
                            }
                            break;
 
-                           case _EINT_DER:
+                           case _EINT:
                            {
                               const real Weight = dv;
                               const real Dens   = FluidPtr[DENS][k][j][i];
@@ -586,11 +603,11 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
 
 #                             if   ( DUAL_ENERGY == DE_ENPY )
                               const bool CheckMinPres_No = false;
-                              const real Enpy = FluidPtr[ENPY][k][j][i];
-                              const real Pres = Hydro_DensEntropy2Pres( Dens, Enpy, EoS_AuxArray_Flt[1],
-                                                                        CheckMinPres_No, NULL_REAL );
+                              const real Enpy = FluidPtr[DUAL][k][j][i];
+                              const real Pres = Hydro_DensDual2Pres( Dens, Enpy, EoS_AuxArray_Flt[1],
+                                                                     CheckMinPres_No, NULL_REAL );
                               const real Eint = EoS_DensPres2Eint_CPUPtr( Dens, Pres, Passive, EoS_AuxArray_Flt,
-                                                                          EoS_AuxArray_Int, h_EoS_Table, NULL );
+                                                                          EoS_AuxArray_Int, h_EoS_Table );
 #                             elif ( DUAL_ENERGY == DE_EINT )
 #                             error : DE_EINT is NOT supported yet !!
 #                             endif
@@ -649,7 +666,7 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
                } // if ( r2 < r_max2 )
             }}} // i,j,k
          } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-      } // for (int lv=lv_min; lv<=lv_max; lv++)
+      } // for (int lv=MinLv; lv<=MaxLv; lv++)
 
       delete [] Passive;         Passive      = NULL;
 
@@ -762,7 +779,7 @@ void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_
          const int LastBin = Correlation[p]->NBin-1;
 
          Correlation[p]->MaxRadius = ( LogBin ) ? Correlation[p]->Radius[LastBin]*sqrt( LogBinRatio )
-                                         : Correlation[p]->Radius[LastBin] + 0.5*dr_min;
+                                                : Correlation[p]->Radius[LastBin] + 0.5*dr_min;
       }
    } // if ( RemoveEmpty )
 

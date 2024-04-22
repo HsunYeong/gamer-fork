@@ -2,15 +2,15 @@
 #include "TestProb.h"
 
 static void GetCenterOfMass( const double CM_Old[], double CM_New[], const double CM_MaxR );
-static void Record_Max( void );
+static void Record_Max( bool record_flag );
 static void Init_Load_StepTable( void );
 static void AddNewField_ELBDM_UniformGranule( void );
 static void Init_User_ELBDM_UniformGranule( void );
 // problem-specific global variables
 // =======================================================================================
 static FieldIdx_t Idx_Dens0 = Idx_Undefined;  // field index for storing the **initial** density
-static double   CM_MaxR;      // maximum radius for determining CM
-static double   CM_TolErrR;   // maximum allowed errors for determining CM
+static double   CM_MaxR;                      // maximum radius for determining CM
+static double   CM_TolErrR;                   // maximum allowed errors for determining CM
 static double   Center[3];                    // use CoM coordinate of the whole halo as center
 static double   dr_min_prof;                  // bin size of correlation function statistics (minimum size if logarithic bin) (profile)
 static double   LogBinRatio_prof;             // ratio of bin size growing rate for logarithmic bin (profile)
@@ -18,7 +18,7 @@ static double   RadiusMax_prof;               // maximum radius for correlation 
 static double   dr_min_corr;                  // bin size of correlation function statistics (minimum size if logarithic bin) (correlation)
 static double   LogBinRatio_corr;             // ratio of bin size growing rate for logarithmic bin (correlation)
 static double   RadiusMax_corr;               // maximum radius for correlation function statistics (correlation)
-//static double   PrepTime;                     // time for doing statistics
+//static double   PrepTime;                   // time for doing statistics
 static bool     ComputeCorrelation;           // flag for compute correlation
 static bool     ReComputeCorrelation;         // flag for recompute correlation for restart; use the simulation time of RESTART as initial time for computing time correlation; only available for RESTART
 static bool     LogBin_prof;                  // logarithmic bin or not (profile)
@@ -30,6 +30,7 @@ static int      MaxLv;                        // do statistics from MinLv to Max
 static int      OutputCorrelationMode;        // output correlation function mode=> 0: constant interval 1: by table
 static int      StepInitial;                  // inital step for recording correlation function (OutputCorrelationMode = 0)
 static int      StepInterval;                 // interval for recording correlation function (OutputCorrelationMode = 0)
+static int      StepEnd;                      // end step for recording correlation function (OutputCorrelationMode = 0)
 static int      *StepTable;                   // step index table for output correlation function (OutputCorrelationMode = 1)
 static bool     Fluid_Periodic_BC_Flag;       // flag for checking the fluid boundary condtion is setup to periodic (0: user defined; 1: periodic)
 static char     FilePath_corr[MAX_STRING];    // output path for correlation function text files
@@ -67,10 +68,6 @@ void Validate()
 
 #  ifdef COMOVING
    Aux_Error( ERROR_INFO, "COMOVING must be disabled !!\n" );
-#  endif
-
-#  ifdef PARTICLE
-   Aux_Error( ERROR_INFO, "PARTICLE must be disabled !!\n" );
 #  endif
 
 // only accept OPT__INIT == INIT_BY_RESTART or OPT__INIT == INIT_BY_FILE
@@ -132,6 +129,7 @@ void SetParameter()
    ReadPara->Add( "OutputCorrelationMode",    &OutputCorrelationMode,   0,             0,                1                 );
    ReadPara->Add( "StepInitial",              &StepInitial,             0,             0,                NoMax_int         );
    ReadPara->Add( "StepInterval",             &StepInterval,            1,             1,                NoMax_int         );
+   ReadPara->Add( "StepEnd",                  &StepEnd,                 NoMax_int,     0,                NoMax_int         );
    ReadPara->Add( "FilePath_corr",            FilePath_corr,            Useless_str,   Useless_str,      Useless_str       );
    if ( OPT__INIT == INIT_BY_RESTART )
       ReadPara->Add( "ReComputeCorrelation", &ReComputeCorrelation,     false,         Useless_bool,     Useless_bool      );
@@ -156,7 +154,7 @@ void SetParameter()
        RemoveEmpty_prof                         = false;                   // hard-coded by Test Problem
 
        if ( MinLv < 0 ) MinLv = 0;
-       if ( MaxLv <= MinLv ) MaxLv = MAX_LEVEL;
+       if ( MaxLv < MinLv ) MaxLv = MAX_LEVEL;
        if ( FilePath_corr == "\0" )  sprintf( FilePath_corr, "./" );
        else
        {
@@ -400,7 +398,7 @@ static void Init_User_ELBDM_UniformGranule(void)
        const double InitialTime = Time[0];
        if ( OutputCorrelationMode == 0)
        {
-          if ( MPI_Rank==0 ) Aux_Message( stdout, "StepInitial = %d ; StepInterval = %d \n", StepInitial, StepInterval);
+          if ( MPI_Rank==0 ) Aux_Message( stdout, "StepInitial = %d ; StepInterval = %d ; StepEnd = %d\n", StepInitial, StepInterval, StepEnd);
        }
        else if ( OutputCorrelationMode == 1)
           Init_Load_StepTable();
@@ -409,7 +407,8 @@ static void Init_User_ELBDM_UniformGranule(void)
        // compute the enter position for passive field
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Calculate halo center for passive field:\n");
 
-       Record_Max();
+       bool record_flag = false;
+       Record_Max( record_flag );
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Center of passive field is ( %14.11e,%14.11e,%14.11e )\n", Center[0], Center[1], Center[2] );
        // commpute density profile for passive field;
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Calculate density profile for passive field:\n");
@@ -458,6 +457,18 @@ void GetCenterOfMass( const double CM_Old[], double CM_New[], const double CM_Ma
    const real   MinTemp_No        = -1.0;
    const real   MinEntr_No        = -1.0;
    const bool   DE_Consistency_No = false;
+#  ifdef PARTICLE
+   const bool   TimingSendPar_No  = false;
+   const bool   PredictParPos_No  = false;
+   const bool   JustCountNPar_No  = false;
+#  ifdef LOAD_BALANCE
+   const bool   SibBufPatch       = true;
+   const bool   FaSibBufPatch     = true;
+#  else
+   const bool   SibBufPatch       = NULL_BOOL;
+   const bool   FaSibBufPatch     = NULL_BOOL;
+#  endif
+#  endif // #ifdef PARTICLE
 
    int   *PID0List = NULL;
    double M_ThisRank, MR_ThisRank[3], M_AllRank, MR_AllRank[3];
@@ -566,7 +577,7 @@ void GetCenterOfMass( const double CM_Old[], double CM_New[], const double CM_Ma
 //
 // Return      :  None
 //-------------------------------------------------------------------------------------------------------
-void Record_Max( )
+void Record_Max( bool record_flag )
 {
    const char filename_max_dens[] = "Record__MaxDens";
    const char filename_center  [] = "Record__Center";
@@ -658,41 +669,44 @@ void Record_Max( )
 
       static bool FirstTime = true;
 
-      if ( FirstTime )
+      if ( record_flag )
       {
-         if ( Aux_CheckFileExist(filename_max_dens) )
-            Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", filename_max_dens );
-         else
+         if ( FirstTime )
          {
-            FILE *file_max_dens = fopen( filename_max_dens, "w" );
-            fprintf( file_max_dens, "#%19s   %10s   %14s   %14s   %14s\n", "Time", "Step", "Dens", "Real", "Imag" );
-            fclose( file_max_dens );
+            if ( Aux_CheckFileExist(filename_max_dens) )
+               Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", filename_max_dens );
+            else
+            {
+               FILE *file_max_dens = fopen( filename_max_dens, "w" );
+               fprintf( file_max_dens, "#%19s   %10s   %14s   %14s   %14s\n", "Time", "Step", "Dens", "Real", "Imag" );
+               fclose( file_max_dens );
+            }
+
+            if ( Aux_CheckFileExist(filename_center) )
+               Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", filename_center );
+            else
+            {
+               FILE *file_center = fopen( filename_center, "w" );
+               fprintf( file_center, "#%19s  %10s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %10s  %14s  %14s  %14s\n",
+                        "Time", "Step", "Dens", "Dens_x", "Dens_y", "Dens_z", "Pote", "Pote_x", "Pote_y", "Pote_z",
+                        "NIter", "CM_x", "CM_y", "CM_z" );
+               fclose( file_center );
+            }
+
+            FirstTime = false;
          }
 
-         if ( Aux_CheckFileExist(filename_center) )
-            Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", filename_center );
-         else
-         {
-            FILE *file_center = fopen( filename_center, "w" );
-            fprintf( file_center, "#%19s  %10s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %14s  %10s  %14s  %14s  %14s\n",
-                     "Time", "Step", "Dens", "Dens_x", "Dens_y", "Dens_z", "Pote", "Pote_x", "Pote_y", "Pote_z",
-                     "NIter", "CM_x", "CM_y", "CM_z" );
-            fclose( file_center );
-         }
+         FILE *file_max_dens = fopen( filename_max_dens, "a" );
+         fprintf( file_max_dens, "%20.14e   %10ld   %14.7e   %14.7e   %14.7e\n",
+                  Time[0], Step, recv[max_dens_rank][0], recv[max_dens_rank][1], recv[max_dens_rank][2] );
+         fclose( file_max_dens );
 
-         FirstTime = false;
-      }
-
-      FILE *file_max_dens = fopen( filename_max_dens, "a" );
-      fprintf( file_max_dens, "%20.14e   %10ld   %14.7e   %14.7e   %14.7e\n",
-               Time[0], Step, recv[max_dens_rank][0], recv[max_dens_rank][1], recv[max_dens_rank][2] );
-      fclose( file_max_dens );
-
-      FILE *file_center = fopen( filename_center, "a" );
-      fprintf( file_center, "%20.14e  %10ld  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e",
-               Time[0], Step, recv[max_dens_rank][0], recv[max_dens_rank][3], recv[max_dens_rank][4], recv[max_dens_rank][5],
-                              recv[min_pote_rank][6], recv[min_pote_rank][7], recv[min_pote_rank][8], recv[min_pote_rank][9] );
-      fclose( file_center );
+         FILE *file_center = fopen( filename_center, "a" );
+         fprintf( file_center, "%20.14e  %10ld  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e  %14.7e",
+                  Time[0], Step, recv[max_dens_rank][0], recv[max_dens_rank][3], recv[max_dens_rank][4], recv[max_dens_rank][5],
+                                 recv[min_pote_rank][6], recv[min_pote_rank][7], recv[min_pote_rank][8], recv[min_pote_rank][9] );
+         fclose( file_center );
+      } // if (record_flag)
    } // if ( MPI_Rank == 0 )
 
 
@@ -726,12 +740,15 @@ void Record_Max( )
 
    if ( MPI_Rank == 0 )
    {
-      if ( dR2 > TolErrR2 )
-         Aux_Message( stderr, "WARNING : dR (%13.7e) > CM_TolErrR (%13.7e) !!\n", sqrt(dR2), CM_TolErrR );
+      if ( record_flag )
+      {
+         if ( dR2 > TolErrR2 )
+            Aux_Message( stderr, "WARNING : dR (%13.7e) > CM_TolErrR (%13.7e) !!\n", sqrt(dR2), CM_TolErrR );
 
-      FILE *file_center = fopen( filename_center, "a" );
-      fprintf( file_center, "  %10d  %14.7e  %14.7e  %14.7e\n", NIter, CM_New[0], CM_New[1], CM_New[2] );
-      fclose( file_center );
+         FILE *file_center = fopen( filename_center, "a" );
+         fprintf( file_center, "  %10d  %14.7e  %14.7e  %14.7e\n", NIter, CM_New[0], CM_New[1], CM_New[2] );
+         fclose( file_center );
+      }
    }
 
    delete [] recv;
@@ -745,12 +762,13 @@ void Record_Max( )
 
 static void Do_COM_and_CF( void )
 {
-   Record_Max();
+   bool record_flag = true;
+   Record_Max( record_flag );
 
 // Compute correlation if ComputeCorrelation flag is true
    if (ComputeCorrelation)
    {
-      if ( ((OutputCorrelationMode==1) && (Step==StepTable[step_counter])) || ((OutputCorrelationMode==0) && (Step>=StepInitial) && (((Step-StepInitial)%StepInterval)==0)) )
+      if ( ((OutputCorrelationMode==1) && (Step==StepTable[step_counter])) || ((OutputCorrelationMode==0) && (Step>=StepInitial) && (((Step-StepInitial)%StepInterval)==0) && (Step<=StepEnd)) )
       {
          const long TVar[] = {_DENS};
          Aux_ComputeCorrelation( Correlation, (const Profile_with_Sigma_t**)Prof, Center, RadiusMax_corr, dr_min_corr, LogBin_corr, LogBinRatio_corr,
