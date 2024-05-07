@@ -1,6 +1,6 @@
 # problem-specific runtime parameters
-CM_MaxR                 0.13856406460551018
-CM_TolErrR              1e-3
+CM_MaxR                 0.13856406460551018      # maximum radius for determining CM
+CM_TolErrR              1e-3                     # maximum allowed errors for determining CM
 ComputeCorrelation      1                        # compute correlation function
 Fluid_Periodic_BC_Flag  1                        # flag for checking the fluid boundary condtion is setup to periodic (0: user defined; 1: periodic)
 

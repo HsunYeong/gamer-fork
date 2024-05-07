@@ -30,7 +30,7 @@ void InterpolateMeanAndStd(real *mean_inter, real *std_inter, const Profile_with
       int bin_index_right = bin_index+1;
       delta_r             = prof_init[0]->Radius[bin_index_right] - prof_init[0]->Radius[bin_index];
       x                   = (r - prof_init[0]->Radius[bin_index]) / delta_r;
-//    check x 
+//    check x
       if (x<(real)(0.0))
          Aux_Error( ERROR_INFO, "x (%14.7e) < 0.0 !! index = %d ; r = %14.7e ; left-hand point = %14.7e ; right-hand point = %14.7e \n", x , bin_index, r, prof_init[0]->Radius[bin_index], prof_init[0]->Radius[bin_index_right] );
       else if (x>(real)(1.0))
@@ -58,7 +58,7 @@ void InterpolateMeanAndStd(real *mean_inter, real *std_inter, const Profile_with
          int bin_index_left  = bin_index-1;
          delta_r             = prof_init[0]->Radius[bin_index] - prof_init[0]->Radius[bin_index_left];
          x                   = (r - prof_init[0]->Radius[bin_index_left]) / delta_r;
-//       check x 
+//       check x
          if (x<(real)(0.0))
             Aux_Error( ERROR_INFO, "x (%14.7e) < 0.0 !! index = %d ; r = %14.7e ; left-hand point = %14.7e ; right-hand point = %14.7e \n", x , bin_index, r, prof_init[0]->Radius[bin_index_left], prof_init[0]->Radius[bin_index] );
          else if (x>(real)(1.0))
