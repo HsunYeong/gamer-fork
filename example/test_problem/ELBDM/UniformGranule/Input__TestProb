@@ -1,8 +1,10 @@
 # problem-specific runtime parameters
-CM_MaxR                 0.13856406460551018      # maximum radius for determining CM
-CM_TolErrR              1e-3                     # maximum allowed errors for determining CM
 ComputeCorrelation      1                        # compute correlation function
 Fluid_Periodic_BC_Flag  1                        # flag for checking the fluid boundary condtion is setup to periodic (0: user defined; 1: periodic)
+
+# parameters for Record__Center (only useful when OPT__RECORD_USER=1, now replaced by OPT__RECORD_CENTER=1)
+CM_MaxR                 1e30                     # maximum radius for determining CM
+CM_TolErrR             -1                        # maximum allowed errors for determining CM
 
 # parameters for correlation function (only useful when ComputeCorrelation=1)
 dr_min_corr             0.00234224               # granule_diameter
