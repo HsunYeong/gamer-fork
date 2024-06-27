@@ -1,15 +1,10 @@
-#ifndef __PROFILE_H__
-#define __PROFILE_H__
-
-
-
-void Aux_Error( const char *File, const int Line, const char *Func, const char *Format, ... );
-
+#ifndef __PROFILE_WITH_SIGMA_H__
+#define __PROFILE_WITH_SIGMA_H__
 
 
 
 //-------------------------------------------------------------------------------------------------------
-// Structure   :  Profile_t
+// Structure   :  Profile_with_Sigma_t
 // Description :  Data structure for computing a radial profile
 //
 // Data Member :  NBin        : Total number of radial bins
@@ -20,15 +15,16 @@ void Aux_Error( const char *File, const int Line, const char *Func, const char *
 //                Allocated   : Whether or not member arrays such as Radius[] have been allocated
 //                Radius      : Radial coordinate at each bin
 //                Data        : Profile data at each bin
+//                Data_Sigma  : Profile data at each bin
 //                Weight      : Total weighting at each bin
 //                NCell       : Number of cells at each bin
 //
-// Method      :  Profile_t      : Constructor
-//               ~Profile_t      : Destructor
+// Method      :  Profile_with_Sigma_t      : Constructor
+//               ~Profile_with_Sigma_t      : Destructor
 //                AllocateMemory : Allocate memory
 //                FreeMemory     : Free memory
 //-------------------------------------------------------------------------------------------------------
-struct Profile_t
+struct Profile_with_Sigma_t
 {
 
 // data members
@@ -42,44 +38,46 @@ struct Profile_t
 
    double *Radius;
    double *Data;
+   double *Data_Sigma;
    double *Weight;
    long   *NCell;
 
 
    //===================================================================================
-   // Constructor :  Profile_t
-   // Description :  Constructor of the structure "Profile_t"
+   // Constructor :  Profile_with_Sigma_t
+   // Description :  Constructor of the structure "Profile_with_Sigma_t"
    //
    // Note        :  Initialize the data members
    //
    // Parameter   :  None
    //===================================================================================
-   Profile_t()
+   Profile_with_Sigma_t()
    {
 
-      NBin      = -1;
-      Allocated = false;
-      Radius    = NULL;
-      Data      = NULL;
-      Weight    = NULL;
-      NCell     = NULL;
+      NBin       = -1;
+      Allocated  = false;
+      Radius     = NULL;
+      Data       = NULL;
+      Data_Sigma = NULL;
+      Weight     = NULL;
+      NCell      = NULL;
 
-   } // METHOD : Profile_t
+   } // METHOD : Profile_with_Sigma_t
 
 
 
    //===================================================================================
-   // Destructor  :  ~Profile_t
-   // Description :  Destructor of the structure "Profile_t"
+   // Destructor  :  ~Profile_with_Sigma_t
+   // Description :  Destructor of the structure "Profile_with_Sigma_t"
    //
    // Note        :  Free memory
    //===================================================================================
-   ~Profile_t()
+   ~Profile_with_Sigma_t()
    {
 
       FreeMemory();
 
-   } // METHOD : ~Profile_t
+   } // METHOD : ~Profile_with_Sigma_t
 
 
 
@@ -100,13 +98,14 @@ struct Profile_t
       if ( NBin < 0 )   Aux_Error( ERROR_INFO, "NBin (%d) < 0 !!\n", NBin );
 
 //    free the previously allocated memory in case NBin has changed
-//    --> allows the same Profile_t object to be reused without the need to manually free memory first
+//    --> allows the same Profile_with_Sigma_t object to be reused without the need to manually free memory first
       if ( Allocated )  FreeMemory();
 
-      Radius = new double [NBin];
-      Data   = new double [NBin];
-      Weight = new double [NBin];
-      NCell  = new long   [NBin];
+      Radius       = new double [NBin];
+      Data         = new double [NBin];
+      Data_Sigma   = new double [NBin];
+      Weight       = new double [NBin];
+      NCell        = new long   [NBin];
 
       Allocated = true;
 
@@ -127,18 +126,18 @@ struct Profile_t
    void FreeMemory()
    {
 
-      delete [] Radius;    Radius = NULL;
-      delete [] Data;      Data   = NULL;
-      delete [] Weight;    Weight = NULL;
-      delete [] NCell;     NCell  = NULL;
+      delete [] Radius;     Radius       = NULL;
+      delete [] Data;       Data         = NULL;
+      delete [] Data_Sigma; Data_Sigma   = NULL;
+      delete [] Weight;     Weight       = NULL;
+      delete [] NCell;      NCell        = NULL;
 
       Allocated = false;
 
    } // METHOD : FreeMemory
 
 
-}; // struct Profile_t
+}; // struct Profile_with_Sigma_t
 
 
-
-#endif // #ifndef __PROFILE_H__
+#endif // #ifndef __PROFILE_WITH_SIGMA_H__

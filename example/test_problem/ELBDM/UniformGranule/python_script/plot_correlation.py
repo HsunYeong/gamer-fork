@@ -30,6 +30,8 @@ for f in filename:
       print('time pattern not matched!! filename=\"%s\"'%f)
       sys.exit(1)
 
+if not r:
+   print("no file loaded, check ../Record__Correlation/ !!")
 
 t = np.array(t)*1000
 C = np.array(C)

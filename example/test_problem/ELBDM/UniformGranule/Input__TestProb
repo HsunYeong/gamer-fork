@@ -12,5 +12,6 @@ MinLv                   0                        # do statistics from MinLv to M
 MaxLv                   0                        # do statistics from MinLv to MaxLv (default=MAX_LEVEL)
 ReComputeCorrelation    0                        # use the simulation time of RESTART as initial time for computing time correlation; only available for RESTART
 StepInitial             0                        # inital step for recording correlation function (default=0)
-StepInterval            100                      # interval for recording correlation function (default=1)
+StepInterval            1                        # interval for recording correlation function (only for OutputCorrelationMode=0) (default=1)
+StepEnd                 200                      # end step for recording correlation function (only for OutputCorrelationMode=0) (default=NoMax_int)
 RemoveEmpty_prof        0                        # remove 0 sample bins; false: Data[empty_bin]=Weight[empty_bin]=NCell[empty_bin]=0 (profile)

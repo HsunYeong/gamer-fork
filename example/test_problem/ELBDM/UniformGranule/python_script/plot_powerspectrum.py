@@ -67,23 +67,28 @@ for idx in range(idx_start, idx_end+1, didx):
       gamer_k    = gamer_ps[:,0]
       gamer_Pk1d = gamer_ps[:,1]
       gamer_k3Pk = gamer_k**3*gamer_Pk1d
+
    plt.figure()
-   plt.plot(kz[1:], Pk1d[1:]/max(Pk1d[1:]), label = 'Power Spectrum, numpy')
+   plt.title("Power Spectrum")
+   plt.plot(kz[1:], Pk1d[1:]/max(Pk1d[1:]), label = 'numpy')
    if(GAMER_PS):
-      plt.plot(gamer_k, gamer_Pk1d/max(gamer_Pk1d), label = 'Power Spectrum, gamer')
+      plt.plot(gamer_k, gamer_Pk1d/max(gamer_Pk1d), label = 'gamer')
    plt.xlabel('$k$')
    plt.ylabel(r'$P(k)$')
    plt.yscale('log')
+   plt.legend(loc='lower left')
    plt.savefig('fig_powerspectrum_%06d.png'%idx, dpi = 150, bbox_inches="tight")
    plt.close()
 
    plt.figure()
-   plt.plot(kz[1:], k3Pk[1:]/max(k3Pk), label = 'Dimensionless Power Spectrum, numpy')
+   plt.title("Dimensionless Power Spectrum")
+   plt.plot(kz[1:], k3Pk[1:]/max(k3Pk), label = 'numpy')
    if(GAMER_PS):
-      plt.plot(gamer_k, gamer_k3Pk/max(gamer_k3Pk), label = 'Dimensionless Power Spectrum, gamer')
+      plt.plot(gamer_k, gamer_k3Pk/max(gamer_k3Pk), label = 'gamer')
    plt.xlabel('$k$')
    plt.ylabel(r'$k^3P(k)$')
    plt.yscale('log')
+   plt.legend(loc='lower right')
    plt.savefig('fig_powerspectrum_dimensionless_%06d.png'%idx, dpi = 150, bbox_inches="tight")
    plt.close()
 

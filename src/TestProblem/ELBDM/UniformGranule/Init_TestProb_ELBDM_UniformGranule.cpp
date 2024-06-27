@@ -1,10 +1,23 @@
 #include "GAMER.h"
 #include "TestProb.h"
+#include "Profile_with_Sigma.h"
 
 static void Init_Load_StepTable( void );
 static void AddNewField_ELBDM_UniformGranule( void );
 static void Init_User_ELBDM_UniformGranule( void );
 static void Do_CF( void );
+
+void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double Center[], const double r_max_input, const double dr_min,
+                                    const bool LogBin, const double LogBinRatio, const bool RemoveEmpty, const long TVarBitIdx[],
+                                    const int NProf, const int MinLv, const int MaxLv, const PatchType_t PatchType,
+                                    const double PrepTimeIn );
+
+void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_t *prof_init[], const double Center[],
+                             const double r_max_input, const double dr_min, const bool LogBin, const double LogBinRatio,
+                             const bool RemoveEmpty, const long TVarBitIdx[], const int NProf, const int MinLv, const int MaxLv,
+                             const PatchType_t PatchType, const double PrepTime, const double dr_min_prof );
+
+
 // problem-specific global variables
 // =======================================================================================
 static FieldIdx_t Idx_Dens0 = Idx_Undefined;  // field index for storing the **initial** density
@@ -193,14 +206,14 @@ void SetParameter()
       Aux_Message( stdout, "  compute correlation                         = %d\n"    , ComputeCorrelation        );
       if (ComputeCorrelation)
       {
-         Aux_Message( stdout, "  histogram bin size  (correlation)           = %13.6e\n", dr_min_corr            );
-         Aux_Message( stdout, "  log bin ratio       (correlation)           = %13.6e\n", LogBinRatio_corr       );
-         Aux_Message( stdout, "  radius maximum      (correlation)           = %13.6e\n", RadiusMax_corr         );
+         Aux_Message( stdout, "  histogram bin size  (correlation)           = %13.7e\n", dr_min_corr            );
+         Aux_Message( stdout, "  log bin ratio       (correlation)           = %13.7e\n", LogBinRatio_corr       );
+         Aux_Message( stdout, "  radius maximum      (correlation)           = %13.7e\n", RadiusMax_corr         );
          Aux_Message( stdout, "  use logarithmic bin (correlation)           = %d\n"    , LogBin_corr            );
          Aux_Message( stdout, "  remove empty bin    (correlation)           = %d\n"    , RemoveEmpty_corr       );
-         Aux_Message( stdout, "  histogram bin size  (profile)               = %13.6e\n", dr_min_prof            );
-         Aux_Message( stdout, "  log bin ratio       (profile, no effect)    = %13.6e\n", LogBinRatio_prof       );
-         Aux_Message( stdout, "  radius maximum      (profile, assigned)     = %13.6e\n", RadiusMax_prof         );
+         Aux_Message( stdout, "  histogram bin size  (profile)               = %13.7e\n", dr_min_prof            );
+         Aux_Message( stdout, "  log bin ratio       (profile, no effect)    = %13.7e\n", LogBinRatio_prof       );
+         Aux_Message( stdout, "  radius maximum      (profile, assigned)     = %13.7e\n", RadiusMax_prof         );
          Aux_Message( stdout, "  use logarithmic bin (profile, assigned)     = %d\n"    , LogBin_prof            );
          Aux_Message( stdout, "  remove empty bin    (profile, assigned)     = %d\n"    , RemoveEmpty_prof       );
          Aux_Message( stdout, "  minimum level                               = %d\n"    , MinLv                  );

@@ -40,15 +40,6 @@ void Aux_ComputeProfile( Profile_t *Prof[], const double Center[], const double 
                          const bool LogBin, const double LogBinRatio, const bool RemoveEmpty, const long TVarBitIdx[],
                          const int NProf, const int MinLv, const int MaxLv, const PatchType_t PatchType,
                          const double PrepTimeIn );
-void Aux_ComputeProfile_with_Sigma( Profile_with_Sigma_t *Prof[], const double Center[], const double r_max_input, const double dr_min,
-                                    const bool LogBin, const double LogBinRatio, const bool RemoveEmpty, const long TVarBitIdx[],
-                                    const int NProf, const int MinLv, const int MaxLv, const PatchType_t PatchType,
-                                    const double PrepTimeIn );
-//void Aux_ComputeCorrelation( Profile_t *Correlation[], FieldIdx_t *Passive_idx[], const Profile_t *prof_init[], const double Center[],
-void Aux_ComputeCorrelation( Profile_t *Correlation[], const Profile_with_Sigma_t *prof_init[], const double Center[],
-                             const double r_max_input, const double dr_min, const bool LogBin, const double LogBinRatio,
-                             const bool RemoveEmpty, const long TVarBitIdx[], const int NProf, const int MinLv, const int MaxLv,
-                             const PatchType_t PatchType, const double PrepTime, const double dr_min_prof );
 void Aux_FindExtrema( Extrema_t *Extrema, const ExtremaMode_t Mode, const int MinLv, const int MaxLv,
                       const PatchType_t PatchType );
 void Aux_FindWeightedAverageCenter( double WeightedAverageCenter[], const double Center_ref[], const double MaxR, const double MinWD,
@@ -784,8 +775,6 @@ void Par_LB_MapBuffer2RealPatch( const int lv, const int  Buff_NPatchTotal, int 
 void YT_Init( int argc, char *argv[] );
 void YT_End();
 void YT_Inline();
-void Execute_YT( const int Stage );
-void YT_Load_ExecuteTable();
 #endif // #ifdef SUPPORT_LIBYT
 
 

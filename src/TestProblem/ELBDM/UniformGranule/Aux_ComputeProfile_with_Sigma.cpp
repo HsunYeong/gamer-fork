@@ -1,4 +1,5 @@
 #include "GAMER.h"
+#include "Profile_with_Sigma.h"
 
 extern void SetTempIntPara( const int lv, const int Sg_0, const double PrepTime, const double Time0, const double Time1,
                             bool &IntTime, int &Sg, int &Sg_IntT, real &Weighting, real &Weighting_IntT );
