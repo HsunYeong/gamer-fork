@@ -41,7 +41,6 @@ static int      StepInterval;                 // interval for recording correlat
 static int      StepEnd;                      // end step for recording correlation function
 static char     FilePath_corr[MAX_STRING];    // output path for correlation function text files
 
-static int step_counter;                             // counter for caching consumed step indices
 static Profile_with_Sigma_t  Prof_Dens_initial;                      // pointer to save initial density profile
 static Profile_with_Sigma_t *Prof[] = { &Prof_Dens_initial };
 static Profile_t             Correlation_Dens;                       // pointer to save density correlation function
@@ -169,8 +168,8 @@ void SetParameter()
 // (1-3) check the runtime parameters
    if ( OPT__INIT == INIT_BY_FUNCTION )
       Aux_Error( ERROR_INFO, "OPT__INIT = 1 is not supported for this test problem !!\n" );
-   // check whether fluid boundary condition in Input__Parameter is set properly
 
+// check whether fluid boundary condition in Input__Parameter is set properly
    for ( int direction = 0; direction < 6; direction++ )
    {
       if ( OPT__BC_FLU[direction] != BC_FLU_PERIODIC )
@@ -248,7 +247,6 @@ static void AddNewField_ELBDM_UniformGranule(void)
 
 #  if ( NCOMP_PASSIVE_USER > 0 )
    Idx_Dens0 = AddField( "Dens0", FIXUP_FLUX_NO, FIXUP_REST_NO, NORMALIZE_NO, INTERP_FRAC_NO );
-//   if ( MPI_Rank == 0 )   printf("Idx_Dens0 = %d \n", Idx_Dens0);
 #  endif
 
 } // FUNCTION : AddNewField_ELBDM_Halo_Stability_Test
@@ -293,13 +291,12 @@ static void Init_User_ELBDM_UniformGranule(void)
 
    if (ComputeCorrelation)
    {
-       step_counter = 0;
        const double InitialTime = Time[0];
        if ( MPI_Rank==0 ) Aux_Message( stdout, "StepInitial = %d ; StepInterval = %d ; StepEnd = %d\n", StepInitial, StepInterval, StepEnd);
 
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "InitialTime = %13.6e \n", InitialTime );
 
-       // compute the enter position for passive field
+//     compute the enter position for passive field
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Calculate halo center for passive field:\n");
 
        double FinaldR;
@@ -328,7 +325,7 @@ static void Init_User_ELBDM_UniformGranule(void)
 
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Center of passive field is ( %14.11e,%14.11e,%14.11e )\n", Center[0], Center[1], Center[2] );
 
-       // commpute density profile for passive field;
+//     commpute density profile for passive field
        if ( MPI_Rank == 0 )  Aux_Message( stdout, "Calculate density profile for passive field:\n");
 
        const long TVar[] = {BIDX(Idx_Dens0)};
@@ -342,7 +339,7 @@ static void Init_User_ELBDM_UniformGranule(void)
           fprintf( output_initial_prof, "#%19s  %21s  %21s  %21s  %11s\n", "Radius", "Dens", "Dens_Sigma" , "Weighting", "Cell_Number");
           for (int b=0; b<Prof[0]->NBin; b++)
              fprintf( output_initial_prof, "%20.14e  %21.14e  %21.14e  %21.14e  %11ld\n",
-                       Prof[0]->Radius[b], Prof[0]->Data[b], Prof[0]->Data_Sigma[b], Prof[0]->Weight[b], Prof[0]->NCell[b] );
+                      Prof[0]->Radius[b], Prof[0]->Data[b], Prof[0]->Data_Sigma[b], Prof[0]->Weight[b], Prof[0]->NCell[b] );
           fclose(output_initial_prof);
        }
    }
@@ -375,8 +372,6 @@ static void Do_CF( void )
                          Correlation[0]->Radius[b], Correlation[0]->Data[b], Correlation[0]->Weight[b], Correlation[0]->NCell[b] );
             fclose(output_correlation);
          }
-         // accumulate the step counter
-         step_counter ++;
       }
    }  // end of if ComputeCorrelation
 }
