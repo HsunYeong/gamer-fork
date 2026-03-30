@@ -316,6 +316,9 @@ void AddNewField_WLMDwarfGalaxy()
    if ( Idx_Metal == Idx_Undefined )
       Idx_Metal = AddField( "Metal", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_YES, NORMALIZE_NO, INTERP_FRAC_YES );
 
+   if ( Idx_Dust == Idx_Undefined )
+      Idx_Dust = AddField( "Dust", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_YES, NORMALIZE_NO, INTERP_FRAC_YES );
+
 } // FUNCTION : AddNewField_WLMDwarfGalaxy
 
 
