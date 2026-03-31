@@ -168,10 +168,10 @@ void Grackle_Close( const int lv, const int SaveSg, const real_che h_Che_Array[]
             }
 
             if ( GRACKLE_METAL )
-            *( fluid[Idx_Metal][0][0] + idx_p ) = Ptr_Metal [idx_pg];
+            *( fluid[Idx_Metal][0][0] + idx_p ) = Ptr_Metal[idx_pg] * DensRatio_FluChe;
 
             if ( GRACKLE_DUST )
-            *( fluid[Idx_Dust ][0][0] + idx_p ) = Ptr_Dust  [idx_pg];
+            *( fluid[Idx_Dust ][0][0] + idx_p ) = Ptr_Dust [idx_pg] * DensRatio_FluChe;
 
             idx_p  ++;
             idx_pg ++;

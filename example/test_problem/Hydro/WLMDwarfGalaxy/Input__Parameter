@@ -138,6 +138,7 @@ GRACKLE_VERBOSE               1           # map to "grackle_verbose" [1]
 GRACKLE_COOLING               1           # ...    "with_radiative_cooling" [1]
 GRACKLE_PRIMORDIAL            0           # ...    "primordial_chemistry" (0=Cloudy, 1/2/3=6-/9-/12-species) [0]
 GRACKLE_METAL                 1           # ...    "metal_cooling" (must increase NCOMP_PASSIVE_USER by 1) [0]
+GRACKLE_DUST                  1           # ...    "use_dust_density_field" (must increase NCOMP_PASSIVE_USER by 1) [0]
 GRACKLE_UV                    0           # ...    "UVbackground" [0]
 GRACKLE_CMB_FLOOR             1           # ...    "cmb_temperature_floor" [1]
 GRACKLE_PE_HEATING            1           # ...    "photoelectric_heating" [0]
@@ -166,7 +167,7 @@ SF_CREATE_STAR_MAX_STAR_MFRAC 0.9         # maximum gas mass fraction allowed to
 
 
 # feedback (FEEDBACK only)
-FB_LEVEL                     -1           # AMR level to apply feedback (must be MAX_LEVEL for now; <0=auto -> MAX_LEVEL) [-1]
+FB_MIN_LEVEL                 -1           # AMR level to apply feedback (must be MAX_LEVEL for now; <0=auto -> MAX_LEVEL) [-1]
 FB_RSEED                      456         # random seed [456]
 FB_SNE                        0           # supernova explosion feedback [0]
 FB_RESOLVED_SNEII             1           # Type II supernovae feedback for high enough grid and particle resolution (must add one extra PAR_NATT_FLT_USER)
