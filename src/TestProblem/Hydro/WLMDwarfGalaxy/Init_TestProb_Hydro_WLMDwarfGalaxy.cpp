@@ -313,10 +313,10 @@ void AddNewField_WLMDwarfGalaxy()
 // add the metallicity field only if it has not been done
 // --> since Grackle may already add this field automatically when GRACKLE_METAL is enabled
 // --> also note that "Idx_Metal" has been predefined in Field.h
-   if ( Idx_Metal == Idx_Undefined )
+   if ( GRACKLE_METAL && Idx_Metal == Idx_Undefined )
       Idx_Metal = AddField( "Metal", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_YES, NORMALIZE_NO, INTERP_FRAC_YES );
 
-   if ( Idx_Dust == Idx_Undefined )
+   if ( GRACKLE_DUST && Idx_Dust == Idx_Undefined )
       Idx_Dust = AddField( "Dust", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_YES, NORMALIZE_NO, INTERP_FRAC_YES );
 
 } // FUNCTION : AddNewField_WLMDwarfGalaxy
