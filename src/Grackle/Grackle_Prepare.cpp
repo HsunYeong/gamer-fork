@@ -49,6 +49,7 @@ real_che (*Grackle_tempFloor_User_Ptr)( const double x, const double y, const do
 //                   --> Che_NField and the corresponding array indices in h_Che_Array[] (e.g., CheIdx_Dens)
 //                       are declared and set by Init_MemAllocate_Grackle()
 //                2. This function always prepares the latest FluSg data
+//                3. If COMOVING is on, update grackle units
 //
 // Parameter   :  lv          : Target refinement level
 //                h_Che_Array : Host array to store the prepared data
@@ -132,14 +133,29 @@ void Grackle_Prepare( const int lv, real_che h_Che_Array[], const int NPG, const
    }
 #  endif // #ifdef GAMER_DEBUG
 
+   if ( NPG > CHE_GPU_NPGROUP )
+      Aux_Error( ERROR_INFO, "NPG (%d) exceeds the memory allocation of CHE_GPU_NPGROUP (%d) for h_Che_Array !!\n",
+                 NPG, CHE_GPU_NPGROUP );
 
-   const int  Size1pg          = CUBE(PS2);
-   const int  Size1v           = NPG*Size1pg;
-   const real MassRatio_pe    = Const_mp / Const_me;
+
+#  ifdef COMOVING
+// update grackle units
+   Che_Units.comoving_coordinates = 1;
+   Che_Units.density_units        = UNIT_D / CUBE(Time[lv]);
+   Che_Units.length_units         = UNIT_L * Time[lv];
+   Che_Units.time_units           = UNIT_T;
+   Che_Units.velocity_units       = UNIT_V;
+   Che_Units.a_units              = 1.0;
+   Che_Units.a_value              = Time[lv];
+#  endif
+
+   const int  Size1pg             = CUBE(PS2);
+   const int  Size1v              = NPG*Size1pg;
+   const real MassRatio_pe        = Const_mp / Const_me;
 #  ifdef DUAL_ENERGY
-   const bool CheckMinPres_No  = false;
+   const bool CheckMinPres_No     = false;
 #  else
-   const bool CheckMinEint_Yes = true;
+   const bool CheckMinEint_Yes    = true;
 #  endif
 
    const double dh = amr->dh[lv];
@@ -278,7 +294,7 @@ void Grackle_Prepare( const int lv, real_che h_Che_Array[], const int NPG, const
 //             when the density is too low, we will pre-floor the total density as Che_MinDens
 //             while keeping the fraction of each species fixed
 //             such that the mass fraction of the species being floored in Grackle is
-//             less than "Grackle_tiny/Che_MinDens"
+//             equal to "Grackle_tiny/Che_MinDens", which is the maximum allowed value
                Ratio_FloorDens = Che_MinDens/Dens;
 
                Aux_Message( stderr, "\nWARNING : density = %16.8e is too low and will be scaled to %16.8e as the input to the Grackle solver !!\n",
@@ -286,13 +302,22 @@ void Grackle_Prepare( const int lv, real_che h_Che_Array[], const int NPG, const
             }
             else
             {
+//             when the density is higher than or equal to Che_MinDens,
+//             the mass fraction of the species being floored in Grackle is "Grackle_tiny/Dens",
+//             which is always less than or equal to "Grackle_tiny/Che_MinDens"
                Ratio_FloorDens = 1.0;
             }
 
 //          mandatory fields
             Ptr_Dens [idx_pg] = Dens * Ratio_FloorDens;
-            Ptr_sEint[idx_pg] = Eint / Dens;
             Ptr_Ent  [idx_pg] = (Etot - Eint) * Ratio_FloorDens; // non-thermal energy density
+
+#           ifdef COMOVING
+//          convert from the comoving specific internal energy to the proper frame
+            Ptr_sEint[idx_pg] = Eint / Dens / SQR(Time[lv]);
+#           else
+            Ptr_sEint[idx_pg] = Eint / Dens;
+#           endif
 
 //          6-species network
             if ( GRACKLE_PRIMORDIAL >= GRACKLE_PRI_CHE_NSPE6 ) {
@@ -404,11 +429,11 @@ void Grackle_Prepare( const int lv, real_che h_Che_Array[], const int NPG, const
 //                   "Grackle_vHeatingRate_User_Ptr", which must be set by a test problem initializer
 //                2. This function will be invoked by multiple OpenMP threads when OPENMP is enabled
 //                   --> Please ensure that everything here is thread-safe
-//                3. Returned rate should be in the unit of erg s^-1 cm^-3
+//                3. Returned rate should be in unit of erg s^-1 cm^-3
 //
-// Parameter   :  x/y/z    : Target physical coordinates
-//                Time     : Target physical time
-//                n_H      : Hydrogen number density, should be in the unit of cm^-3
+// Parameter   :  x/y/z : Target physical coordinates
+//                Time  : Target physical time
+//                n_H   : Hydrogen number density in units of cm^-3
 //
 // Return      :  volumetric_heating_rate
 //-------------------------------------------------------------------------------------------------------
@@ -436,10 +461,10 @@ static real_che Grackle_vHeatingRate_User_Template( const double x, const double
 //                   "Grackle_sHeatingRate_User_Ptr", which must be set by a test problem initializer
 //                2. This function will be invoked by multiple OpenMP threads when OPENMP is enabled
 //                   --> Please ensure that everything here is thread-safe
-//                3. Returned rate should be in the units of erg s^-1 g^-1
+//                3. Returned rate should be in units of erg s^-1 g^-1
 //
-// Parameter   :  x/y/z    : Target physical coordinates
-//                Time     : Target physical time
+// Parameter   :  x/y/z : Target physical coordinates
+//                Time  : Target physical time
 //
 // Return      :  specific_heating_rate
 //-------------------------------------------------------------------------------------------------------
@@ -464,15 +489,15 @@ static real_che Grackle_sHeatingRate_User_Template( const double x, const double
 // Description :  Default function to set Grackle's temperature floor
 //
 // Note        :  1. Invoked by Grackle_Prepare() using the function pointer
-//                   "Grackle_tempFloor_User_Ptr", which must be set by a test problem initializer
+//                   "Grackle_tempFloor_User_Ptr", which can be reset by a test problem initializer
 //                2. This function will be invoked by multiple OpenMP threads when OPENMP is enabled
 //                   --> Please ensure that everything here is thread-safe
 //                3. Returned temperature should be in units of K
 //
 // Parameter   :  x/y/z     : Target physical coordinates
 //                Time      : Target physical time
-//                Dens_Gas  : Gas density, in code units
-//                sEint_Gas : Gas specific internal energy, in code units
+//                Dens_Gas  : Gas density (in code units)
+//                sEint_Gas : Gas specific internal energy (in code units)
 //
 // Return      :  temperature_floor
 //-------------------------------------------------------------------------------------------------------
