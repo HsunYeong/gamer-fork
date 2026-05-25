@@ -12,10 +12,15 @@ extern RandomNumber_t *FB_RNG;
 // Function    :  SF_CreateStar_GeneralGalaxy
 // Description :  Create new star particles in the general methods where ther star formation is independent
 //
-// Note        :  1. One must turn on STORE_POT_GHOST when adopting STORE_PAR_ACC
+// Note        :  1. Ref: (1) Nathan Goldbaum, et al., 2015, ApJ, 814, 131 (arXiv: 1510.08458), sec. 2.4
+//                        (2) Ji-hoon Kim, et al., 2016, ApJ, 833, 202 (arXiv: 1610.03066), sec. 3.2
+//                2. One must turn on STORE_POT_GHOST when adopting STORE_PAR_ACC
 //                   --> It is because, currently, this function always uses the pot_ext[] array of each patch
 //                       to calculate the gravitationally acceleration of the new star particles
-//                2. One must invoke Buf_GetBufferData( ..., _TOTAL, ... ) after calling this function
+//                3. One must invoke Buf_GetBufferData( ..., _TOTAL, ... ) after calling this function
+//                4. Currently this function does not check whether the cell mass exceeds the Jeans mass
+//                   --> Ref: "jeanmass" in star_maker_ssn.F of Enzo
+//                5. The new particle UID should be initialized as PUID_TBA. The actual PUID will be assigned later in SF_CreateStar()
 //
 // Parameter   :  lv             : Target refinement level
 //                TimeNew        : Current physical time (after advancing solution by dt)
@@ -280,6 +285,7 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
          NewParAttFlt[NNewPar][PAR_VELZ] = fluid[MOMZ][k][j][i]*_GasDens;
          NewParAttFlt[NNewPar][PAR_TIME] = TimeNew;
          NewParAttInt[NNewPar][PAR_TYPE] = PTYPE_STAR;
+         NewParAttInt[NNewPar][PAR_PUID] = PUID_TBA;
 
 //       particle acceleration
 #        ifdef STORE_PAR_ACC
@@ -409,7 +415,6 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
    delete [] NewParID;
 
    } // end of OpenMP parallel region
-
 
 // get the total number of active particles in all MPI ranks
    MPI_Allreduce( &amr->Par->NPar_Active, &amr->Par->NPar_Active_AllRank, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD );
