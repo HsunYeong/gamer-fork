@@ -5,3 +5,6 @@ WLMDwarfGalaxy_PEHeatingCoreLength    0.4          # core radius of the photoele
 WLMDwarfGalaxy_PEHeatingCoreHeight    0.0          # core height of the photoelectric heating rate distribution [0.0]
 WLMDwarfGalaxy_PEHeatingRate0         2.6e-27      # central photoelectric heating rate (in erg/cm^3/s/n_H) [2.6e-27]
 WLMDwarfGalaxy_PEHeatingRateBg        2.1e-29      # background photoelectric heating rate (in erg/cm^3/s/n_H) [2.1e-29]
+WLMDwarfGalaxy_B0X                    1.0e-9       # magnetic field along x (in gauss) [1.0e-9]
+WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in gauss) [0.0]
+WLMDwarfGalaxy_B0Z                    0.0          # magnetic field along z (in gauss) [0.0]

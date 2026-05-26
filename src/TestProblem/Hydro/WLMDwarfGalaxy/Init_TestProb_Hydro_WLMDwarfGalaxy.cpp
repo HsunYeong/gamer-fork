@@ -13,6 +13,11 @@ static double WLMDwarfGalaxy_PEHeatingRateBg;       // background photoelectric 
 static double WLMDwarfGalaxy_CenterOfMass_X = -1.0; // x coordinate of the center of mass of the system
 static double WLMDwarfGalaxy_CenterOfMass_Y = -1.0; // y coordinate of the center of mass of the system
 static double WLMDwarfGalaxy_CenterOfMass_Z = -1.0; // z coordinate of the center of mass of the system
+#ifdef MHD
+static double WLMDwarfGalaxy_B0X;                   // magnetic field along x (in gauss)
+static double WLMDwarfGalaxy_B0Y;                   // magnetic field along y (in gauss)
+static double WLMDwarfGalaxy_B0Z;                   // magnetic field along z (in gauss)
+#endif
 // =======================================================================================
 
 
@@ -178,7 +183,11 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_PEHeatingCoreHeight",    &WLMDwarfGalaxy_PEHeatingCoreHeight,     0.0,          0.0,              NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_PEHeatingRate0",         &WLMDwarfGalaxy_PEHeatingRate0,          2.6e-27,      0.0,              NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_PEHeatingRateBg",        &WLMDwarfGalaxy_PEHeatingRateBg,         2.1e-29,      0.0,              NoMax_double      );
-
+#  ifdef MHD
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0X",                    &WLMDwarfGalaxy_B0X,                     1.0e-9,       NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Y",                    &WLMDwarfGalaxy_B0Y,                     0.0,          NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Z",                    &WLMDwarfGalaxy_B0Z,                     0.0,          NoMin_double,     NoMax_double      );
+#  endif
 } // FUNCITON : LoadInputTestProb
 
 
@@ -255,6 +264,11 @@ void SetParameter()
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingCoreHeight  = %13.7e kpc\n",            WLMDwarfGalaxy_PEHeatingCoreHeight  * UNIT_L/Const_kpc );
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRate0       = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRate0                          );
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRateBg      = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRateBg                         );
+#     ifdef MHD
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0X                  = %14.7e\n",                WLMDwarfGalaxy_B0X                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Y                  = %14.7e\n",                WLMDwarfGalaxy_B0Y                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Z                  = %14.7e\n",                WLMDwarfGalaxy_B0Z                                     );
+#     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
 
@@ -291,6 +305,33 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 
 } // FUNCTION : SetGridIC
 
+#ifdef MHD
+//-------------------------------------------------------------------------------------------------------
+// Function    :  SetBFieldIC
+// Description :  Set the problem-specific initial condition of magnetic field
+//
+// Note        :  1. This function will be invoked by multiple OpenMP threads when OPENMP is enabled
+//                   (unless OPT__INIT_GRID_WITH_OMP is disabled)
+//                   --> Please ensure that everything here is thread-safe
+//
+// Parameter   :  magnetic : Array to store the output magnetic field
+//                x/y/z    : Target physical coordinates
+//                Time     : Target physical time
+//                lv       : Target refinement level
+//                AuxArray : Auxiliary array
+//
+// Return      :  magnetic
+//-------------------------------------------------------------------------------------------------------
+void SetBFieldIC( real magnetic[], const double x, const double y, const double z, const double Time,
+                  const int lv, double AuxArray[] )
+{
+
+   magnetic[MAGX] = WLMDwarfGalaxy_B0X/UNIT_B;
+   magnetic[MAGY] = WLMDwarfGalaxy_B0Y/UNIT_B;
+   magnetic[MAGZ] = WLMDwarfGalaxy_B0Z/UNIT_B;
+
+} // FUNCTION : SetBFieldIC
+#endif // #ifdef MHD
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -582,6 +623,9 @@ void Init_TestProb_Hydro_WLMDwarfGalaxy()
    Aux_Record_User_Ptr           = Aux_Record_WLMDwarfGalaxy;
 #  ifdef SUPPORT_GRACKLE
    Grackle_vHeatingRate_User_Ptr = Grackle_vHeatingRate_WLMDwarfGalaxy;
+#  endif
+#  ifdef MHD
+   Init_Function_BField_User_Ptr = SetBFieldIC;
 #  endif
 #  ifdef SUPPORT_HDF5
    Output_HDF5_InputTest_Ptr     = LoadInputTestProb;
