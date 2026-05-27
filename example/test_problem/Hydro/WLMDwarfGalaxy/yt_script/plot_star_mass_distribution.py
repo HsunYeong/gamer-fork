@@ -47,22 +47,22 @@ y_lim_max = 3.0e1
 
 for ds in ts.piter():
 
-    WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
-#   check particle
-    if len( ds.all_data()['new_star', 'particle_ones'] ) == 0:
-       print( 'WARNING: There is no particle in %s !!'%ds )
-       continue
+#  check particle
+   if len( ds.all_data()['new_star', 'particle_ones'] ) == 0:
+      print( 'WARNING: There is no particle in %s !!'%ds )
+      continue
 
-#   plot
-    p = yt.PhasePlot( ds, ('new_star', 'ParCreTime'), ('new_star', 'particle_mass'), ('new_star', 'particle_ones'),
-                      weight_field=None, x_bins=256, y_bins=256 )
+#  plot
+   p = yt.PhasePlot( ds, ('new_star', 'ParCreTime'), ('new_star', 'particle_mass'), ('new_star', 'particle_ones'),
+                     weight_field=None, x_bins=256, y_bins=256 )
 
-    p.set_unit( ('new_star', 'ParCreTime'),    'Myr'  )
-    p.set_unit( ('new_star', 'particle_mass'), 'Msun' )
-    p.set_log(  ('new_star', 'ParCreTime'),     False )
-    p.set_log(  ('new_star', 'particle_mass'),  False )
-    p.set_xlim( x_lim_min, x_lim_max )
-    p.set_ylim( y_lim_min, y_lim_max )
-    p.set_cmap( ('new_star', 'particle_ones'), colormap )
-    p.save( 'fig_%s_star_mass_distribution.png'%(ds), mpl_kwargs={'dpi':dpi} )
+   p.set_unit( ('new_star', 'ParCreTime'),    'Myr'  )
+   p.set_unit( ('new_star', 'particle_mass'), 'Msun' )
+   p.set_log(  ('new_star', 'ParCreTime'),     False )
+   p.set_log(  ('new_star', 'particle_mass'),  False )
+   p.set_xlim( x_lim_min, x_lim_max )
+   p.set_ylim( y_lim_min, y_lim_max )
+   p.set_cmap( ('new_star', 'particle_ones'), colormap )
+   p.save( 'fig_%s_star_mass_distribution.png'%(ds), mpl_kwargs={'dpi':dpi} )

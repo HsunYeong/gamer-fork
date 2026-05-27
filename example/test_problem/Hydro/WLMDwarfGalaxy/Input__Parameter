@@ -167,7 +167,7 @@ SF_CREATE_STAR_MAX_STAR_MFRAC 0.9         # maximum gas mass fraction allowed to
 
 
 # feedback (FEEDBACK only)
-FB_MIN_LEVEL                 -1           # AMR level to apply feedback (must be MAX_LEVEL for now; <0=auto -> MAX_LEVEL) [-1]
+FB_MIN_LEVEL                 -1           # minimum AMR level to apply feedback (must be MAX_LEVEL for now; <0=auto -> MAX_LEVEL) [-1]
 FB_RSEED                      456         # random seed [456]
 FB_SNE                        0           # supernova explosion feedback [0]
 FB_RESOLVED_SNEII             1           # Type II supernovae feedback for high enough grid and particle resolution (must add one extra PAR_NATT_FLT_USER)
@@ -255,7 +255,7 @@ MONO_MAX_ITER                 10          # maximum number of iterations to redu
 OPT__OUTPUT_TOTAL             1           # output the simulation snapshot: (0=off, 1=HDF5, 2=C-binary) [1]
 OPT__OUTPUT_PART              0           # output a single line or slice: (0=off, 1=xy, 2=yz, 3=xz, 4=x, 5=y, 6=z, 7=diag, 8=entire box) [0]
 OPT__OUTPUT_USER              0           # output the user-specified data -> edit "Output_User.cpp" [0]
-OPT__OUTPUT_PAR_MODE          1           # output the particle data: (0=off, 1=text-file, 2=C-binary) [0] ##PARTICLE ONLY##
+OPT__OUTPUT_PAR_MODE          0           # output the particle data: (0=off, 1=text-file, 2=C-binary) [0] ##PARTICLE ONLY##
 OPT__OUTPUT_POT               1           # output gravitational potential [1] ##OPT__OUTPUT_TOTAL ONLY##
 OPT__OUTPUT_PAR_DENS          1           # output the particle or total mass density on grids:
                                           # (0=off, 1=particle mass density, 2=total mass density) [1] ##OPT__OUTPUT_TOTAL ONLY##

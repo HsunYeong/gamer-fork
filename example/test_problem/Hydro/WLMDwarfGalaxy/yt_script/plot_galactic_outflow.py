@@ -12,6 +12,7 @@ import WLMDwarfGalaxy_outflow_rates
 import WLMDwarfGalaxy_TempDens_Phase_and_PDF
 import WLMDwarfGalaxy_outflow_TV_relation
 import WLMDwarfGalaxy_outflow_thinlayer
+import WLMDwarfGalaxy_outflow_thinlayer_dust2gas
 from yt.utilities.parallel_tools.parallel_analysis_interface import communication_system
 
 # load the command-line parameters
@@ -51,9 +52,18 @@ y_lim_max   = 2.0e7
 v_lim_min   = 8.0e-1
 v_lim_max   = 3.0e+3
 
-outflow_z_kpc  =  10
-outflow_dz_kpc =   1.0
-Bound_z_kpc    =   2.5
+outflowSlab    = True
+outflow_z_kpc  =  1.0
+outflow_dz_kpc =  0.1*outflow_z_kpc
+Bound_z_kpc    =  2.5
+if outflowSlab:
+   if outflow_z_kpc == 1.0:
+      x_lim_min   = 1.0e-33
+      x_lim_max   = 2.0e-24
+   elif outflow_z_kpc == 10.0:
+      x_lim_min   = 1.0e-36
+      x_lim_max   = 2.0e-27
+
 
 list_phases = ["hot", "warm-hot", "warm-cool", "cool", "all"]
 
@@ -64,96 +74,121 @@ ts = WLMDwarfGalaxy_load_datasets.load_WLMDwarfGalaxy_datasets(code, prefix, idx
 
 WLMDwarfGalaxy_derived_fields.set_particle_types(code)
 
+hasDust = True
+
 # loop over all datasets
 for ds in ts.piter():
 
-    idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
-    WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
+   idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
 
-    WLMDwarfGalaxy_outflow_thinlayer.plot_outflow_thinlayer_projection(ds)
+   WLMDwarfGalaxy_outflow_thinlayer.plot_outflow_thinlayer_projection(ds)
 
-    f_orp, ax_orp = WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_initial()
-    f_ozp, ax_ozp = WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_initial()
-    for phase in list_phases:
+   if hasDust:
+      WLMDwarfGalaxy_outflow_thinlayer_dust2gas.plot_outflow_thinlayer_projection_dust2gas(ds)
 
-        # outflow rates at a speific z
-        WLMDwarfGalaxy_outflow_rates.calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, phase )
+   f_orp, ax_orp = WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_initial()
+   f_ozp, ax_ozp = WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_initial()
+   for phase in list_phases:
 
-        # define outflow
-        outflow_region, outflow_p_type = WLMDwarfGalaxy_galactic_inoutflow.get_inoutflow_region( ds, Bound_z_kpc, phase )
-        if not outflow_region.quantities.total_quantity( (outflow_p_type, 'volume') ) > 0.0:
-           continue
+      # outflow rates at a speific z
+      WLMDwarfGalaxy_outflow_rates.calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, phase, hasDust )
 
-        # images of the whole outflow
-        WLMDwarfGalaxy_galactic_inoutflow.plot_inoutflow_region(ds, outflow_region, outflow_p_type, phase)
+      # define outflow
+      if outflowSlab:
+         outflow_region, outflow_p_type = WLMDwarfGalaxy_outflow_rates.get_inoutflow_slab( ds, outflow_z_kpc, outflow_dz_kpc, phase )
+      else:
+         outflow_region, outflow_p_type = WLMDwarfGalaxy_galactic_inoutflow.get_inoutflow_region( ds, Bound_z_kpc, phase )
+      if not outflow_region.quantities.total_quantity( (outflow_p_type, 'volume') ) > 0.0:
+         continue
 
-        # outflow T-v diagrams
-        WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+      # images of the whole outflow
+      WLMDwarfGalaxy_galactic_inoutflow.plot_inoutflow_region(ds, outflow_region, outflow_p_type, phase)
 
-        # outflow phase diagrams
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.create_PhaseDiagram(          ds, outflow_region, '_outflow_%s'%phase, outflow_p_type, 'mass',   nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.create_PhaseDiagram(          ds, outflow_region, '_outflow_%s'%phase, outflow_p_type, 'volume', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max )
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflow_%s'%phase,                 'mass',   nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflow_%s'%phase,                 'volume', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+      if phase == 'all':
+         # outflow T-v diagrams
+         WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+         #WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+         WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+         #WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+         WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+         #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+         WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+         #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
 
-        # images of cold-dense gas in outflow
-        WLMDwarfGalaxy_galactic_inoutflow.plot_cold_dense_gas(ds, outflow_region, outflow_p_type, phase)
+         '''
+         if hasDust:
+            WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'r', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+            WLMDwarfGalaxy_outflow_TV_relation.create_PhaseDiagram(          ds, outflow_region, '_outflowing_%s'%phase, outflow_p_type, 'z', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max )
+            WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'r', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+            WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflowing_%s'%phase,                 'z', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+         '''
 
-        # outflow profiles
-        WLMDwarfGalaxy_outflow_radial_profiles.create_profiles(ds, outflow_region, outflow_p_type, phase)
-        WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles(ax_orp, code, range(idx, idx+1, didx), phase)
-        WLMDwarfGalaxy_outflow_z_profiles.create_profiles(ds, outflow_region, outflow_p_type, phase)
-        WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles(ax_ozp, code, range(idx, idx+1, didx), phase)
+         # outflow phase diagrams
+         WLMDwarfGalaxy_TempDens_Phase_and_PDF.create_PhaseDiagram(          ds, outflow_region, '_outflow_%s'%phase, outflow_p_type, 'mass', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max )
+         WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( range(idx, idx+1, didx), code, '_outflow_%s'%phase,                 'mass', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
 
-        # clean data
-        outflow_region.clear_data()
-        gc.collect()
+         if hasDust:
+            WLMDwarfGalaxy_TempDens_Phase_and_PDF.create_PhaseDiagram(              ds, outflow_region, '_outflow_%s'%phase, outflow_p_type, 'dust_mass', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max )
+            WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram    ( range(idx, idx+1, didx), code, '_outflow_%s'%phase,                 'dust_mass', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
+            WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram_DGR( range(idx, idx+1, didx),       '_outflow_%s'%phase,                              nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, '$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ), ds )
 
-    WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_final(f_orp, ax_orp, code, range(idx, idx+1, didx), 't = %6.1f %s'%(ds.current_time.in_units('Myr').d, 'Myr'), '%s'%ds)
-    WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_final(f_ozp, ax_ozp, code, range(idx, idx+1, didx), 't = %6.1f %s'%(ds.current_time.in_units('Myr').d, 'Myr'), '%s'%ds)
+      # images of cold-dense gas in outflow
+      WLMDwarfGalaxy_galactic_inoutflow.plot_cold_dense_gas(ds, outflow_region, outflow_p_type, phase)
 
+      # outflow profiles
+      WLMDwarfGalaxy_outflow_radial_profiles.create_profiles(ds, outflow_region, outflow_p_type, phase)
+      WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles(ax_orp, code, range(idx, idx+1, didx), phase)
+      WLMDwarfGalaxy_outflow_z_profiles.create_profiles(ds, outflow_region, outflow_p_type, phase)
+      WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles(ax_ozp, code, range(idx, idx+1, didx), phase)
+
+      # clean data
+      outflow_region.clear_data()
+      gc.collect()
+
+   WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_final(f_orp, ax_orp, code, range(idx, idx+1, didx), 't = %6.1f %s'%(ds.current_time.in_units('Myr').d, 'Myr'), '%s'%ds)
+   WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_final(f_ozp, ax_ozp, code, range(idx, idx+1, didx), 't = %6.1f %s'%(ds.current_time.in_units('Myr').d, 'Myr'), '%s'%ds)
 
 
 comm = communication_system.communicators[-1]
 comm.barrier()
 
 if yt.is_root():
-    idx_min     = 30 if code == 'GAMER' else 150
-    idx_sta     = max( idx_start, idx_min )
-    didx_avg    = 1 if code == 'GAMER' else 5
-    didx_avg    = max( didx_avg, didx )
-    indices_avg = range(idx_sta, idx_end+1, didx_avg)
+   idx_min     = 30 if code == 'GAMER' else 150
+   idx_sta     = max( idx_start, idx_min ) if idx_end > idx_min else idx_start
+   didx_avg    = 1 if code == 'GAMER' else 5
+   didx_avg    = max( didx_avg, didx )
+   indices_avg = range(idx_sta, idx_end+1, didx_avg)
 
-    f_orp, ax_orp = WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_initial()
-    f_ozp, ax_ozp = WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_initial()
-    for phase in list_phases:
+   f_orp, ax_orp = WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_initial()
+   f_ozp, ax_ozp = WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_initial()
+   for phase in list_phases:
 
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
-        WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( indices_avg, code, '_outflow_%s'%phase,         'mass',   nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
-        WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( indices_avg, code, '_outflow_%s'%phase,         'volume', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+      if phase == 'all':
+         WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'r', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+         #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'r', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+         WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'z', 'mass',   nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+         #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(    indices_avg, code, '_outflowing_%s'%phase, 'z', 'energy', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+         WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram( indices_avg, code, '_outflow_%s'%phase,         'mass',   nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
 
-        for idx in indices_avg:
-            prefix = 'Data_%06d'%idx if code == 'GAMER' else 'snap_%03d'%idx
-            if idx == idx_start:
-                os.system("head -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%2d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%2d_kpc'%(phase, int(outflow_z_kpc))))
-            os.system("tail -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%2d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%2d_kpc'%(phase, int(outflow_z_kpc))))
+         if hasDust:
+            #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(        indices_avg, code, '_outflowing_%s'%phase, 'r', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+            #WLMDwarfGalaxy_outflow_TV_relation.plot_PhaseDiagram(        indices_avg, code, '_outflowing_%s'%phase, 'z', 'dust_mass', nbin, v_lim_min, v_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+            WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram    ( indices_avg, code, '_outflow_%s'%phase,         'dust_mass', nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
+            WLMDwarfGalaxy_TempDens_Phase_and_PDF.plot_PhaseDiagram_DGR( indices_avg,       '_outflow_%s'%phase,                      nbin, x_lim_min, x_lim_max, y_lim_min, y_lim_max, 'Time-Averaged', 'Time-Averaged' )
 
-        # time-averaged outflow profiles
-        WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles(ax_orp, code, indices_avg, phase)
-        WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles(ax_ozp, code, indices_avg, phase)
+      for idx in indices_avg:
+         prefix = 'Data_%06d'%idx if code == 'GAMER' else 'snap_%03d'%idx
+         if idx == idx_start:
+            os.system("head -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
+         os.system("tail -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
 
-    # outflow rates time-evolution
-    WLMDwarfGalaxy_outflow_rates.plot_galactic_outflow_rate_evolution(outflow_z_kpc, list_phases)
+      # time-averaged outflow profiles
+      WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles(ax_orp, code, indices_avg, phase)
+      WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles(ax_ozp, code, indices_avg, phase)
 
-    WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_final(f_orp, ax_orp, code, indices_avg, 'Time-Averaged', 'Time-Averaged')
-    WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_final(          f_ozp, ax_ozp, code, indices_avg, 'Time-Averaged', 'Time-Averaged')
+   # outflow rates time-evolution
+   WLMDwarfGalaxy_outflow_rates.plot_galactic_outflow_rate_evolution(outflow_z_kpc, list_phases, hasDust)
+
+   WLMDwarfGalaxy_outflow_radial_profiles.plot_outflow_radial_profiles_final(f_orp, ax_orp, code, indices_avg, 'Time-Averaged', 'Time-Averaged')
+   WLMDwarfGalaxy_outflow_z_profiles.plot_outflow_z_profiles_final(          f_ozp, ax_ozp, code, indices_avg, 'Time-Averaged', 'Time-Averaged')

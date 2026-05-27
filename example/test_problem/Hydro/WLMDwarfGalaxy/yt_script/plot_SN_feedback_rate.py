@@ -5,6 +5,8 @@ import numpy as np
 from yt.data_objects.particle_filters import add_particle_filter
 from matplotlib import pyplot as plt
 import WLMDwarfGalaxy_derived_fields
+import h5py
+from yt.units.yt_array import YTArray
 
 
 filein  = "../Data_000075"
@@ -66,7 +68,6 @@ SNr[SNr == 0] = np.nan
 StarsPerSN  = 1.0/(ds.parameters['FB_ResolvedSNeII_NPerMass']*ds.parameters['SF_CreateStar_MinStarMass'])
 SNDelayTime = ds.quan( ds.parameters['FB_ResolvedSNeII_DelayTime'], 'code_time' ).in_units('Myr').d
 
-
 # plot
 plt.plot( time,               sfr,                  label='Stars' )
 plt.plot( time,               SNr,                  label='SNe'   )
@@ -88,3 +89,55 @@ plt.text( 10.0, 4.0e+2, text_string, fontfamily='monospace' )
 # show/save figure
 plt.savefig( fileout+".png", bbox_inches="tight", pad_inches=0.05, dpi=dpi )
 #plt.show()
+plt.close()
+
+
+# get total dust mass
+f = h5py.File('../Data_000075', 'r')
+Unit_T = f['Info']['InputPara']['Unit_T']
+Unit_M = f['Info']['InputPara']['Unit_M']
+f.close()
+
+def IdxSearch(target, arr):
+   left  = 0
+   right = len(arr) - 1
+   while left < right:
+      mid = (left + right) // 2
+      if arr[mid] < target:
+         left = mid + 1
+      elif arr[mid] > target:
+         right = mid -1
+      else:
+         return mid
+   return left
+
+table = np.loadtxt("../Record__Conservation")
+time_all    = YTArray( table[:, 0]*Unit_T, 's').in_units('Myr').d
+dust_mass   = YTArray( table[:,47]*Unit_M, 'g').in_units('Msun').d
+
+SNe_upper_idx_time_step = np.digitize( SNe_expl_time, bins=time_all, right=True )
+SNe_time_step           = np.array(  [ SNe_ones[SNe_upper_idx_time_step == j+1].sum()  for j in range(len(time_all)) ]  )
+SNe_sum                 = np.cumsum(SNe_time_step)
+idx_300 = IdxSearch(300, time_all)
+idx_750 = IdxSearch(750, time_all)
+
+
+SNe_300_750 = SNe_sum  [idx_750] - SNe_sum  [idx_300]
+d_dust_mass = dust_mass[idx_750] - dust_mass[idx_300]
+
+d_dust_per_SNe = d_dust_mass / SNe_300_750
+print("Dust mass decreased during 300-750 Myr = " + str(d_dust_mass) + " M_sun")
+print("Total SNe during 300-750 Myr = " + str(SNe_300_750))
+print("Dust mass decrease per SN = " + str(d_dust_per_SNe) + " M_sun")
+
+
+plt.plot( time_all, dust_mass,      label=r'$\rho_{\rm dust}/\rho_{\rm dust}(\mathrm{t}=0)$' )
+plt.plot( time_all, SNe_time_step,  label='Number of SNe'   )
+plt.yscale('log')
+plt.xlim( 0.0, 800 )
+plt.legend(loc='upper left')
+plt.xlabel( "$\mathrm{t\ [Myr]}$",  fontsize="large" )
+
+# show/save figure
+plt.savefig( "fig_dust_vs_SNe.png", bbox_inches="tight", pad_inches=0.05, dpi=dpi )
+

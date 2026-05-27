@@ -45,20 +45,20 @@ ad = ds.all_data()
 # get the mass and creation time of the new stars
 if code == 'GAMER':
 
-    mass          = ad[ 'new_star', 'ParMass'    ].in_units( 'Msun' )
-    creation_time = ad[ 'new_star', 'ParCreTime' ].in_units( 'Myr' )
+   mass          = ad[ 'new_star', 'ParMass'    ].in_units( 'Msun' )
+   creation_time = ad[ 'new_star', 'ParCreTime' ].in_units( 'Myr' )
 
-    # add back the feedback mass
-    exploded      = (ad[ 'new_star', 'ParSNIITime'  ] <=0 )
-    mass[exploded] += ds.quan( ds.parameters['FB_ResolvedSNeII_EjectMass'], 'code_mass' ).in_units('Msun')
+   # add back the feedback mass
+   exploded      = (ad[ 'new_star', 'ParSNIITime'  ] <=0 )
+   mass[exploded] += ds.quan( ds.parameters['FB_ResolvedSNeII_EjectMass'], 'code_mass' ).in_units('Msun')
 
 elif code == 'GIZMO':
 
-    mass          = ad[ 'PartType4', 'Masses' ].in_units( 'Msun' )
-    creation_time = ds.arr( ad[ 'PartType4', 'StellarFormationTime' ].d, 'code_time' ).in_units( 'Myr' )
+   mass          = ad[ 'PartType4', 'Masses' ].in_units( 'Msun' )
+   creation_time = ds.arr( ad[ 'PartType4', 'StellarFormationTime' ].d, 'code_time' ).in_units( 'Myr' )
 
 else:
-    raise RuntimeError('Code %s is NOT supported  !!'%code)
+   raise RuntimeError('Code %s is NOT supported  !!'%code)
 
 
 # bin the data
