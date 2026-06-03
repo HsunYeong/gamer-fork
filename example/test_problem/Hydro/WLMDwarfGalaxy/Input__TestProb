@@ -8,3 +8,4 @@ WLMDwarfGalaxy_PEHeatingRateBg        2.1e-29      # background photoelectric he
 WLMDwarfGalaxy_B0X                    1.0e-9       # magnetic field along x (in gauss) [1.0e-9]
 WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in gauss) [0.0]
 WLMDwarfGalaxy_B0Z                    0.0          # magnetic field along z (in gauss) [0.0]
+WLMDwarfGalaxy_ResetB_VecPot          1            # use vector potential to reset magnetic field

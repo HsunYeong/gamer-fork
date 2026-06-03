@@ -14,16 +14,28 @@ static double WLMDwarfGalaxy_CenterOfMass_X = -1.0; // x coordinate of the cente
 static double WLMDwarfGalaxy_CenterOfMass_Y = -1.0; // y coordinate of the center of mass of the system
 static double WLMDwarfGalaxy_CenterOfMass_Z = -1.0; // z coordinate of the center of mass of the system
 #ifdef MHD
-static double WLMDwarfGalaxy_B0X;                   // magnetic field along x (in gauss)
-static double WLMDwarfGalaxy_B0Y;                   // magnetic field along y (in gauss)
-static double WLMDwarfGalaxy_B0Z;                   // magnetic field along z (in gauss)
+       double WLMDwarfGalaxy_B0X;                   // magnetic field along x (in gauss)
+       double WLMDwarfGalaxy_B0Y;                   // magnetic field along y (in gauss)
+       double WLMDwarfGalaxy_B0Z;                   // magnetic field along z (in gauss)
+static bool   WLMDwarfGalaxy_ResetB_VecPot;         // use vector potential to reset magnetic field
 #endif
 // =======================================================================================
 
 
 // problem-specific function prototypes
 bool Flag_WLMDwarfGalaxy( const int i, const int j, const int k, const int lv, const int PID, const double *Threshold );
-
+void Flu_ResetByUser_API_WLMDwarfGalaxy( const int lv, const int FluSg, const int MagSg, const double TimeNew, const double dt );
+#ifdef MHD
+void Init_ByFile_WLMDwarfGalaxy( real fluid_out[], const real fluid_in[], const int nvar_in,
+                                 const double x, const double y, const double z, const double Time,
+                                 const int lv, double AuxArray[] );
+double MHD_ResetByUser_VecPot_WLMDwarfGalaxy( const double x, const double y, const double z, const double Time,
+                                              const double dt, const int lv, const char Component, double AuxArray[] );
+double MHD_ResetByUser_BField_WLMDwarfGalaxy( const double x, const double y, const double z, const double Time,
+                                              const double dt, const int lv, const char Component, double AuxArray[], const double B_in,
+                                              const bool UseVecPot, const real *Ax, const real *Ay, const real *Az,
+                                              const int i, const int j, const int k );
+#endif
 
 
 
@@ -107,6 +119,11 @@ void Validate()
       Aux_Error( ERROR_INFO, "GRACKLE_USE_V_HEATING_RATE must be enabled for this test !!\n" );
 #  endif // #ifdef SUPPORT_GRACKLE
 
+#  ifdef MHD
+   if ( OPT__INIT == 2 && !OPT__RESTART_RESET && OPT__RESET_FLUID_INIT == 1 )
+      Aux_Error( ERROR_INFO, "please turn on OPT__RESTART_RESET before setting OPT__RESET_FLUID_INIT=1 when restart !!\n" );
+#  endif
+
    if ( !OPT__RECORD_USER )
       Aux_Error( ERROR_INFO, "OPT__RECORD_USER must be enabled for this test !!\n" );
 
@@ -187,6 +204,7 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0X",                    &WLMDwarfGalaxy_B0X,                     1.0e-9,       NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Y",                    &WLMDwarfGalaxy_B0Y,                     0.0,          NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Z",                    &WLMDwarfGalaxy_B0Z,                     0.0,          NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_ResetB_VecPot",          &WLMDwarfGalaxy_ResetB_VecPot,           true,         Useless_bool,     Useless_bool      );
 #  endif
 } // FUNCITON : LoadInputTestProb
 
@@ -240,7 +258,7 @@ void SetParameter()
 // (3) reset other general-purpose parameters
 //     --> a helper macro PRINT_RESET_PARA is defined in Macro.h
    const long   End_Step_Default = __INT_MAX__;
-   const double End_T_Default    =  1000.0*Const_Myr/UNIT_T;
+   const double End_T_Default    =  750.0*Const_Myr/UNIT_T;
 
    if ( END_STEP < 0 ) {
       END_STEP = End_Step_Default;
@@ -265,9 +283,10 @@ void SetParameter()
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRate0       = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRate0                          );
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRateBg      = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRateBg                         );
 #     ifdef MHD
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0X                  = %14.7e\n",                WLMDwarfGalaxy_B0X                                     );
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Y                  = %14.7e\n",                WLMDwarfGalaxy_B0Y                                     );
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Z                  = %14.7e\n",                WLMDwarfGalaxy_B0Z                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0X                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0X                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Y                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0Y                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Z                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0Z                                     );
+      Aux_Message( stdout, "  use vector potential                = %s\n",                    (WLMDwarfGalaxy_ResetB_VecPot)?"YES":"NO"              );
 #     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
@@ -326,9 +345,7 @@ void SetBFieldIC( real magnetic[], const double x, const double y, const double 
                   const int lv, double AuxArray[] )
 {
 
-   magnetic[MAGX] = WLMDwarfGalaxy_B0X/UNIT_B;
-   magnetic[MAGY] = WLMDwarfGalaxy_B0Y/UNIT_B;
-   magnetic[MAGZ] = WLMDwarfGalaxy_B0Z/UNIT_B;
+   Aux_Error( ERROR_INFO, "OPT__INIT = 1 is not supported for this test problem !!\n" );
 
 } // FUNCTION : SetBFieldIC
 #endif // #ifdef MHD
@@ -621,11 +638,15 @@ void Init_TestProb_Hydro_WLMDwarfGalaxy()
    Par_Init_Attribute_User_Ptr   = AddNewParticleAttribute_WLMDwarfGalaxy;
    Flag_User_Ptr                 = Flag_WLMDwarfGalaxy;
    Aux_Record_User_Ptr           = Aux_Record_WLMDwarfGalaxy;
+   Flu_ResetByUser_API_Ptr       = Flu_ResetByUser_API_WLMDwarfGalaxy;
 #  ifdef SUPPORT_GRACKLE
    Grackle_vHeatingRate_User_Ptr = Grackle_vHeatingRate_WLMDwarfGalaxy;
 #  endif
 #  ifdef MHD
+   Init_ByFile_User_Ptr          = Init_ByFile_WLMDwarfGalaxy;
    Init_Function_BField_User_Ptr = SetBFieldIC;
+   MHD_ResetByUser_BField_Ptr    = MHD_ResetByUser_BField_WLMDwarfGalaxy;
+   MHD_ResetByUser_VecPot_Ptr    = (WLMDwarfGalaxy_ResetB_VecPot) ? MHD_ResetByUser_VecPot_WLMDwarfGalaxy : NULL;
 #  endif
 #  ifdef SUPPORT_HDF5
    Output_HDF5_InputTest_Ptr     = LoadInputTestProb;

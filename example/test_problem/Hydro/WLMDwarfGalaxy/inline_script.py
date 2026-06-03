@@ -1,10 +1,12 @@
 import yt_libyt
 import yt
 import numpy as np
+from yt.data_objects.particle_filters import filter_registry
 
 yt.enable_parallelism()
 
 def yt_inline():
+
     # Get data
     ds = yt_libyt.libytDataset()
 
@@ -32,28 +34,32 @@ def yt_inline():
         filter = data[ 'all', 'ParCreTime' ] > 0
         return filter
 
-    yt.add_particle_filter( 'new_star', function=new_star, filtered_type='all', requires=['ParCreTime'] )
+    if 'new_star' not in filter_registry:
+        yt.add_particle_filter( 'new_star', function=new_star, filtered_type='all', requires=['ParCreTime'] )
     ds.add_particle_filter( 'new_star' )
 
     def exp_SNII( pfilter, data ):
         filter = data[ 'all', 'ParSNIITime' ] <= 0
         return filter
 
-    yt.add_particle_filter( 'exp_SNII', function=exp_SNII, filtered_type='all', requires=['ParSNIITime'] )
+    if 'exp_SNII' not in filter_registry:
+        yt.add_particle_filter( 'exp_SNII', function=exp_SNII, filtered_type='all', requires=['ParSNIITime'] )
     ds.add_particle_filter( 'exp_SNII' )
 
     def young_star( pfilter, data ):
         filter = (data[ 'new_star', 'ParCreTime' ] > data.ds.current_time - data.ds.quan(2.5, 'Myr'))
         return filter
 
-    yt.add_particle_filter( 'young_star', function=young_star, filtered_type='new_star', requires=['ParCreTime'] )
+    if 'young_star' not in filter_registry:
+        yt.add_particle_filter( 'young_star', function=young_star, filtered_type='new_star', requires=['ParCreTime'] )
     ds.add_particle_filter( 'young_star' )
 
     def young_SNII( pfilter, data ):
         filter = (-1.0*data[ 'exp_SNII', 'ParSNIITime' ]*data.ds.units.code_time > data.ds.current_time - data.ds.quan(2.5, 'Myr'))
         return filter
 
-    yt.add_particle_filter( 'young_SNII', function=young_SNII, filtered_type='exp_SNII', requires=['ParSNIITime'] )
+    if 'young_SNII' not in filter_registry:
+        yt.add_particle_filter( 'young_SNII', function=young_SNII, filtered_type='exp_SNII', requires=['ParSNIITime'] )
     ds.add_particle_filter( 'young_SNII' )
 
     pz_dens.annotate_particles( (2*half_width, 'code_length'), ptype='young_star', p_size=7.0, col='w', marker='o' )
@@ -88,7 +94,6 @@ def yt_inline():
                              text='$t$ = {:.1f} {:s}'.format( ds.current_time.in_units('Myr').d, 'Myr' ),
                              color='black' )
     temp_dens.save()
-
 
 def yt_inline_inputArg( fields ):
     pass
