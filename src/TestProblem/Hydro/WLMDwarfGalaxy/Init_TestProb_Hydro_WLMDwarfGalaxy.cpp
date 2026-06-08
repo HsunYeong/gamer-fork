@@ -14,10 +14,14 @@ static double WLMDwarfGalaxy_CenterOfMass_X = -1.0; // x coordinate of the cente
 static double WLMDwarfGalaxy_CenterOfMass_Y = -1.0; // y coordinate of the center of mass of the system
 static double WLMDwarfGalaxy_CenterOfMass_Z = -1.0; // z coordinate of the center of mass of the system
 #ifdef MHD
-       double WLMDwarfGalaxy_B0X;                   // magnetic field along x (in gauss)
-       double WLMDwarfGalaxy_B0Y;                   // magnetic field along y (in gauss)
-       double WLMDwarfGalaxy_B0Z;                   // magnetic field along z (in gauss)
 static bool   WLMDwarfGalaxy_ResetB_VecPot;         // use vector potential to reset magnetic field
+       bool   WLMDwarfGalaxy_UniformB;              // use uniform magnetic field
+       double WLMDwarfGalaxy_B0X;                   // magnetic field along x (in gauss) ##WLMDwarfGalaxy_UniformB=1 ONLY##
+       double WLMDwarfGalaxy_B0Y;                   // magnetic field along y (in gauss) ##WLMDwarfGalaxy_UniformB=1 ONLY##
+       double WLMDwarfGalaxy_B0Z;                   // magnetic field along z (in gauss) ##WLMDwarfGalaxy_UniformB=1 ONLY##
+       double WLMDwarfGalaxy_B0;                    // B0 parameter (in gauss) to initialize vector potential ##WLMDwarfGalaxy_UniformB=0 ONLY##
+       double WLMDwarfGalaxy_Rho0;                  // Rho0 parameter (in code unit) to initialize vector potential ##WLMDwarfGalaxy_UniformB=1 ONLY##
+
 #endif
 // =======================================================================================
 
@@ -201,10 +205,13 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_PEHeatingRate0",         &WLMDwarfGalaxy_PEHeatingRate0,          2.6e-27,      0.0,              NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_PEHeatingRateBg",        &WLMDwarfGalaxy_PEHeatingRateBg,         2.1e-29,      0.0,              NoMax_double      );
 #  ifdef MHD
-   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0X",                    &WLMDwarfGalaxy_B0X,                     1.0e-9,       NoMin_double,     NoMax_double      );
-   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Y",                    &WLMDwarfGalaxy_B0Y,                     0.0,          NoMin_double,     NoMax_double      );
-   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Z",                    &WLMDwarfGalaxy_B0Z,                     0.0,          NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_ResetB_VecPot",          &WLMDwarfGalaxy_ResetB_VecPot,           true,         Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_UniformB",               &WLMDwarfGalaxy_UniformB,                true,         Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0X",                    &WLMDwarfGalaxy_B0X,                     0.0,          NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Y",                    &WLMDwarfGalaxy_B0Y,                     0.0,          NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0Z",                    &WLMDwarfGalaxy_B0Z,                     1.0e-11,      NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_B0",                     &WLMDwarfGalaxy_B0,                      1.0e-9,       NoMin_double,     NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_Rho0",                   &WLMDwarfGalaxy_Rho0,                    1.0e-3,       NoMin_double,     NoMax_double      );
 #  endif
 } // FUNCITON : LoadInputTestProb
 
@@ -283,10 +290,13 @@ void SetParameter()
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRate0       = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRate0                          );
       Aux_Message( stdout, "  WLMDwarfGalaxy_PEHeatingRateBg      = %13.7e erg/cm^3/s/n_H\n", WLMDwarfGalaxy_PEHeatingRateBg                         );
 #     ifdef MHD
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0X                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0X                                     );
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Y                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0Y                                     );
-      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Z                  = %13.7e\n gauss",          WLMDwarfGalaxy_B0Z                                     );
       Aux_Message( stdout, "  use vector potential                = %s\n",                    (WLMDwarfGalaxy_ResetB_VecPot)?"YES":"NO"              );
+      Aux_Message( stdout, "  use uniform magnetic field          = %s\n",                    (WLMDwarfGalaxy_UniformB     )?"YES":"NO"              );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0X                  = %13.7e gauss\n",          WLMDwarfGalaxy_B0X                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Y                  = %13.7e gauss\n",          WLMDwarfGalaxy_B0Y                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0Z                  = %13.7e gauss\n",          WLMDwarfGalaxy_B0Z                                     );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_B0                   = %13.7e gauss\n",          WLMDwarfGalaxy_B0                                      );
+      Aux_Message( stdout, "  WLMDwarfGalaxy_Rho0                 = %13.7e code density\n",   WLMDwarfGalaxy_Rho0                                    );
 #     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }

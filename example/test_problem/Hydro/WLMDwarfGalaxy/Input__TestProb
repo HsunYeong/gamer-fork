@@ -5,7 +5,10 @@ WLMDwarfGalaxy_PEHeatingCoreLength    0.4          # core radius of the photoele
 WLMDwarfGalaxy_PEHeatingCoreHeight    0.0          # core height of the photoelectric heating rate distribution [0.0]
 WLMDwarfGalaxy_PEHeatingRate0         2.6e-27      # central photoelectric heating rate (in erg/cm^3/s/n_H) [2.6e-27]
 WLMDwarfGalaxy_PEHeatingRateBg        2.1e-29      # background photoelectric heating rate (in erg/cm^3/s/n_H) [2.1e-29]
-WLMDwarfGalaxy_B0X                    1.0e-9       # magnetic field along x (in gauss) [1.0e-9]
+WLMDwarfGalaxy_ResetB_VecPot          1            # use vector potential to reset magnetic field [1]
+WLMDwarfGalaxy_UniformB               1            # use uniform magnetic field [1]
+WLMDwarfGalaxy_B0X                    0.0          # magnetic field along x (in gauss) [0.0]
 WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in gauss) [0.0]
-WLMDwarfGalaxy_B0Z                    0.0          # magnetic field along z (in gauss) [0.0]
-WLMDwarfGalaxy_ResetB_VecPot          1            # use vector potential to reset magnetic field
+WLMDwarfGalaxy_B0Z                    1.0e-11      # magnetic field along z (in gauss) [1.0e-11]
+WLMDwarfGalaxy_B0                     1.0e-9       # B0 parameter (in gauss) to initialize vector potential [1.0e-9] ##WLMDwarfGalaxy_UniformB=0 ONLY##
+WLMDwarfGalaxy_Rho0                   1.0e-3       # Rho0 parameter (in code unit) to initialize vector potential [1.0e-3] ##WLMDwarfGalaxy_UniformB=1 ONLY##

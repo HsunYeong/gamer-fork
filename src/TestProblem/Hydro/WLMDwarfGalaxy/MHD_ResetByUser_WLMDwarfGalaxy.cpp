@@ -1,10 +1,12 @@
 #include "GAMER.h"
 
 #ifdef MHD
-
+extern bool   WLMDwarfGalaxy_UniformB;
 extern double WLMDwarfGalaxy_B0X;
 extern double WLMDwarfGalaxy_B0Y;
 extern double WLMDwarfGalaxy_B0Z;
+extern double WLMDwarfGalaxy_B0;
+extern double WLMDwarfGalaxy_Rho0;
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -35,15 +37,32 @@ double MHD_ResetByUser_VecPot_WLMDwarfGalaxy( const double x, const double y, co
 
    double A;
 
-   switch ( Component )
+   if ( WLMDwarfGalaxy_UniformB )
    {
-      case 'x' : A = 0.5*(WLMDwarfGalaxy_B0Y*z - WLMDwarfGalaxy_B0Z*y);  break;
-      case 'y' : A = 0.5*(WLMDwarfGalaxy_B0Z*x - WLMDwarfGalaxy_B0X*z);  break;
-      case 'z' : A = 0.5*(WLMDwarfGalaxy_B0X*y - WLMDwarfGalaxy_B0Y*x);  break;
+      switch ( Component )
+      {
+         case 'x' : A = 0.5*(WLMDwarfGalaxy_B0Y*z - WLMDwarfGalaxy_B0Z*y);  break;
+         case 'y' : A = 0.5*(WLMDwarfGalaxy_B0Z*x - WLMDwarfGalaxy_B0X*z);  break;
+         case 'z' : A = 0.5*(WLMDwarfGalaxy_B0X*y - WLMDwarfGalaxy_B0Y*x);  break;
 
-      default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
+         default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
+      }
    }
+   else
+   {
+      const double dx   = x - amr->BoxCenter[0];
+      const double dy   = y - amr->BoxCenter[1];
+      const double R    = sqrt( SQR(dx) + SQR(dy));
 
+      switch ( Component )
+      {
+         case 'x' : A = - WLMDwarfGalaxy_B0*dy*pow( AuxArray[0]/WLMDwarfGalaxy_Rho0, 2.0/3.0 );  break;
+         case 'y' : A =   WLMDwarfGalaxy_B0*dx*pow( AuxArray[1]/WLMDwarfGalaxy_Rho0, 2.0/3.0 );  break;
+         case 'z' : A =   0.0;                                                                   break;
+
+         default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
+      }
+   }
    return A;
 
 } // FUNCTION : MHD_ResetByUser_VecPot_WLMDwarfGalaxy
