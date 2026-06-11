@@ -6,7 +6,8 @@ extern double WLMDwarfGalaxy_B0X;
 extern double WLMDwarfGalaxy_B0Y;
 extern double WLMDwarfGalaxy_B0Z;
 extern double WLMDwarfGalaxy_B0;
-extern double WLMDwarfGalaxy_Rho0;
+extern double WLMDwarfGalaxy_r0;
+extern double WLMDwarfGalaxy_rho0;
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -34,31 +35,39 @@ extern double WLMDwarfGalaxy_Rho0;
 double MHD_ResetByUser_VecPot_WLMDwarfGalaxy( const double x, const double y, const double z, const double Time,
                                               const double dt, const int lv, const char Component, double AuxArray[] )
 {
+   const double dx   = x - amr->BoxCenter[0];
+   const double dy   = y - amr->BoxCenter[1];
+   const double dz   = z - amr->BoxCenter[2];
+   const double R    = sqrt( SQR(dx) + SQR(dy));
+   const double r    = sqrt( SQR(dx) + SQR(dy) + SQR(dz));
 
+   const double B0X  = WLMDwarfGalaxy_B0X;
+   const double B0Y  = WLMDwarfGalaxy_B0Y;
+   const double B0Z  = WLMDwarfGalaxy_B0Z;
+   const double B0   = WLMDwarfGalaxy_B0;
+   const double r0   = WLMDwarfGalaxy_r0;
+   const double rho0 = WLMDwarfGalaxy_rho0;
+   const double amp  = (r < r0)? 1.0 : exp( -(r-r0)/r0 );
    double A;
 
    if ( WLMDwarfGalaxy_UniformB )
    {
       switch ( Component )
       {
-         case 'x' : A = 0.5*(WLMDwarfGalaxy_B0Y*z - WLMDwarfGalaxy_B0Z*y);  break;
-         case 'y' : A = 0.5*(WLMDwarfGalaxy_B0Z*x - WLMDwarfGalaxy_B0X*z);  break;
-         case 'z' : A = 0.5*(WLMDwarfGalaxy_B0X*y - WLMDwarfGalaxy_B0Y*x);  break;
+         case 'x' : A = 0.5*(B0Y*dz - B0Z*dy);  break;
+         case 'y' : A = 0.5*(B0Z*dx - B0X*dz);  break;
+         case 'z' : A = 0.5*(B0X*dy - B0Y*dx);  break;
 
          default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
       }
    }
    else
    {
-      const double dx   = x - amr->BoxCenter[0];
-      const double dy   = y - amr->BoxCenter[1];
-      const double R    = sqrt( SQR(dx) + SQR(dy));
-
       switch ( Component )
       {
-         case 'x' : A = - WLMDwarfGalaxy_B0*dy*pow( AuxArray[0]/WLMDwarfGalaxy_Rho0, 2.0/3.0 );  break;
-         case 'y' : A =   WLMDwarfGalaxy_B0*dx*pow( AuxArray[1]/WLMDwarfGalaxy_Rho0, 2.0/3.0 );  break;
-         case 'z' : A =   0.0;                                                                   break;
+         case 'x' : A = - amp*B0*dy*pow( AuxArray[0]/rho0, 2.0/3.0 ); break;
+         case 'y' : A =   amp*B0*dx*pow( AuxArray[1]/rho0, 2.0/3.0 ); break;
+         case 'z' : A =   0.0;                                        break;
 
          default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
       }

@@ -11,4 +11,5 @@ WLMDwarfGalaxy_B0X                    0.0          # magnetic field along x (in 
 WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in gauss) [0.0]
 WLMDwarfGalaxy_B0Z                    1.0e-11      # magnetic field along z (in gauss) [1.0e-11]
 WLMDwarfGalaxy_B0                     1.0e-9       # B0 parameter (in gauss) to initialize vector potential [1.0e-9] ##WLMDwarfGalaxy_UniformB=0 ONLY##
-WLMDwarfGalaxy_Rho0                   1.0e-3       # Rho0 parameter (in code unit) to initialize vector potential [1.0e-3] ##WLMDwarfGalaxy_UniformB=1 ONLY##
+WLMDwarfGalaxy_o0                     1.0          # r0 parameter (in kpc) to initialize vector potential [1.0e-3] ##WLMDwarfGalaxy_UniformB=1 ONLY##
+WLMDwarfGalaxy_rho0                   1.0          # rho0 parameter (in code unit) to initialize vector potential [1.0e-3] ##WLMDwarfGalaxy_UniformB=1 ONLY##
