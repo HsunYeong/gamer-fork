@@ -5,9 +5,6 @@ extern bool   WLMDwarfGalaxy_UniformB;
 extern double WLMDwarfGalaxy_B0X;
 extern double WLMDwarfGalaxy_B0Y;
 extern double WLMDwarfGalaxy_B0Z;
-extern double WLMDwarfGalaxy_B0;
-extern double WLMDwarfGalaxy_r0;
-extern double WLMDwarfGalaxy_rho0;
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -38,40 +35,23 @@ double MHD_ResetByUser_VecPot_WLMDwarfGalaxy( const double x, const double y, co
    const double dx   = x - amr->BoxCenter[0];
    const double dy   = y - amr->BoxCenter[1];
    const double dz   = z - amr->BoxCenter[2];
-   const double R    = sqrt( SQR(dx) + SQR(dy));
-   const double r    = sqrt( SQR(dx) + SQR(dy) + SQR(dz));
 
    const double B0X  = WLMDwarfGalaxy_B0X;
    const double B0Y  = WLMDwarfGalaxy_B0Y;
    const double B0Z  = WLMDwarfGalaxy_B0Z;
-   const double B0   = WLMDwarfGalaxy_B0;
-   const double r0   = WLMDwarfGalaxy_r0;
-   const double rho0 = WLMDwarfGalaxy_rho0;
-   const double amp  = (r < r0)? 1.0 : exp( -(r-r0)/r0 );
+
    double A;
 
-   if ( WLMDwarfGalaxy_UniformB )
+   switch ( Component )
    {
-      switch ( Component )
-      {
-         case 'x' : A = 0.5*(B0Y*dz - B0Z*dy);  break;
-         case 'y' : A = 0.5*(B0Z*dx - B0X*dz);  break;
-         case 'z' : A = 0.5*(B0X*dy - B0Y*dx);  break;
+      case 'x' : A = 0.5*(B0Y*dz - B0Z*dy);  break;
+      case 'y' : A = 0.5*(B0Z*dx - B0X*dz);  break;
+      case 'z' : A = 0.5*(B0X*dy - B0Y*dx);  break;
 
-         default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
-      }
+      default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
    }
-   else
-   {
-      switch ( Component )
-      {
-         case 'x' : A = - amp*B0*dy*pow( AuxArray[0]/rho0, 2.0/3.0 ); break;
-         case 'y' : A =   amp*B0*dx*pow( AuxArray[1]/rho0, 2.0/3.0 ); break;
-         case 'z' : A =   0.0;                                        break;
 
-         default  : Aux_Error( ERROR_INFO, "unsupported component (%c) !!\n", Component );
-      }
-   }
+
    return A;
 
 } // FUNCTION : MHD_ResetByUser_VecPot_WLMDwarfGalaxy

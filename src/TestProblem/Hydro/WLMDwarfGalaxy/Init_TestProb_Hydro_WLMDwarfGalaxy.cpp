@@ -379,7 +379,7 @@ void SetBFieldIC( real magnetic[], const double x, const double y, const double 
 //-------------------------------------------------------------------------------------------------------
 void AddNewField_WLMDwarfGalaxy()
 {
-
+#  ifdef SUPPORT_GRACKLE
 // add the metallicity field only if it has not been done
 // --> since Grackle may already add this field automatically when GRACKLE_METAL is enabled
 // --> also note that "Idx_Metal" has been predefined in Field.h
@@ -388,7 +388,7 @@ void AddNewField_WLMDwarfGalaxy()
 
    if ( GRACKLE_DUST && Idx_Dust == Idx_Undefined )
       Idx_Dust = AddField( "Dust", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_YES, NORMALIZE_NO, INTERP_FRAC_YES );
-
+#  endif
 } // FUNCTION : AddNewField_WLMDwarfGalaxy
 
 
