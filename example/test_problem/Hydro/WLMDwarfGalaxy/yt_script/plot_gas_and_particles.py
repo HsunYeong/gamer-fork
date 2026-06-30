@@ -41,6 +41,8 @@ colormap     = {
                  'dust2gas'                :'viridis',
                  'T'                       :'magma',
                  'kinetic_energy_density'  :'plasma',
+                 'magnetic_energy_density' :'plasma',
+                 'plasma_beta'             :'plasma',
                  'particle_density_on_grid':'algae',
                  'velocity_magnitude'      :'RdPu',
                  'particle'                :'algae',
@@ -52,6 +54,8 @@ field_unit   = {
                  'dust2gas'                :'dimensionless',
                  'T'                       :'K',
                  'kinetic_energy_density'  :'Msun/pc**3*km**2/s**2',
+                 'magnetic_energy_density' :'G**2',
+                 'plasma_beta'             :'dimensionless',
                  'particle_density_on_grid':'Msun/pc**3',
                  'velocity_magnitude'      :'km/s',
                  'resolution_size'         :'pc',
@@ -67,6 +71,10 @@ zlim         = {
                  'T_p'                        :(3.0e+0, 3.0e+6),
                  'kinetic_energy_density_s'   :(1.0e-3, 1.0e+2),
                  'kinetic_energy_density_p'   :(1.0e+2, 1.0e+6),
+                 'magnetic_energy_density_s'  :(1.0e-28,1.0e-18),
+                 'magnetic_energy_density_p'  :(1.0e-24,1.0e-14),
+                 'plasma_beta_s'              :(1.0e+6, 1.0e+16),
+                 'plasma_beta_p'              :(1.0e+6, 1.0e+16),
                  'particle_density_on_grid_s' :(1.0e-5, 1.0e+0),
                  'particle_density_on_grid_p' :(1.0e+0, 1.0e+4),
                  'velocity_magnitude_s'       :(1.0e+1, 1.5e+2),
@@ -112,6 +120,8 @@ for ds in ts.piter():
 #   fields_list.append( 'resolution_size'          )
 #   fields_list.append( 'dust2gas'                 )
 #   fields_list.append( 'particle_density_on_grid' ) if code == 'GAMER' else None
+#   fields_list.append('magnetic_energy_density'   )
+#   fields_list.append('plasma_beta'               )
 
    pfields_list = []
 #   pfields_list.append( ('all',      'particle_mass') )
@@ -123,7 +133,7 @@ for ds in ts.piter():
    # decide the center
    center = ds.domain_center
 
-   for zoom_mode in ['b', 'm']:
+   for zoom_mode in ['m']:
 
       # zoom in
       width_kpc = zoomed_width[zoom_mode]
@@ -143,6 +153,11 @@ for ds in ts.piter():
                s.set_log ( field, False )
                if direction == 'z':
                   s.annotate_quiver('velocity_x', 'velocity_y', factor=16)
+            if field == 'magnetic_energy_density' and ('gas', 'magnetic_energy_density') in ds.derived_field_list:
+               #s.annotate_magnetic_field(normalize=True)
+               s.annotate_streamlines(("gas", "magnetic_field_x"), ("gas", "magnetic_field_y"), color='black') # linewidth=("gas", "magnetic_field_strength")
+               #s.annotate_line_integral_convolution(("gas", "magnetic_field_x"), ("gas", "magnetic_field_y"))
+
             s.annotate_timestamp( time_unit='Myr', corner='upper_right' )
             s.annotate_text( (0.02, 0.88), '%s'%(field), coord_system='axis', text_args={'color':'w', 'path_effects':[patheffects.withStroke(linewidth=2, foreground='k')]} )
             s.save( './imgs_a/fig_%s_%s_Slice_%s_%s.png'%(ds, zoom_mode, direction, field), mpl_kwargs={'dpi':dpi} )
@@ -154,13 +169,15 @@ for ds in ts.piter():
             if field == 'velocity_magnitude':
                continue
 
-            weight_field = 'density_square' if field == 'T' else ('index', 'ones') if field == 'dust' else 'density' if field == 'dust2gas' else None
-            project_unit = '' if field == 'T' or field == 'resolution_size' or field == 'dust2gas' or field == 'dust' else '*pc'
+            weight_field =  'density_square'          if field == 'T'           else \
+                            'density'                 if field == 'dust2gas'    else \
+                            'magnetic_energy_density' if field == 'plasma_beta' else None
+            project_unit = '' if field == 'T' or field == 'resolution_size' or field == 'dust2gas' or field == 'plasma_beta' else '*pc'
             proj_method  = 'min' if field == 'resolution_size' else 'integrate'
 
 
             # projections
-            if field == 'dust' or field == 'T' or field == 'dust2gas':
+            if field == 'T' or field == 'dust2gas' or field == 'magnetic_energy_density' or field == 'plasma_beta':
                width_x = 1 if direction == 'x' else width_kpc
                width_z = 1 if direction == 'z' else width_kpc
                box  = ds.box( center - 0.5*ds.arr([width_x, width_kpc, width_z], 'kpc'),
@@ -168,6 +185,7 @@ for ds in ts.piter():
                p = yt.ProjectionPlot( ds, direction, field, data_source=box, center=center, width=(width_kpc, 'kpc'), method=proj_method, weight_field=weight_field, buff_size=(1024, 1024) )
             else:
                p = yt.ProjectionPlot( ds, direction, field, center=center, width=(width_kpc, 'kpc'), method=proj_method, weight_field=weight_field, buff_size=(1024, 1024) )
+            p.set_background_color( field )
             p.set_axes_unit( 'kpc' )
             p.set_unit( field, field_unit[field]+project_unit )
             p.set_zlim( field, zlim[field+'_p'][0], zlim[field+'_p'][1] )
@@ -176,6 +194,10 @@ for ds in ts.piter():
                p.set_colorbar_label(field, r"$\Sigma_{\rm d}/\Sigma_{\rm g}$")
             p.annotate_timestamp( time_unit='Myr', corner='upper_right' )
             p.annotate_text( (0.02, 0.88), '%s'%(field), coord_system='axis', text_args={'color':'w', 'path_effects':[patheffects.withStroke(linewidth=2, foreground='k')]} )
+            if field == 'magnetic_energy_density' and ('gas', 'magnetic_energy_density') in ds.derived_field_list:
+               #p.annotate_magnetic_field(normalize=True)
+               p.annotate_streamlines(("gas", "magnetic_field_x"), ("gas", "magnetic_field_y"), color='black')
+               #p.annotate_line_integral_convolution(("gas", "magnetic_field_x"), ("gas", "magnetic_field_y"), lim=(0.5, 0.65))
             try:
                p.save( './imgs_a/fig_%s_%s_Projection_%s_%s.png'%(ds, zoom_mode, direction, field), mpl_kwargs={'dpi':dpi} )
                if code == 'GAMER' and printGrid:

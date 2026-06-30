@@ -31,7 +31,7 @@ void MHD_Init_BField_ByVecPot_File_WLMDwarfGalaxy( const int B_lv )
 
 #  ifndef MHD
    Aux_Error( ERROR_INFO, "MHD must be enabled !!\n" );
-#  endif
+#  else
 
 #  ifndef SUPPORT_HDF5
    Aux_Error( ERROR_INFO, "SUPPORT_HDF5 must be set to load a vector potential from a file !!\n" );
@@ -264,6 +264,7 @@ void MHD_Init_BField_ByVecPot_File_WLMDwarfGalaxy( const int B_lv )
    delete [] Azcoord;
 
    if ( MPI_Rank == 0 ) Aux_Message( stdout, "   Loading the magnetic field from the input file ... done\n" );
+#  endif // ifndef MHD ... else
 
 } // FUNCTION : MHD_Init_BField_ByVecPot_File_WLMDwarfGalaxy
 
