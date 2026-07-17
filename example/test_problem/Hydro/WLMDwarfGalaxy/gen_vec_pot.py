@@ -4,8 +4,8 @@ import yt
 
 # Vector potential parameters
 r0     = 30.0    # in kpc
-rho0   = 1.0     # in code_density
-B0     = 1.0e-9  # in gauss
+rho0   = 0.1     # in code_density
+B0     = 1.0e-8  # in gauss
 Rho_bg = 1.0e-36 # background gas to add if the data on the grid is zero, in g/cm^3
 
 # This part should be consistent with construct_ic.py!!

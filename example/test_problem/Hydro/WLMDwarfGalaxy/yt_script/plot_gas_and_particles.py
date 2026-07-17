@@ -97,6 +97,7 @@ dpi          = 150
 
 # options
 hasDust   = True
+plotPar   = False
 printGrid = False
 
 yt.enable_parallelism()
@@ -145,8 +146,8 @@ for ds in ts.piter():
             s = yt.SlicePlot( ds, direction, field, center=center, width=(width_kpc, 'kpc'), buff_size=(1024, 1024) )
             s.set_axes_unit( 'kpc' )
             s.set_unit( field, field_unit[field] )
-            s.set_zlim( field, zlim[field+'_s'][0], zlim[field+'_s'][1] )
             s.set_cmap( field, colormap[field] )
+            s.set_zlim( field, zlim[field+'_s'][0], zlim[field+'_s'][1] )
             if field == 'dust2gas':
                s.set_colorbar_label(field, r"$\rho_{\rm d}/\rho_{\rm g}$")
             if field == 'velocity_magnitude':
@@ -188,8 +189,8 @@ for ds in ts.piter():
             p.set_background_color( field )
             p.set_axes_unit( 'kpc' )
             p.set_unit( field, field_unit[field]+project_unit )
-            p.set_zlim( field, zlim[field+'_p'][0], zlim[field+'_p'][1] )
             p.set_cmap( field, colormap[field] )
+            p.set_zlim( field, zlim[field+'_p'][0], zlim[field+'_p'][1] )
             if field == 'dust2gas':
                p.set_colorbar_label(field, r"$\Sigma_{\rm d}/\Sigma_{\rm g}$")
             p.annotate_timestamp( time_unit='Myr', corner='upper_right' )
@@ -204,7 +205,7 @@ for ds in ts.piter():
                   p.annotate_grids( periodic=False )
                   p.save( './imgs_a/fig_%s_%s_Projection_%s_%s_withgrids.png'%(ds, zoom_mode, direction, field), mpl_kwargs={'dpi':dpi} )
                   p.clear_annotations( index=-1 )
-               if field == 'density':
+               if field == 'density' and plotPar:
                   if ('new_star', 'particle_mass') in ds.derived_field_list:
                      p.annotate_particles( (width_kpc, 'kpc'), ptype='new_star', p_size=1, col='w', alpha=1.0, marker='o' )
                      p.save( './imgs_a/fig_%s_%s_Projection_%s_%s_withStars.png'%(ds, zoom_mode, direction, field), mpl_kwargs={'dpi':dpi} )

@@ -115,8 +115,19 @@ def set_derived_fields(ds, hasDust = False):
    ds.add_field( ('gas', 'resolution_size'), function=_resolution_size, sampling_type=sampling_type, units='pc' )
 
 
+   def _dual_internal_energy_density( field, data ):
+      Enth = data[('gas', 'total_energy_density')] - data[('gas', 'thermal_energy_density')]
+      mask = data[('gas', 'thermal_energy_density')]/Enth > 2.0e-1
+      dual_pres = data['Dual']*(data['Dens'].in_units('code_density').d)**(gamma - 1.0)
+      return np.where( mask, data[('gas', 'thermal_energy_density')].in_units('code_pressure').d, dual_pres / (gamma - 1.0) ) * data.ds.quan(1, 'code_pressure')
+   ds.add_field( ('gas', 'dual_internal_energy_density'), function=_dual_internal_energy_density, sampling_type=sampling_type, units='erg/cm**3' )
+
+   def _dual_specific_thermal_energy( field, data ):
+      return data[('gas', 'dual_internal_energy_density')]/data[('gas', 'density')]
+   ds.add_field( ('gas', 'dual_specific_thermal_energy'), function=_dual_specific_thermal_energy, sampling_type=sampling_type, units='km**2/s**2' )
+
    # re-define temperature with a fixed mean molecular weight
-   field_u = ('gas', 'specific_thermal_energy') if ds.dataset_type == 'gamer' else ('PartType0', 'InternalEnergy')
+   field_u = ('gas', 'dual_specific_thermal_energy') if ds.dataset_type == 'gamer' else ('PartType0', 'InternalEnergy')
    ds.mu   = 0.588235294117647  # Fully-ionized, 1/( 2.0*0.76/1 + 3.0*(1-0.76)/4 )
 
    def _T( field, data ):
@@ -161,6 +172,21 @@ def set_derived_fields(ds, hasDust = False):
    def _cell_energy_z_outflow_flux( field, data ):
       return data[('gas', 'mass')]*( 0.5*data[('gas', 'velocity_magnitude')]**2 + gamma*data[('gas', 'specific_thermal_energy')] )*data[('gas', 'outflow_z_velocity')]
    ds.add_field( ('gas', 'cell_energy_z_outflow_flux'), function=_cell_energy_z_outflow_flux, sampling_type=sampling_type, units='erg*km/s' )
+
+   if ('gas', 'magnetic_energy_density') in ds.derived_field_list:
+      def _cell_magnetic_energy_z_outflow_flux( field, data ):
+         return data[('gas', 'volume')]*data[('gas', 'magnetic_energy_density')]*data[('gas', 'outflow_z_velocity')]
+      ds.add_field( ('gas', 'cell_magnetic_energy_z_outflow_flux'), function=_cell_magnetic_energy_z_outflow_flux, sampling_type=sampling_type, units='erg*km/s' )
+
+      def _plasma_beta_k(field, data):
+         return data[('gas', 'kinetic_energy_density')] / data[('gas', 'magnetic_energy_density')]
+      ds.add_field( ('gas', 'plasma_beta_k'), function=_plasma_beta_k, sampling_type=sampling_type, units='dimensionless' )
+
+      def _plasma_beta_dual(field, data):
+         return data[('gas', 'dual_internal_energy_density')] / data[('gas', 'magnetic_energy_density')]
+      ds.add_field( ('gas', 'plasma_beta_dual'), function=_plasma_beta_dual, sampling_type=sampling_type, units='dimensionless' )
+
+
 
    if hasDust:
       def _cell_dust_mass_radial_outflow_flux( field, data ):

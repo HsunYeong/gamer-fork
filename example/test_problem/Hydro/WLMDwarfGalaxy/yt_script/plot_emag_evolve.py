@@ -4,6 +4,7 @@ import sys
 import yt
 import matplotlib.pyplot as plt
 import WLMDwarfGalaxy_load_datasets
+import numpy as np
 
 # load the command-line parameters
 parser = argparse.ArgumentParser( description='Plot the gas slices and projections' )
@@ -46,16 +47,14 @@ my_storage = {}
 # main loop
 for sto, ds in ts.piter(storage=my_storage):
 
-   width_x =  6.0
-   width_y =  6.0
-   width_z =  3.0
+   radius =  8.0
+   height =  3.0
 
    # decide the center
    center = ds.domain_center
-   box    = ds.box( center-0.5*ds.arr([1.0*width_x, 1.0*width_y, 1.0*width_z], 'kpc'),
-                    center+0.5*ds.arr([1.0*width_x, 1.0*width_y, 1.0*width_z], 'kpc') )
-
-   emag = box.quantities.weighted_average_quantity( 'magnetic_energy_density', 'cell_volume' ).in_units('G**2').d
+   #disk   = ds.disk( center='c', normal=[0,0,1], radius=(radius, 'kpc'), height=(height, 'kpc') )
+   ad     = ds.all_data()
+   emag = ad.quantities.weighted_average_quantity( 'magnetic_energy_density', 'cell_volume' ).in_units('G**2').d
    time = ds.current_time.in_units('Myr').d
    sto.result = {
         "time" : time,
@@ -74,8 +73,13 @@ if yt.is_root():
    plt.yscale('log')
    #plt.xlim( 0.0, 825 )
    #plt.ylim( 3.0e-5, 2.0e-2 )
-   plt.xlabel( '$\mathrm{t\ [Myr]}$',                 fontsize='large' )
+   plt.xlabel( '$\mathrm{t\ [Myr]}$',                fontsize='large' )
    plt.ylabel( '$\mathrm{magnetic\ energy\ [G^2]}$', fontsize='large' )
 
    # save figure
    plt.savefig( 'fig__emag.png', bbox_inches='tight', pad_inches=0.05, dpi=dpi )
+
+   np.savetxt( 'EMag', np.column_stack( (time_all, emag_all)),
+               fmt='  %9.8e',
+               header='             t             EMag' )
+

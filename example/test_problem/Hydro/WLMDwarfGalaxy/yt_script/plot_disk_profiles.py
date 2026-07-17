@@ -1,186 +1,266 @@
-import matplotlib
-matplotlib.use('Agg')
+import yt
 import numpy as np
+import matplotlib.pyplot as plt
 import argparse
 import sys
-import matplotlib.pyplot as plt
+import WLMDwarfGalaxy_load_datasets
+import WLMDwarfGalaxy_derived_fields
 from matplotlib.pyplot import cm
-import yt
-import gc
+from matplotlib.ticker import LogLocator, NullFormatter
+from matplotlib.patches import Rectangle
 
-# -------------------------------------------------------------------------------------------------------------------------
-# user-specified parameters
-figure_dpi  = 140
-
-
-#-------------------------------------------------------------------------------------------------------------------------
 # load the command-line parameters
-parser = argparse.ArgumentParser( description='An example script to plot disk data' )
+parser = argparse.ArgumentParser( description='Plot various gas profiles' )
 
+parser.add_argument( '-p', action='store', required=False, type=str, dest='prefix',
+                     help='path prefix [%(default)s]', default='../' )
 parser.add_argument( '-s', action='store', required=True,  type=int, dest='idx_start',
                      help='first data index' )
 parser.add_argument( '-e', action='store', required=True,  type=int, dest='idx_end',
                      help='last data index' )
 parser.add_argument( '-d', action='store', required=False, type=int, dest='didx',
                      help='delta data index [%(default)d]', default=1 )
+parser.add_argument( '-c', action='store', required=False, type=str, dest='code',
+                     help='simulation code [%(default)s]', default='GAMER' )
 
 args=parser.parse_args()
+
+# take note
+print( '\nCommand-line arguments:' )
+print( '-------------------------------------------------------------------' )
+print( ' '.join(map(str, sys.argv)) )
+print( '-------------------------------------------------------------------\n' )
+
 
 idx_start   = args.idx_start
 idx_end     = args.idx_end
 didx        = args.didx
+prefix      = args.prefix
+code        = args.code
 
-# print command-line parameters
-print( '\nCommand-line arguments:' )
-print( '-------------------------------------------------------------------' )
-for t in range( len(sys.argv) ):
-   print( str(sys.argv[t]))
-print( '' )
-print( '-------------------------------------------------------------------\n' )
+plt.rcParams['font.family']       = 'STIXGeneral'
+plt.rcParams['mathtext.fontset']  = 'custom'
+plt.rcParams['mathtext.rm']       = 'STIXGeneral:regular'
+plt.rcParams['mathtext.it']       = 'STIXGeneral:italic'
+plt.rcParams['mathtext.bf']       = 'STIXGeneral:italic:bold'
+dpi         = 150
+FONT_SIZE=24
+TICK_SIZE=20
 
-def SearchIndex(x, A, N):
-   i = 0
-   j = N - 1
-   while(i <= j):
-      mid = int(i + (j - i)/2)
-      if(A[mid] == x):
-         i = mid
-         break
-      elif(A[mid] > x):
-         j = mid - 1
-      else: i = mid + 1
-   return i
+disk_normal = [0.0, 0.0, 1.0]
+width_kpc   = 9
+nbin        = 300
+radius      = 8.0
+height      = 3.0
 
+markersize  = 4.0
 
-nbin = 500
 
 yt.enable_parallelism()
 
 # load the dataset
-ts = yt.DatasetSeries( [ '../Data_%06d'%idx for idx in range(idx_start, idx_end+1, didx) ] )
+ts = WLMDwarfGalaxy_load_datasets.load_WLMDwarfGalaxy_datasets(code, prefix, idx_start, idx_end, didx)
+
+WLMDwarfGalaxy_derived_fields.set_particle_types(code)
+
+yt_radius   = ('index', 'cylindrical_radius')
+yt_theta    = ('index', 'cylindrical_theta')
+yt_tan_vel  = 'velocity_cylindrical_theta'
+yt_type     = 'cell'
+yt_mass     = ('gas', 'cell_mass')
+yt_vol      = ('gas', 'cell_volume')
+
 my_storage = {}
 
-#-------------------------------------------------------------------------------------------------------------------------
-# angle-averaged rotation curve
+# loop over all datasets
 for sto, ds in ts.piter(storage=my_storage):
 
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
+   def _abs_z( field, data ):
+      return (data[('gas', 'z')]**2)**0.5
+   ds.add_field( ("gas", "abs_z"), function=_abs_z, sampling_type="cell", units="kpc" )
+   def _Br_square( field, data ):
+      return data[('gas', 'magnetic_field_cylindrical_radius')]**2
+   ds.add_field( ("gas", "Br_square"), function=_Br_square, sampling_type="cell", units="G**2" )
+   def _Bp_square( field, data ):
+      return data[('gas', 'magnetic_field_cylindrical_radius')]**2
+   ds.add_field( ("gas", "Bp_square"), function=_Bp_square, sampling_type="cell", units="G**2" )
+   def _Bz_square( field, data ):
+      return data[('gas', 'magnetic_field_cylindrical_z')]**2
+   ds.add_field( ("gas", "Bz_square"), function=_Bz_square, sampling_type="cell", units="G**2" )
+
+   cen     = ds.domain_center
+#  only include the data within a sphere with a radius of 0.5*width_kpc
+   sp_gas = ds.disk( center='c', normal=disk_normal, radius=(radius, 'kpc'), height=(height, 'kpc') )
+   '''
+   sp_gas  = ds.sphere( cen, (0.5*width_kpc, 'kpc') ).cut_region( ["obj['gas', 'density'].in_units('g/cm**3') > 1.0e-30"] )
+   sp_gas.set_field_parameter( 'normal', disk_normal )
+   sp_disk = ds.sphere( cen, (0.5*width_kpc, 'kpc') )
+   sp_disk.set_field_parameter( 'normal', disk_normal )
+   sp_halo = ds.sphere( cen, (90.0, 'kpc') )
+   '''
+
    idx  = ds.parameters["DumpID"]
-   time = ds.quan( ds.parameters["Time"][0], 'code_time' ).in_units('Myr').d
-   # define domain of interest
-   radius = 8.0
-   height = 3.0
+   time = np.round(ds.quan( ds.parameters["Time"][0], 'code_time' ).in_units('Myr').d)
 
-   disk = ds.disk( center='c', normal=[0,0,1], radius=(radius, 'kpc'), height=(height, 'kpc') ).cut_region( ["obj['gas', 'density'].in_units('g/cm**3') > 1.0e-30"] )
+#  (1) gas surface density
+   prof       = yt.ProfilePlot( sp_gas, yt_radius, yt_mass, weight_field=None,
+                                n_bins=nbin, x_log=False, accumulation=False )
+   gas_dens   = prof.profiles[0][yt_mass].in_units('Msun').d
+   gas_radius = prof.profiles[0].x.in_units('kpc').d
 
-   CoM = disk.quantities.center_of_mass()
-   VCM = [ disk.quantities.weighted_average_quantity(  ('gas', 'velocity_x'), ('gas', 'cell_mass') ),
-           disk.quantities.weighted_average_quantity(  ('gas', 'velocity_y'), ('gas', 'cell_mass') ),
-           disk.quantities.weighted_average_quantity(  ('gas', 'velocity_z'), ('gas', 'cell_mass') ) ]
+#  convert mass to surface density in Msun/pc^2
+   dr = gas_radius[1] - gas_radius[0] # assuming linear bin
+   for b in range( len(gas_radius) ):
+      area         = np.pi*( (gas_radius[b]+0.5*dr)**2 - (gas_radius[b]-0.5*dr)**2 )
+      gas_dens[b] /= area*1.0e6
 
-   mass = disk[('gas', 'cell_mass'  )]
-   vol  = disk[('gas', 'cell_volume')]
-   posx = disk[('gas',          'x')] - CoM[0]
-   posy = disk[('gas',          'y')] - CoM[1]
-   velx = disk[('gas', 'velocity_x')] - VCM[0]
-   vely = disk[('gas', 'velocity_y')] - VCM[1]
-   velz = disk[('gas', 'velocity_z')] - VCM[2]
-   eint = disk[('gas', 'thermal_energy_density' )]
-   emag = disk[('gas', 'magnetic_energy_density')]
 
-   posr = (posx**2 + posy**2)**0.5
-   velr = (posx*velx + posy*vely)/posr
-   velp = (posx*vely - posy*velx)/posr
-   sortR  = np.sort(posr)
-   indexR = np.argsort(posr)
+#  (2) gas energy
+   prof     = yt.ProfilePlot( sp_gas, yt_radius,
+                              [ ('gas', 'magnetic_energy_density'),
+                                ('gas', 'kinetic_energy_density'),
+                                ('gas', 'dual_internal_energy_density') ],
+                              weight_field=yt_vol,
+                              n_bins=nbin, x_log=False, accumulation=False )
+   Emag = prof.profiles[0][('gas', 'magnetic_energy_density')]
+   Ekin = prof.profiles[0][('gas', 'kinetic_energy_density')]
+   Eint = prof.profiles[0][('gas', 'dual_internal_energy_density')]
+   beta  = (Eint/Emag).d
+   betak = (Ekin/Emag).d
+   meanB = (Emag.in_units('G**2').d*8*np.pi)**0.5
 
-   mean_r   = np.zeros(nbin)
-   mean_vr  = np.zeros(nbin)
-   mean_vp  = np.zeros(nbin)
-   mean_vz  = np.zeros(nbin)
-   mean_vr2 = np.zeros(nbin)
-   mean_vp2 = np.zeros(nbin)
-   mean_vz2 = np.zeros(nbin)
-   mean_B   = np.zeros(nbin)
-   sigma_vr = np.zeros(nbin)
-   sigma_vp = np.zeros(nbin)
-   sigma_vz = np.zeros(nbin)
-   plasma_b = np.zeros(nbin)
-   surdens  = np.zeros(nbin)
+#  (3) gas rotational velocity
+#  consider only dense enough gas in order to exclude the gaseous halo
+#  --> follow the AGORA analysis script: https://bitbucket.org/mornkr/agora-analysis-script/
+   prof     = yt.ProfilePlot( sp_gas, yt_radius,  ('gas', yt_tan_vel),
+                              weight_field=yt_mass, n_bins=nbin, x_log=False )
+   gas_vrot = prof.profiles[0][yt_tan_vel].in_units('km/s').d
 
-   ndata   = np.size(posr)
 
-   r   = ds.quan(0.0, 'kpc')
-   dr  = ds.quan(radius, 'kpc')/nbin
-   num = 0
-   for j in range(nbin):
-      num_pre = num
-      num     = SearchIndex( r+dr, sortR.in_units('kpc'), ndata )
+#  (4) gas velocity dispersion
+#  --> follow the AGORA analysis script: https://bitbucket.org/mornkr/agora-analysis-script/
+   def _local_rotational_velocity_x( field, data ):
+      vx = np.zeros( data[('gas', 'velocity_x')].shape )
+      for r, vrot in zip(gas_radius, gas_vrot):
+         idx = np.where( (data[yt_radius].in_units('kpc') >= (r - 0.5*dr)) &
+                         (data[yt_radius].in_units('kpc') <  (r + 0.5*dr)) )
+         vx[idx] = -np.sin( data[yt_theta][idx] ) * vrot
+      return data.ds.arr( vx, 'km/s' ).in_base( data.ds.unit_system.name )
+   ds.add_field( ('gas', 'local_rotational_velocity_x'), function=_local_rotational_velocity_x,
+                 sampling_type=yt_type, take_log=False, units='km/s' )
 
-      mean_r [j]  = np.average( posr[ indexR[ num_pre:num ] ].in_units('kpc' ).d,    weights=mass[ indexR[ num_pre:num ] ] )
-      mean_vr[j]  = np.average( velr[ indexR[ num_pre:num ] ].in_units('km/s').d,    weights=mass[ indexR[ num_pre:num ] ] )
-      mean_vp[j]  = np.average( velp[ indexR[ num_pre:num ] ].in_units('km/s').d,    weights=mass[ indexR[ num_pre:num ] ] )
-      mean_vz[j]  = np.average( velz[ indexR[ num_pre:num ] ].in_units('km/s').d,    weights=mass[ indexR[ num_pre:num ] ] )
+   def _local_rotational_velocity_y( field, data ):
+      vy = np.zeros( data[('gas', 'velocity_y')].shape )
+      for r, vrot in zip(gas_radius, gas_vrot):
+         idx = np.where( (data[yt_radius].in_units('kpc') >= (r - 0.5*dr)) &
+                         (data[yt_radius].in_units('kpc') <  (r + 0.5*dr)) )
+         vy[idx] =  np.cos( data[yt_theta][idx] ) * vrot
+      return data.ds.arr( vy, 'km/s' ).in_base( data.ds.unit_system.name )
+   ds.add_field( ('gas', 'local_rotational_velocity_y'), function=_local_rotational_velocity_y,
+                 sampling_type=yt_type, take_log=False, units='km/s' )
 
-      mean_vr2[j] = np.average( velr[ indexR[ num_pre:num ] ].in_units('km/s').d**2, weights=mass[ indexR[ num_pre:num ] ] )
-      mean_vp2[j] = np.average( velp[ indexR[ num_pre:num ] ].in_units('km/s').d**2, weights=mass[ indexR[ num_pre:num ] ] )
-      mean_vz2[j] = np.average( velz[ indexR[ num_pre:num ] ].in_units('km/s').d**2, weights=mass[ indexR[ num_pre:num ] ] )
+   def _velocity_minus_local_rotational_velocity_squared( field, data ):
+      return ( data[('gas', 'velocity_x')] - data[('gas', 'local_rotational_velocity_x')] )**2 + \
+             ( data[('gas', 'velocity_y')] - data[('gas', 'local_rotational_velocity_y')] )**2 + \
+             ( data[('gas', 'velocity_z')]                                                )**2
+   ds.add_field( ('gas', 'velocity_minus_local_rotational_velocity_squared'), function=_velocity_minus_local_rotational_velocity_squared,
+                 sampling_type=yt_type, take_log=False, units='km**2/s**2' )
 
-      sigma_vr[j] = (mean_vr2[j] - mean_vr[j]**2)**0.5
-      sigma_vp[j] = (mean_vp2[j] - mean_vp[j]**2)**0.5
-      sigma_vz[j] = (mean_vz2[j] - mean_vz[j]**2)**0.5
+   prof     = yt.ProfilePlot( sp_gas, yt_radius,  ('gas', 'velocity_minus_local_rotational_velocity_squared'),
+                              weight_field=yt_mass, n_bins=nbin, x_log=False )
+   gas_vdis = np.sqrt( prof.profiles[0]['velocity_minus_local_rotational_velocity_squared'] ).in_units('km/s').d
 
-      enc_mass    = np.sum( mass[ indexR[ num_pre:num ] ].in_units('Msun').d )
-      enc_eint    = np.sum( (eint[ indexR[ num_pre:num ] ]*vol[ indexR[ num_pre:num ] ]) )
-      enc_emag    = np.sum( (emag[ indexR[ num_pre:num ] ]*vol[ indexR[ num_pre:num ] ]) )
-
-      area        = (np.pi *((r + dr)**2 - r**2)).in_units('kpc**2').d
-      surdens[j]  = enc_mass/area
-      plasma_b[j] = (enc_eint/enc_emag).d
-      mean_B[j]   = np.average( emag[ indexR[ num_pre:num ] ].in_units('G**2').d, weights=vol[ indexR[ num_pre:num ] ] )
-      mean_B[j]   = (mean_B[j]*8*np.pi)**0.5
-      r = r + dr
+#  (2) magnetic field
+   prof     = yt.ProfilePlot( sp_gas, yt_radius,
+                              [ ('gas', 'Br_square'),
+                                ('gas', 'Bp_square'),
+                                ('gas', 'Bz_square') ],
+                              weight_field=yt_vol,
+                              n_bins=nbin, x_log=False, accumulation=False )
+   Br2 = prof.profiles[0][('gas', 'Br_square')].in_units('G**2').d
+   Bp2 = prof.profiles[0][('gas', 'Bp_square')].in_units('G**2').d
+   Bz2 = prof.profiles[0][('gas', 'Bz_square')].in_units('G**2').d
 
    sto.result = {
         "idx"     : idx,
         "time"    : time,
-        "mean_r"  : mean_r,
-        "mean_vp" : mean_vp,
-        "sigma_vr": sigma_vr,
-        "sigma_vp": sigma_vp,
-        "sigma_vz": sigma_vz,
-        "surdens" : surdens,
-        "plasma_b": plasma_b,
-        "mean_B"  : mean_B
+        "mean_r"  : gas_radius,
+        "mean_vp" : gas_vrot,
+        "sigma_v" : gas_vdis,
+        "surdens" : gas_dens,
+        "beta"    : beta,
+        "betak"   : betak,
+        "mean_B"  : meanB,
+        "mean_Br2": Br2,
+        "mean_Bp2": Bp2,
+        "mean_Bz2": Bz2
    }
-   disk.clear_data()
-   del mass, vol, posx, posy, posr, velx, vely, velz, velr, velp, emag, eint
-   gc.collect()
-
 
 if yt.is_root():
    results = list(my_storage.values())
    def plot_fig(field, title, ylabel, ymin, ymax, ylog):
-      plt.figure(dpi = figure_dpi)
+      plt.figure(figsize=(8.5,7.0), dpi = dpi)
       for r in results:
          idx  = r["idx"]
          time = r["time"]
-         plt.plot(r["mean_r"], r["%s"%field], color = cm.Blues(0.3+0.6*(idx-idx_start)/(idx_end+1-idx_start)), label ='t=%3d Myr'%(np.round(time)))
+         color = cm.Blues(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues(0.6)
+         plt.plot(r["mean_r"], r["%s"%field], color = color, label ='t=%3d Myr'%(np.round(time)))
+         np.save('Data_Disk_%06d_%s'%(idx, title), np.array([r["mean_r"], r["%s"%field]]))
+
       plt.xlim((0, radius))
       if ymin != None and ymax != None:
          plt.ylim((ymin, ymax))
       if ylog:
          plt.yscale('log')
       plt.grid(ls='--')
-      plt.legend(bbox_to_anchor=(1.25, 0), loc='lower right', borderaxespad=0, shadow=True, prop={'size':8})
-      plt.xlabel(r"$R$ (kpc)")
-      plt.ylabel( ylabel )
-      plt.savefig("fig__%s.png"%title, dpi = figure_dpi, bbox_inches="tight")
+      plt.legend(bbox_to_anchor=(1.3, 0), loc='lower right', borderaxespad=0, shadow=True, fontsize=0.8*TICK_SIZE)
+      plt.xlabel(r"$R$ (kpc)", fontsize=FONT_SIZE)
+      plt.ylabel( ylabel, fontsize=FONT_SIZE )
+      plt.xticks(fontsize=TICK_SIZE)
+      plt.yticks(fontsize=TICK_SIZE)
+      plt.savefig("fig__%s.png"%title, dpi = dpi, bbox_inches="tight", pad_inches=0.05)
       plt.close()
 
    plot_fig( 'mean_vp',  'rotation_curve',  r"$v_{\rm cir}$ (km/s)",                        0,   80, False )
    plot_fig( 'surdens',  'surface_density', r"$\Sigma$ (${\rm M}_{\odot}/{\rm kpc}^2$)",  1e2,  1e8, True  )
-   plot_fig( 'sigma_vz', 'sigma_vz',        r"$\sigma_z$ (${\rm km}/{\rm s}$)",             0,   30, False )
-   plot_fig( 'plasma_b', 'plasma_beta',     r"$\beta$",                                  None, None, True  )
+   plot_fig( 'sigma_v',  'sigma_v',         r"$\sigma$ (${\rm km}/{\rm s}$)",               0,   30, False )
+   plot_fig( 'beta',     'plasma_beta',     r"$\beta$",                                  None, None, True  )
+   plot_fig( 'betak',    'plasma_betak',    r"$\beta_k$",                                None, None, True  )
    plot_fig( 'mean_B',   'mean_B',          r"$\langle B \rangle$ (G)",                  None, None, True  )
+
+   fig = plt.figure(figsize=(8.5,7.0), dpi = dpi)
+   axs = fig.add_subplot(111)
+   label_rows = [ ['time (Myr)'  , r'$B_r$ (G)', r'$B_\phi$ (G)', r'$B_z$ (G)'] ]
+   extra = Rectangle((0, 0), 1, 1.0, fc="w", fill=False, edgecolor='none', linewidth=0)
+   legend_handle = [ [extra, extra, extra, extra] ]
+
+   for r in results:
+      idx  = r["idx"]
+      time = r["time"]
+      Br2  = r["mean_Br2"]
+      Bp2  = r["mean_Bp2"]
+      Bz2  = r["mean_Bz2"]
+
+      color1 = cm.Blues (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues (0.6)
+      color2 = cm.Reds  (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Reds  (0.6)
+      color3 = cm.Greens(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Greens(0.6)
+
+      l1, = axs.plot(r["mean_r"], Br2, color = color1, label =r'$B_r^2$'   )
+      l2, = axs.plot(r["mean_r"], Bp2, color = color2, label =r'$B_\phi^2$')
+      l3, = axs.plot(r["mean_r"], Bz2, color = color3, label =r'$B_z^2$'   )
+      label_rows.append( ['%3d'%(np.round(time)), '', '', ''])
+      legend_handle.append( [extra, l1, l2, l3] )
+   legend_labels = np.array( label_rows ).flatten('F')
+   legend_handle  = np.array(legend_handle).flatten('F')
+   axs.legend(legend_handle, legend_labels, loc='lower left',fontsize=9, ncol = 4, handletextpad = -2.5, handlelength=2.5, handleheight=1.5, columnspacing=0.6, labelspacing=0.4)
+   axs.set_xlim((0, radius))
+   axs.set_yscale('log')
+   axs.set_xlabel(r"$R$ (kpc)", fontsize=FONT_SIZE)
+   axs.set_ylabel(r"$B^2$ (G$^2$)", fontsize=FONT_SIZE )
+   plt.xticks(fontsize=TICK_SIZE)
+   plt.yticks(fontsize=TICK_SIZE)
+   plt.savefig("fig__B2.png", dpi = dpi, bbox_inches="tight", pad_inches=0.05)
+   plt.close()
 
 
