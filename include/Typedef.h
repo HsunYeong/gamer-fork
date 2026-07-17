@@ -93,10 +93,11 @@ const TestProbID_t
    TESTPROB_HYDRO_CR_SOUNDWAVE                 =   20,
    TESTPROB_HYDRO_CR_SHOCKTUBE                 =   21,
    TESTPROB_HYDRO_CR_DIFFUSION                 =   23,
-   TESTPROB_HYDRO_STAR_FORMATION_THRESHOLD     =   24,
-   TESTPROB_HYDRO_SN_FEEDBACK_BLAST_WAVE       =   25,
-   TESTPROB_HYDRO_GRACKLE_TEST                 =   26,
-   TESTPROB_HYDRO_WLM_DWARF_GALAXY             =   27,
+   TESTPROB_HYDRO_GRACKLE_TEST                 =   24,
+   TESTPROB_HYDRO_PARTICLE_FLAG                =   25,
+   TESTPROB_HYDRO_STAR_FORMATION_THRESHOLD     =   26,
+   TESTPROB_HYDRO_SN_FEEDBACK_BLAST_WAVE       =   27,
+   TESTPROB_HYDRO_WLM_DWARF_GALAXY             =   28,
    TESTPROB_HYDRO_BARRED_POT                   =   51,
    TESTPROB_HYDRO_JET_ICM_WALL                 =   52,
    TESTPROB_HYDRO_CDM_LSS                      =  100,
@@ -407,6 +408,13 @@ const ParOutputDens_t
    PAR_OUTPUT_DENS_NONE     = 0,
    PAR_OUTPUT_DENS_PAR_ONLY = 1,
    PAR_OUTPUT_DENS_TOTAL    = 2;
+
+typedef int FlagParTarget_t;
+const FlagParTarget_t
+   FLAG_PAR_NONE = 0,
+   FLAG_PAR_MUST = 1,
+   FLAG_PAR_CAN  = 2,
+   FLAG_PAR_BOTH = 3;
 
 typedef int ParPass2Son_t;
 const ParPass2Son_t

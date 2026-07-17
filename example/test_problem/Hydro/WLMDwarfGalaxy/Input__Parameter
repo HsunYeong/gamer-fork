@@ -23,14 +23,14 @@ END_STEP                     -1           # end step (<0=auto -> must be set by 
 
 
 # test problems
-TESTPROB_ID                   27          # test problem ID [0]
+TESTPROB_ID                   28          # test problem ID [0]
                                           #    0: none
                                           #    1: HYDRO blast wave
                                           #    2: HYDRO acoustic wave
                                           #    3: HYDRO Bondi accretion (+GRAVITY)
                                           #    4: HYDRO cluster merger vs. Flash (+GRAVITY)
                                           #    5: HYDRO AGORA isolated galaxy (+GRAVITY)
-                                          #   27: HYDRO WLM Dwarf galaxy (+GRAVITY)
+                                          #   28: HYDRO WLM Dwarf galaxy (+GRAVITY)
                                           # 1000: ELBDM external potential (+GRAVITY)
 
 
