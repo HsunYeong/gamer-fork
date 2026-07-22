@@ -476,6 +476,10 @@ void Output_DumpData_Total_HDF5( const char *FileName )
    hsize_t H5_SetDims_FCMag[4], H5_MemDims_FCMag[4], H5_Count_FCMag[4], H5_Offset_FCMag[4];
    hid_t   H5_MemID_FCMag, H5_SetID_FCMag, H5_SpaceID_FCMag[NCOMP_MAG];
 #  endif
+#  ifdef TURBULENCE
+   hid_t   H5_GroupID_Turb, H5_SetID_Turb, H5_SpaceID_OUArr;
+   hsize_t H5_SetDims_OUArr;
+#  endif
 
 // 2-1. do NOT write fill values to any dataset for higher I/O performance
    H5_DataCreatePropList = H5Pcreate( H5P_DATASET_CREATE );
@@ -581,8 +585,37 @@ void Output_DumpData_Total_HDF5( const char *FileName )
 
       H5_Status = H5Gclose( H5_GroupID_User );
       H5_Status = H5Fclose( H5_FileID );
+/*
+//    3-6. Turb data
+#     ifdef TURBULENCE
+      int     Turb_Step      = Turb->Step;
+      int     Turb_RandSeed  = Turb->RSeed;
+      int     Turb_OUArrSize = Turb->NMode*3*2;
+      double *Turb_OUArr     = Turb->get_OUphases();
+      H5_GroupID_Turb = H5Gcreate( H5_FileID, "Turb", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+      if ( H5_GroupID_Turb < 0 )     Aux_Error( ERROR_INFO, "failed to create the group \"%s\" !!\n", "Turb" );
 
-//    3-6. free memory
+      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_Step", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_Step);
+      H5Dclose(H5_SetID_Turb);
+
+      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_RSeed", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_RandSeed);
+      H5Dclose(H5_SetID_Turb);
+
+      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_OUArrSize", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_OUArrSize);
+      H5Dclose(H5_SetID_Turb);
+
+      H5_SetDims_OUArr = Turb_OUArrSize;
+      H5_SpaceID_OUArr = H5Screate_simple(1, &H5_SetDims_OUArr, NULL);
+      H5_SetID_Turb = H5Dcreate(H5_GroupID, "Turb_OUArr", H5T_NATIVE_DOUBLE, H5_SpaceID_OUArr, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Turb_OUArr);
+      H5Dclose(H5_SetID_Turb);
+      H5Sclose(H5_SpaceID_OUArr);
+#     endif
+*/
+//    3-7. free memory
       for (int lv=0; lv<NLEVEL-1; lv++)   free( InputPara.FlagTable_User[lv].p );
    } // if ( MPI_Rank == 0 )
 
@@ -2023,6 +2056,12 @@ void FillIn_Makefile( Makefile_t &Makefile )
    Makefile.SupportGrackle         = 0;
 #  endif
 
+#  ifdef TURBULENCE
+   Makefile.Turbulence             = 1;
+#  else
+   Makefile.Turbulence             = 0;
+#  endif
+
    Makefile.RandomNumber           = RANDOM_NUMBER;
 
    Makefile.NLevel                 = NLEVEL;
@@ -2830,6 +2869,25 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
 #  endif
 #  endif // #ifdef COSMIC_RAY
 
+// turbulence
+#  ifdef TURBULENCE
+   InputPara.Turb_Activate     = TURB_ACTIVATE;
+   InputPara.Turb_Verbose      = TURB_VERBOSE;
+   InputPara.Turb_Vel          = TURB_VEL;
+   InputPara.Turb_AmplCoeff    = TURB_AMPL_COEFF;
+   InputPara.Turb_AmplFactor   = TURB_AMPL_FACTOR;
+   InputPara.Turb_Kdriv        = TURB_KDRIV;
+   InputPara.Turb_Kmin         = TURB_KMIN;
+   InputPara.Turb_Kmax         = TURB_KMAX;
+   InputPara.Turb_Zeta         = TURB_ZETA;
+   InputPara.Turb_SpecForm     = TURB_SPEC_FORM;
+   InputPara.Turb_Pow          = TURB_POW;
+   InputPara.Turb_RSeedInit    = TURB_RSEED_INIT;
+   InputPara.Turb_UpdateStep   = TURB_UPDATE_STEP;
+   InputPara.Turb_TableSize    = TURB_TABLE_SIZE;
+   InputPara.Turb_Reset        = TURB_RESET;
+#  endif
+
 // initialization
    InputPara.Opt__Init               = OPT__INIT;
    InputPara.RestartLoadNRank        = RESTART_LOAD_NRANK;
@@ -3234,6 +3292,7 @@ void GetCompound_Makefile( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "LibYTJupyter",           HOFFSET(Makefile_t,LibYTJupyter           ), H5T_NATIVE_INT );
 #  endif
    H5Tinsert( H5_TypeID, "SupportGrackle",         HOFFSET(Makefile_t,SupportGrackle         ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "Turbulence",             HOFFSET(Makefile_t,Turbulence             ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "RandomNumber",           HOFFSET(Makefile_t,RandomNumber           ), H5T_NATIVE_INT );
 
    H5Tinsert( H5_TypeID, "NLevel",                 HOFFSET(Makefile_t,NLevel                 ), H5T_NATIVE_INT );
@@ -3926,6 +3985,25 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
    H5Tinsert( H5_TypeID, "CR_Diffusion_MinB",      HOFFSET(InputPara_t,CR_Diffusion_MinB      ), H5T_NATIVE_DOUBLE            );
 #  endif
 #  endif // #ifdef COSMIC_RAY
+
+// turbulence
+#  ifdef TURBULENCE
+   H5Tinsert( H5_TypeID, "Turb_Activate",          HOFFSET(InputPara_t,Turb_Activate          ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_Verbose",           HOFFSET(InputPara_t,Turb_Verbose           ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_Vel",               HOFFSET(InputPara_t,Turb_Vel               ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_AmplCoeff",         HOFFSET(InputPara_t,Turb_AmplCoeff         ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_AmplFactor",        HOFFSET(InputPara_t,Turb_AmplFactor        ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_Kdriv",             HOFFSET(InputPara_t,Turb_Kdriv             ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_Kmin",              HOFFSET(InputPara_t,Turb_Kmin              ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_Kmax",              HOFFSET(InputPara_t,Turb_Kmax              ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_Zeta",              HOFFSET(InputPara_t,Turb_Zeta              ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_SpecForm",          HOFFSET(InputPara_t,Turb_SpecForm          ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_Pow",               HOFFSET(InputPara_t,Turb_Pow               ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Turb_RSeedInit",         HOFFSET(InputPara_t,Turb_RSeedInit         ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_UpdateStep",        HOFFSET(InputPara_t,Turb_UpdateStep        ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_TableSize",         HOFFSET(InputPara_t,Turb_TableSize         ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Turb_Reset",             HOFFSET(InputPara_t,Turb_Reset             ), H5T_NATIVE_INT               );
+#  endif
 
 // initialization
    H5Tinsert( H5_TypeID, "Opt__Init",               HOFFSET(InputPara_t,Opt__Init               ), H5T_NATIVE_INT              );

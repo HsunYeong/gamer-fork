@@ -879,5 +879,15 @@ void EoS_End();
 #endif
 
 
+// turbulence
+#ifdef TURBULENCE
+void Turb_Init();
+void Turb_End();
+void Turb_Aux_CheckUpdate();
+void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt, const int SaveSg );
+void Turb_GetRNG( double& a, double& b, int& Seed );
+double Turb_ran1s( int& Seed );
+#endif // #ifdef TURBULENCE
+
 
 #endif // __PROTOTYPE_H__

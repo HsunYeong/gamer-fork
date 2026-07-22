@@ -311,6 +311,24 @@ void Init_Load_Parameter()
    ReadPara->Add( "CR_DIFF_MIN_B",              &CR_DIFF_MIN_B,                   0.0,             NoMin_double,  NoMax_double   );
 #  endif
 
+// turbulence generation
+#  ifdef TURBULENCE
+   ReadPara->Add( "TURB_ACTIVATE",              &TURB_ACTIVATE,                   true,            Useless_bool,  Useless_bool   );
+   ReadPara->Add( "TURB_VERBOSE",               &TURB_VERBOSE,                    true,            Useless_bool,  Useless_bool   );
+   ReadPara->Add( "TURB_VEL",                   &TURB_VEL,                        0.2,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_AMPL_COEFF",            &TURB_AMPL_COEFF,                 0.15,            0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_KDRIV",                 &TURB_KDRIV,                      2.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_KMIN",                  &TURB_KMIN,                       1.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_KMAX",                  &TURB_KMAX,                       3.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_ZETA",                  &TURB_ZETA,                       1.0,             0.0,           1.0            );
+   ReadPara->Add( "TURB_SPEC_FORM",             &TURB_SPEC_FORM,                  1,               0,             2              );
+   ReadPara->Add( "TURB_POW",                   &TURB_POW,                        1.0,             NoMin_double,  NoMax_double   );
+   ReadPara->Add( "TURB_RSEED_INIT",            &TURB_RSEED_INIT,                 1,               0,             NoMax_int      );
+   ReadPara->Add( "TURB_UPDATE_STEP",           &TURB_UPDATE_STEP,                1,               1,             NoMax_int      );
+   ReadPara->Add( "TURB_TABLE_SIZE",            &TURB_TABLE_SIZE,                 256,             0,             NoMax_int      );
+   ReadPara->Add( "TURB_RESET",                 &TURB_RESET,                      false,           Useless_bool,  Useless_bool   );
+#  endif
 
 // fluid solvers in HYDRO
 #  if ( MODEL == HYDRO )

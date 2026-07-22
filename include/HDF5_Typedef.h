@@ -154,6 +154,7 @@ struct Makefile_t
    int LibYTJupyter;
 #  endif
    int SupportGrackle;
+   int Turbulence;
    int RandomNumber;
 
 #  ifdef GRAVITY
@@ -754,6 +755,25 @@ struct InputPara_t
    double CR_Diffusion_ParaCoeff;
    double CR_Diffusion_PerpCoeff;
    double CR_Diffusion_MinB;
+#  endif
+
+// Turbulence
+#  ifdef TURBULENCE
+   int    Turb_Activate;
+   int    Turb_Verbose;
+   double Turb_Vel;
+   double Turb_AmplCoeff;
+   double Turb_AmplFactor;
+   double Turb_Kdriv;
+   double Turb_Kmin;
+   double Turb_Kmax;
+   double Turb_Zeta;
+   int    Turb_SpecForm;
+   double Turb_Pow;
+   int    Turb_RSeedInit;
+   int    Turb_UpdateStep;
+   int    Turb_TableSize;
+   int    Turb_Reset;
 #  endif
 
 // initialization

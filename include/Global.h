@@ -9,6 +9,7 @@
 #include <libyt.h>
 #endif
 #include "GatherTree.h"
+#include "Turbulence.h"
 
 
 // **********************************************************************************************************
@@ -414,6 +415,29 @@ extern double CR_DIFF_PARA;
 extern double CR_DIFF_PERP;
 extern double DT__CR_DIFFUSION;
 extern double CR_DIFF_MIN_B;
+#endif
+
+
+// (2-15) turbulence generator
+// =======================================================================================================
+#ifdef TURBULENCE
+extern Turbulence_t *Turb;
+extern double *TurbAccTable[3];
+extern bool    TURB_ACTIVATE;
+extern bool    TURB_VERBOSE;
+extern double  TURB_VEL;
+extern double  TURB_AMPL_COEFF;
+extern double  TURB_AMPL_FACTOR;
+extern double  TURB_KDRIV;
+extern double  TURB_KMIN;
+extern double  TURB_KMAX;
+extern double  TURB_ZETA;
+extern int     TURB_SPEC_FORM;
+extern double  TURB_POW;
+extern int     TURB_RSEED_INIT;
+extern int     TURB_UPDATE_STEP;
+extern int     TURB_TABLE_SIZE;
+extern bool    TURB_RESET;
 #endif
 
 

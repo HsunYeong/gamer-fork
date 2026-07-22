@@ -386,4 +386,10 @@ void Init_GAMER( int *argc, char ***argv )
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", "Initializing source-term fields" );
    } // if ( OPT__INIT != INIT_BY_RESTART )
 
+// initialize turbulence
+#  ifdef TURBULENCE
+   if ( TURB_ACTIVATE )    Turb_Init();
+#  endif
+
+
 } // FUNCTION : Init_GAMER

@@ -8,6 +8,7 @@ extern Timer_t *Timer_Src_Advance[NLEVEL];
 extern Timer_t *Timer_Che_Advance[NLEVEL];
 extern Timer_t *Timer_SF         [NLEVEL];
 extern Timer_t *Timer_FB_Advance [NLEVEL];
+extern Timer_t *Timer_Tur_Advance[NLEVEL];
 extern Timer_t *Timer_FixUp      [NLEVEL];
 extern Timer_t *Timer_Flag       [NLEVEL];
 extern Timer_t *Timer_Refine     [NLEVEL];
@@ -602,6 +603,26 @@ void EvolveLevel( const int lv, const double dTime_FaLv )
          if ( OPT__VERBOSE  &&  MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
       }
 #     endif // #ifdef FEEDBACK
+
+
+// *********************************
+//    6-5. turbulence
+// *********************************
+#     ifdef TURBULENCE
+      if ( TURB_ACTIVATE )
+      {
+         const int SaveSg_Tur = SaveSg_Flu;   // save in the same FluSg
+
+         if ( OPT__VERBOSE  &&  MPI_Rank == 0 )
+            Aux_Message( stdout, "   Lv %2d: Turb_AdvanceDt, counter = %4ld ... ", lv, AdvanceCounter[lv] );
+
+         TIMING_FUNC(   Turb_AdvanceDt( lv, TimeNew, TimeOld, dt_SubStep, SaveSg_Tur ),
+                        Timer_Tur_Advance[lv],   TIMER_ON   );
+
+         if ( OPT__VERBOSE  &&  MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
+      } // if ( TURB_ACTIVATE )
+#     endif // #ifdef TURBULENCE
+
 
 // ===============================================================================================
 

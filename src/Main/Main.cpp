@@ -388,6 +388,28 @@ double CR_DIFF_MIN_B;
 #endif
 
 
+// (2-16) turbulencer
+#ifdef TURBULENCE
+bool    TURB_ACTIVATE;
+bool    TURB_VERBOSE;
+double  TURB_VEL;
+double  TURB_AMPL_COEFF;
+double  TURB_AMPL_FACTOR;
+double  TURB_KDRIV;
+double  TURB_KMIN;
+double  TURB_KMAX;
+double  TURB_ZETA;
+int     TURB_SPEC_FORM;
+double  TURB_POW;
+int     TURB_RSEED_INIT;
+int     TURB_UPDATE_STEP;
+int     TURB_TABLE_SIZE;
+bool    TURB_RESET;
+double *TurbAccTable[3];
+Turbulence_t *Turb = NULL;
+#endif
+
+
 // 3. CPU (host) arrays for transferring data between CPU and GPU
 // =======================================================================================================
 // (3-1) fluid solver
@@ -480,8 +502,6 @@ double (*h_Corner_Array_S[2])[3]                                   = { NULL, NUL
 real (*h_SrcDlepProf_Data)[SRC_DLEP_PROF_NBINMAX]                  = NULL;
 real  *h_SrcDlepProf_Radius                                        = NULL;
 #endif
-
-
 
 // 4. GPU (device) global memory arrays
 // =======================================================================================================
@@ -587,6 +607,7 @@ Timer_t *Timer_Src_Advance[NLEVEL];
 Timer_t *Timer_Che_Advance[NLEVEL];
 Timer_t *Timer_SF         [NLEVEL];
 Timer_t *Timer_FB_Advance [NLEVEL];
+Timer_t *Timer_Tur_Advance[NLEVEL];
 Timer_t *Timer_FixUp      [NLEVEL];
 Timer_t *Timer_Flag       [NLEVEL];
 Timer_t *Timer_Refine     [NLEVEL];
@@ -773,6 +794,11 @@ int main( int argc, char *argv[] )
       if ( ELBDM_RESCALE_MASS_ERROR  &&  Step % ELBDM_RESCALE_MASS_STEPS == 0 )
       TIMING_FUNC(   ELBDM_RescaleMassError(),        Timer_Main[4],   TIMER_ON   );
 #     endif // #if ( MODEL == ELBDM )
+
+#     ifdef TURBULENCE
+      if ( TURB_ACTIVATE )
+      TIMING_FUNC(   Turb_Aux_CheckUpdate(),        Timer_Main[4],   TIMER_ON   );
+#     endif
 //    ---------------------------------------------------------------------------------------------------
 
 

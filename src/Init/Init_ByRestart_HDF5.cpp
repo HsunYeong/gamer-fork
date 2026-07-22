@@ -1663,6 +1663,7 @@ void Check_Makefile( const char *FileName, const int FormatVersion )
    LoadField( "LibYTJupyter",           &RS.LibYTJupyter,           SID, TID, NonFatal, &RT.LibYTJupyter,           1, NonFatal );
 #  endif
    LoadField( "SupportGrackle",         &RS.SupportGrackle,         SID, TID, NonFatal, &RT.SupportGrackle,         1, NonFatal );
+   LoadField( "Turbulence",             &RS.Turbulence,             SID, TID, NonFatal, &RT.Turbulence,             1, NonFatal );
    LoadField( "RandomNumber",           &RS.RandomNumber,           SID, TID, NonFatal, &RT.RandomNumber,           1, NonFatal );
 
    LoadField( "NLevel",                 &RS.NLevel,                 SID, TID, NonFatal, &RT.NLevel,                 1, NonFatal );
@@ -2334,6 +2335,25 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "CR_Diffusion_MinB",       &RS.CR_Diffusion_MinB,       SID, TID, NonFatal, &RT.CR_Diffusion_MinB,        1, NonFatal );
 #  endif
 #  endif // #ifdef COSMIC_RAY
+
+// Turbulence
+#  ifdef TURBULENCE
+   LoadField( "Turb_Activate",           &RS.Turb_Activate,           SID, TID, NonFatal, &RT.Turb_Activate,            1, NonFatal );
+   LoadField( "Turb_Verbose",            &RS.Turb_Verbose,            SID, TID, NonFatal, &RT.Turb_Verbose,             1, NonFatal );
+   LoadField( "Turb_Vel",                &RS.Turb_Vel,                SID, TID, NonFatal, &RT.Turb_Vel,                 1, NonFatal );
+   LoadField( "Turb_AmplCoeff",          &RS.Turb_AmplCoeff,          SID, TID, NonFatal, &RT.Turb_AmplCoeff,           1, NonFatal );
+   LoadField( "Turb_AmplFactor",         &RS.Turb_AmplFactor,         SID, TID, NonFatal, &RT.Turb_AmplFactor,          1, NonFatal );
+   LoadField( "Turb_Kdriv",              &RS.Turb_Kdriv,              SID, TID, NonFatal, &RT.Turb_Kdriv,               1, NonFatal );
+   LoadField( "Turb_Kmin",               &RS.Turb_Kmin,               SID, TID, NonFatal, &RT.Turb_Kmin,                1, NonFatal );
+   LoadField( "Turb_Kmax",               &RS.Turb_Kmax,               SID, TID, NonFatal, &RT.Turb_Kmax,                1, NonFatal );
+   LoadField( "Turb_Zeta",               &RS.Turb_Zeta,               SID, TID, NonFatal, &RT.Turb_Zeta,                1, NonFatal );
+   LoadField( "Turb_SpecForm",           &RS.Turb_SpecForm,           SID, TID, NonFatal, &RT.Turb_SpecForm,            1, NonFatal );
+   LoadField( "Turb_Pow",                &RS.Turb_Pow,                SID, TID, NonFatal, &RT.Turb_Pow,                 1, NonFatal );
+   LoadField( "Turb_RSeedInit",          &RS.Turb_RSeedInit,          SID, TID, NonFatal, &RT.Turb_RSeedInit,           1, NonFatal );
+   LoadField( "Turb_UpdateStep",         &RS.Turb_UpdateStep,         SID, TID, NonFatal, &RT.Turb_UpdateStep,          1, NonFatal );
+   LoadField( "Turb_TableSize",          &RS.Turb_TableSize,          SID, TID, NonFatal, &RT.Turb_TableSize,           1, NonFatal );
+   LoadField( "Turb_Reset",              &RS.Turb_Reset,              SID, TID, NonFatal, &RT.Turb_Reset,               1, NonFatal );
+#  endif
 
 // initialization
    LoadField( "Opt__Init",               &RS.Opt__Init,               SID, TID, NonFatal, &RT.Opt__Init,                1, NonFatal );
