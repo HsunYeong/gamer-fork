@@ -530,6 +530,19 @@ void Aux_TakeNote()
       fprintf( Note, "FB_SEP_FLUOUT                   OFF\n" );
 #     endif
 
+#     ifdef EXTRA_EOS_CHECK
+      fprintf( Note, "EXTRA_EOS_CHECK                 ON\n" );
+#     else
+      fprintf( Note, "EXTRA_EOS_CHECK                 OFF\n" );
+#     endif
+
+#     ifdef CHECK_UNPHY_ROUNDING
+      fprintf( Note, "CHECK_UNPHY_ROUNDING            ON\n" );
+#     else
+      fprintf( Note, "CHECK_UNPHY_ROUNDING            OFF\n" );
+#     endif
+      fprintf( Note, "CHECK_UNPHY_ROUNDING_FACTOR    % 21.14e\n", CHECK_UNPHY_ROUNDING_FACTOR );
+
 #     if   ( MODEL == HYDRO )
 #     ifdef CHECK_UNPHYSICAL_IN_FLUID
       fprintf( Note, "CHECK_UNPHYSICAL_IN_FLUID       ON\n" );
@@ -605,12 +618,6 @@ void Aux_TakeNote()
 
 #     ifdef MHM_CHECK_PREDICT
       fprintf( Note, "MHM_CHECK_PREDICT               ON\n" );
-#     ifndef SRHD
-      fprintf( Note, "MHM_REPREDICT_ITER_NUM         % d\n",     MHM_REPREDICT_ITER_NUM       );
-      fprintf( Note, "MHM_REPREDICT_STEPS_SAFE_FAC   % 14.7e\n", MHM_REPREDICT_STEPS_SAFE_FAC );
-      fprintf( Note, "MHM_REPREDICT_SLOPE_SAFE_FAC   % 14.7e\n", MHM_REPREDICT_SLOPE_SAFE_FAC );
-      fprintf( Note, "MHM_REPREDICT_SUBSTEPS_MAX     % d\n",     MHM_REPREDICT_SUBSTEPS_MAX   );
-#     endif // #ifndef SRHD
 #     else
       fprintf( Note, "MHM_CHECK_PREDICT               OFF\n" );
 #     endif
