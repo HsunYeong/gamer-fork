@@ -99,6 +99,7 @@ void Turb_Init()
        Aux_Message( stdout, "Turbulence parameters:\n" );
        Aux_Message( stdout, "   velocity dispersion    = %13.7e:\n", TURB_VEL         );
        Aux_Message( stdout, "   amplitute coefficient  = %13.7e:\n", TURB_AMPL_COEFF  );
+       Aux_Message( stdout, "   amplitute factor       = %13.7e:\n", TURB_AMPL_FACTOR );
        Aux_Message( stdout, "   energy injection rate  = %13.7e:\n", EnergyInputRate  );
        Aux_Message( stdout, "   kmin                   = %13.7e:\n", kmin             );
        Aux_Message( stdout, "   kmax                   = %13.7e:\n", kmax             );
@@ -139,6 +140,8 @@ void Turb_Init()
          {
 //          get random number Nr and Ni
             Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed );
+            Nr[d] *= Turb->OUvar;
+            Ni[d] *= Turb->OUvar;
 
             kk       += SQR( Turb->Kmode[d][n] );
             k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
@@ -222,6 +225,11 @@ void Turb_Init()
          TurbAccTable[d][idx] = Acc[d]*TURB_AMPL_FACTOR;
       }
    }}} // for i, j, k
+
+// set next update time
+   Turb->Time += Turb->dt;
+
+   if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
 } // FUNCTION : Turb_Init
 

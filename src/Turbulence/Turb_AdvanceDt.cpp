@@ -25,7 +25,6 @@
 //-------------------------------------------------------------------------------------------------------
 void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt, const int SaveSg )
 {
-
    const double dh = amr->dh[lv];
    const double _dh_table = TURB_TABLE_SIZE/BOX_SIZE;
    const long NPoint = TURB_TABLE_SIZE + 1;
@@ -39,7 +38,6 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
 #  pragma omp parallel for schedule( runtime )
    for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
    {
-
       for (int k=0; k<PS1; k++)  {  const double z = amr->patch[0][lv][PID]->EdgeL[2] + k*dh + 0.5*dh;
       for (int j=0; j<PS1; j++)  {  const double y = amr->patch[0][lv][PID]->EdgeL[1] + j*dh + 0.5*dh;
       for (int i=0; i<PS1; i++)  {  const double x = amr->patch[0][lv][PID]->EdgeL[0] + i*dh + 0.5*dh;
@@ -92,7 +90,6 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
 
       }}} // i,j,k
    } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-
 
 } // FUNCTION : Turb_AdvanceDt
 

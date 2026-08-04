@@ -8,7 +8,7 @@ void Turb_Aux_CheckUpdate()
 
    while ( Time[0] > Turb->Time )
    {
-      if ( MPI_Rank == 0 )    Aux_Message( stdout, "Time = %13.7e > Turbulence time = %13.7e: Update turbulence pattern ...\n", Time[0], Turb->Time );
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, "Time ( %13.7e ) > Turbulence time ( %13.7e ): Update turbulence pattern ...\n", Time[0], Turb->Time );
 
       double dt  = Turb->dt;
       double tau = Turb->Tdecay;
@@ -19,7 +19,7 @@ void Turb_Aux_CheckUpdate()
 //    Construct OU phase vector
       for (int n = 0; n < Turb->NMode; ++n)
       {
-         double kk = 0;
+         double kk       = 0;
          double k_dot_Nr = 0;
          double k_dot_Ni = 0;
          double Nr[3], Ni[3];
@@ -47,7 +47,7 @@ void Turb_Aux_CheckUpdate()
 
       } // for (int n = 0; n < Turb->NMode; ++n)
 
-      if ( MPI_Rank == 0 )    Aux_Message( stdout, "Time = %13.7e > Turbulence time = %13.7e: Update turbulence pattern ... done\n", Time[0], Turb->Time );
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
 
 //    update turbulence time
       Turb->Time += dt;
