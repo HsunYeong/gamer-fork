@@ -300,6 +300,12 @@ struct SymConst_t
    int    InterpMask;
    int    FB_SepFluOut;
 
+#  if ( MODEL == HYDRO )
+   int    ExtraEoSCheck;
+#  endif
+   int    CheckUnphyRnd;
+   double CheckUnphyRndFactor;
+
 
 #  if   ( MODEL == HYDRO )
    int    Flu_BlockSize_x;
@@ -329,7 +335,7 @@ struct SymConst_t
    int    EoSNAuxMax;
    int    EoSNTableMax;
 
-#  elif  ( MODEL == ELBDM )
+#  elif ( MODEL == ELBDM )
    int    Flu_BlockSize_x;
    int    Flu_BlockSize_y;
 #  if ( ELBDM_SCHEME == ELBDM_HYBRID )

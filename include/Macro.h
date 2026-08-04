@@ -968,6 +968,32 @@
 #endif
 
 
+// apply additional checks on equation-of-state calculations
+#if ( MODEL == HYDRO  &&  !defined BAROTROPIC_EOS  &&  EOS != EOS_GAMMA )
+#  define EXTRA_EOS_CHECK
+#endif
+
+
+// extend the unphysical-state check to account for floating-point rounding errors
+#ifdef EXTRA_EOS_CHECK
+#  define CHECK_UNPHY_ROUNDING
+#endif
+
+// maximum rounding-error factor to test
+// --> check the offsets: i*CHECK_UNPHY_ROUNDING_FACTOR*MACHINE_EPSILON,
+//     where i = CHECK_UNPHY_ROUNDING_IMIN, 0, CHECK_UNPHY_ROUNDING_IMAX
+// --> define it even when CHECK_UNPHY_ROUNDING is disabled so that it can be reused elsewhere
+#  define CHECK_UNPHY_ROUNDING_FACTOR  (real)3.0
+
+#ifdef CHECK_UNPHY_ROUNDING
+#  define CHECK_UNPHY_ROUNDING_IMIN   -1
+#  define CHECK_UNPHY_ROUNDING_IMAX   +1
+#else
+#  define CHECK_UNPHY_ROUNDING_IMIN    0
+#  define CHECK_UNPHY_ROUNDING_IMAX    0
+#endif
+
+
 // extreme values
 #ifndef __INT_MAX__
 #  define __INT_MAX__            2147483647
