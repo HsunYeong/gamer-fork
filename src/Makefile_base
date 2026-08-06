@@ -382,10 +382,10 @@ endif # CR_DIFFUSION
 # turbulence source files (included only if "TURBULENCE" is turned on)
 # ------------------------------------------------------------------------------------
 ifeq "$(filter -DTURBULENCE, $(SIMU_OPTION))" "-DTURBULENCE"
-CPU_FILE    += Turb_Init.cpp  Turb_Aux_CheckUpdate.cpp  Turb_AdvanceDt.cpp
+CPU_FILE    += Turb_Init.cpp  Turb_CheckUpdate.cpp  Turb_AdvanceDt.cpp Turb_FillinTable.cpp
 
 vpath %.cpp    Turbulence
-endif # SUPPORT_GRACKLE
+endif # TURBULENCE
 
 
 # test problem source files

@@ -7,23 +7,16 @@
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_AdvanceDt
-// Description :  Update the internal energy by the various cooling and heating mechanisms in Grackle
+// Description :  Update momentum and total energy by turbulence acceleration table
 //
-// Note        :  1. Invoke InvokeSolver()
-//                2. Invoked by EvolveLevel()
+// Note        :  1. Invoked by EvolveLevel()
 //
 // Parameter   :  lv           : Target refinement level
 //                TimeNew      : Target physical time to reach
-//                TimeOld      : Physical time before update
-//                               --> This function updates physical time from TimeOld to TimeNew
 //                dt           : Time interval to advance solution (can be different from TimeNew-TimeOld in COMOVING)
 //                SaveSg       : Sandglass to store the updated data
-//                OverlapMPI   : true --> Overlap MPI time with CPU/GPU computation
-//                Overlap_Sync : true  --> Advance the patches which cannot be overlapped with MPI communication
-//                               false --> Advance the patches which can    be overlapped with MPI communication
-//                               (useful only if "OverlapMPI == true")
 //-------------------------------------------------------------------------------------------------------
-void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, const double dt, const int SaveSg )
+void Turb_AdvanceDt( const int lv, const double TimeNew, const double dt, const int SaveSg )
 {
    const double dh = amr->dh[lv];
    const double _dh_table = TURB_TABLE_SIZE/BOX_SIZE;
@@ -31,6 +24,8 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
    const long didx_x = 1;
    const long didx_y = NPoint;
    const long didx_z = SQR( NPoint );
+   const double tfrac = (TimeNew - Turb->TimeLast) / Turb->dt;
+   const double one_m_tfrac = 1 - tfrac;
 
    if ( Turb == NULL )
       Aux_Error( ERROR_INFO, "Turb == NULL at rank %d!!\n", MPI_Rank );
@@ -52,7 +47,7 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
 //       compute acc by trilinear interpolation
          real weight_xL, weight_yL, weight_zL;
          real weight_xR, weight_yR, weight_zR;
-         real Acc[3] = {0, 0, 0};
+         real Acc[2][3] = {{0}};
 
          weight_xR = dx - (real)idx_x;
          weight_yR = dy - (real)idx_y;
@@ -61,16 +56,17 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
          weight_yL = 1.0 - weight_yR;
          weight_zL = 1.0 - weight_zR;
 
+         for (int t=0; t<2; t++)
          for (int d=0; d<3; d++)
          {
-            Acc[d] = TurbAccTable[d][ idx0                            ] * weight_xL * weight_yL * weight_zL +
-                     TurbAccTable[d][ idx0 + didx_x                   ] * weight_xR * weight_yL * weight_zL +
-                     TurbAccTable[d][ idx0          + didx_y          ] * weight_xL * weight_yR * weight_zL +
-                     TurbAccTable[d][ idx0                   + didx_z ] * weight_xL * weight_yL * weight_zR +
-                     TurbAccTable[d][ idx0 + didx_x + didx_y          ] * weight_xR * weight_yR * weight_zL +
-                     TurbAccTable[d][ idx0          + didx_y + didx_z ] * weight_xL * weight_yR * weight_zR +
-                     TurbAccTable[d][ idx0 + didx_x          + didx_z ] * weight_xR * weight_yL * weight_zR +
-                     TurbAccTable[d][ idx0 + didx_x + didx_y + didx_z ] * weight_xR * weight_yR * weight_zR;
+            Acc[t][d] = Turb->AccTable[t][ idx0                            ][d] * weight_xL * weight_yL * weight_zL +
+                        Turb->AccTable[t][ idx0 + didx_x                   ][d] * weight_xR * weight_yL * weight_zL +
+                        Turb->AccTable[t][ idx0          + didx_y          ][d] * weight_xL * weight_yR * weight_zL +
+                        Turb->AccTable[t][ idx0                   + didx_z ][d] * weight_xL * weight_yL * weight_zR +
+                        Turb->AccTable[t][ idx0 + didx_x + didx_y          ][d] * weight_xR * weight_yR * weight_zL +
+                        Turb->AccTable[t][ idx0          + didx_y + didx_z ][d] * weight_xL * weight_yR * weight_zR +
+                        Turb->AccTable[t][ idx0 + didx_x          + didx_z ][d] * weight_xR * weight_yL * weight_zR +
+                        Turb->AccTable[t][ idx0 + didx_x + didx_y + didx_z ][d] * weight_xR * weight_yR * weight_zR;
          }
 
          const double dens = amr->patch[SaveSg][lv][PID]->fluid[DENS][k][j][i];
@@ -78,9 +74,9 @@ void Turb_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, c
          const double vely = amr->patch[SaveSg][lv][PID]->fluid[MOMY][k][j][i] / dens;
          const double velz = amr->patch[SaveSg][lv][PID]->fluid[MOMZ][k][j][i] / dens;
 
-         const double dMomX = dens * dt * Acc[0];
-         const double dMomY = dens * dt * Acc[1];
-         const double dMomZ = dens * dt * Acc[2];
+         const double dMomX = dens * dt * ( one_m_tfrac*Acc[0][0] + tfrac*Acc[1][0] );
+         const double dMomY = dens * dt * ( one_m_tfrac*Acc[0][1] + tfrac*Acc[1][1] );
+         const double dMomZ = dens * dt * ( one_m_tfrac*Acc[0][2] + tfrac*Acc[1][2] );
          const double dE    = velx*dMomX + vely*dMomY + velz*dMomZ  + (dMomX*dMomX + dMomY*dMomY + dMomZ*dMomZ)/(2.0*dens);
 
          amr->patch[SaveSg][lv][PID]->fluid[MOMX][k][j][i] += (real)dMomX;

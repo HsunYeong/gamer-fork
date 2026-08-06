@@ -225,24 +225,24 @@ CR_DIFF_MIN_B                 0.0         # disable diffusion locally when B fie
 
 # turbulence (TURBULENCE)
 TURB_ACTIVATE                 1           # enable turbulence [1]
-TURB_VERBOSE                  1           # enable verbose output (0: no output, 1: standard output, 2: more output) [1]
+TURB_VERBOSE                  1           # enable verbose output [1]
 TURB_VEL                      0.2         # target turbulence velocity dispersion (in code unit) [0.2]
 TURB_AMPL_COEFF               0.15        # this will determine the OU variance [0.15]
 TURB_AMPL_FACTOR              1.0         # adjust this factor if dispersion measured is different from target velocity [1.0]
-TURB_KDRIV                    2           # driving wave number in units of 2*pi/L, determine the correlation time=BOXSIZE/(TURB_KDRIV*TURB_VEL) [2]
-TURB_KMIN                     1           # minimum wave number in units of 2*pi/L [1]
-TURB_KMAX                     3           # maximum wave number in units of 2*pi/L [3]
-TURB_ZETA                     0.5         # solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [0.5]
+TURB_KDRIV                    2.0         # driving wave number in units of 2*pi/L, determine the correlation time=BOXSIZE/(TURB_KDRIV*TURB_VEL) [2.0]
+TURB_KMIN                     1.0         # minimum wave number in units of 2*pi/L [1.0]
+TURB_KMAX                     3.0         # maximum wave number in units of 2*pi/L [3.0]
+TURB_ZETA                     1.0         # solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0]
 TURB_SPEC_FORM                1           # spectral form of the driving amplitude (0=constant, 1=parabolic, 2=power law) [1]
-TURB_POW                     -2.0         # power of power law k spectrum, only useful when TURB_SPEC_FORM=2 [-2.0]
+TURB_POW                     -1.666666667 # power law for energy power spectrum, only useful when TURB_SPEC_FORM=2 [-5.0/3.0]
 TURB_RSEED_INIT               123         # initial random seed, useless when restart without reset [123]
 TURB_UPDATE_STEP              10          # update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10]
-TURB_TABLE_SIZE               256         # resolution of turbulence table [256]
+TURB_TABLE_SIZE               128         # resolution of turbulence table [128]
 TURB_RESET                    0           # reset turbulence field when restart [0]
 
 
 # fluid solver in HYDRO (MODEL==HYDRO only)
-GAMMA                         1.01        # ratio of specific heats (i.e., adiabatic index) [5.0/3.0] ##EOS_GAMMA ONLY##
+GAMMA                         1.666666667 # ratio of specific heats (i.e., adiabatic index) [5.0/3.0] ##EOS_GAMMA ONLY##
 MOLECULAR_WEIGHT              1.0e4       # mean molecular weight [0.6]
 MU_NORM                      -1.0         # normalization of MOLECULAR_WEIGHT (<0=m_H, 0=amu, >0=input manually) [-1.0]
 ISO_TEMP                      1.0e4       # isothermal temperature in kelvin ##EOS_ISOTHERMAL ONLY##
@@ -386,7 +386,7 @@ OPT__OUTPUT_TEXT_LENGTH_INT   12          # string length of integer variables i
 OPT__OUTPUT_USER              0           # output the user-specified data -> edit "Output_User.cpp" [0]
 OPT__OUTPUT_PAR_MODE          0           # output the particle data: (0=off, 1=text-file, 2=C-binary) [0] ##PARTICLE ONLY##
 OPT__OUTPUT_PAR_MESH          1           # output the attributes of tracer particles mapped from mesh quantities -> edit "Input__Par_Mesh" [1] ##PARTICLE ONLY##
-OPT__OUTPUT_BASEPS            1           # output the base-level power spectrum [0]
+OPT__OUTPUT_BASEPS            0           # output the base-level power spectrum [0]
 OPT__OUTPUT_BASE              0           # only output the base-level data [0] ##OPT__OUTPUT_PART ONLY##
 OPT__OUTPUT_POT               1           # output gravitational potential [1] ##OPT__OUTPUT_TOTAL ONLY##
 OPT__OUTPUT_PAR_DENS          1           # output the particle or total mass density on grids:

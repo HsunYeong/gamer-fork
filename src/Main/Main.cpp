@@ -405,7 +405,6 @@ int     TURB_RSEED_INIT;
 int     TURB_UPDATE_STEP;
 int     TURB_TABLE_SIZE;
 bool    TURB_RESET;
-double *TurbAccTable[3];
 Turbulence_t *Turb = NULL;
 #endif
 
@@ -793,11 +792,6 @@ int main( int argc, char *argv[] )
       if ( ELBDM_RESCALE_MASS_ERROR  &&  Step % ELBDM_RESCALE_MASS_STEPS == 0 )
       TIMING_FUNC(   ELBDM_RescaleMassError(),        Timer_Main[4],   TIMER_ON   );
 #     endif // #if ( MODEL == ELBDM )
-
-#     ifdef TURBULENCE
-      if ( TURB_ACTIVATE )
-      TIMING_FUNC(   Turb_Aux_CheckUpdate(),        Timer_Main[4],   TIMER_ON   );
-#     endif
 //    ---------------------------------------------------------------------------------------------------
 
 

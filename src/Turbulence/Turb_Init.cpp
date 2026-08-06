@@ -27,15 +27,19 @@ void Turb_Init()
    Turb->dt       = Turb->Tdecay/TURB_UPDATE_STEP;
    Turb->RSeed    = TURB_RSEED_INIT;
 
-// check whether dt > hydro dt
-
    const double ZetaNorm = sqrt(3.0)/sqrt(1.0 - 2.0*TURB_ZETA + 3.0*SQR(TURB_ZETA));
    const double EnergyInputRate = CUBE(TURB_AMPL_COEFF*TURB_VEL)/BOX_SIZE;
+
+// OUvar ~ a_rms
    Turb->OUvar = sqrt( EnergyInputRate/Turb->Tdecay );
 
 // initialize k modes
    double kmin   = (TURB_KMIN - __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
    double kmax   = (TURB_KMAX + __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
+
+   if ( kmax < kmin )
+      Aux_Error( ERROR_INFO, "Turbulence: kmax ( %13.7e ) < kmin ( %13.7e )!!\n", kmax, kmin );
+
    double kmid   = 0.5*(kmin + kmax);
    int    Nmax   = 2*TURB_KMAX + 1;
    int    nmodes = 0;
@@ -77,10 +81,10 @@ void Turb_Init()
             amp = 1.0*kmin/kmag;
 //       parabolic
          else if ( TURB_SPEC_FORM == 1 )
-            amp = sqrt(fabs(-4 * SQR( (kmag - kmid)/(kmax - kmin) ) + 1))*kmid/kmag;
+            amp = sqrt( fabs(-4 * SQR( (kmag - kmid)/(kmax - kmin) ) + 1) )*kmid/kmag;
 //       power law
          else if ( TURB_SPEC_FORM == 2 )
-            amp = sqrt(pow(kmag/kmin, TURB_POW))*kmin/kmag;
+            amp = sqrt( pow(kmag/kmin, TURB_POW) )*kmin/kmag;
          else
             Aux_Error( ERROR_INFO, "Unknown TURB_SPEC_FORM = %d!!\n", TURB_SPEC_FORM );
 
@@ -116,7 +120,8 @@ void Turb_Init()
    }
 
 // initialize OU noise
-   if ( Turb->OUphase == NULL) Turb->OUphase = new double [6*nmodes];
+   for (int t = 0; t < 2; t++)
+      if ( Turb->OUphase[t] == NULL ) Turb->OUphase[t] = new double [6*nmodes];
 
 // when restart, load turbulence field
    if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
@@ -129,43 +134,59 @@ void Turb_Init()
    }
    else
    {
-//    Construct OU phase vector
+//    loop through two sets
+      for (int t = 0; t < 2 ; t++)
+      {
+//       construct OU phase vector
+         for (int n = 0; n < Turb->NMode; ++n)
+         {
+            double kk       = 0;
+            double k_dot_Nr = 0;
+            double k_dot_Ni = 0;
+            double Nr[3], Ni[3];
+            for (int d = 0; d < 3; ++d)
+            {
+//             get random number Nr and Ni
+               Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed, Turb->OUvar );
+
+               kk       += SQR( Turb->Kmode[d][n] );
+               k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
+               k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
+            }
+
+//          Helmholtz decomposition
+            for (int d = 0; d < 3; ++d)
+            {
+               Turb->OUphase[t][2*3*n+2*d  ] = TURB_ZETA*Nr[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+               Turb->OUphase[t][2*3*n+2*d+1] = TURB_ZETA*Ni[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+            }
+         } // for (int n = 0; n < Turb->NMode; ++n)
+      } // for t
+
+//    perform Ornstein-Uhlenbeck process to update OUphase[1]
+      double coeff1 = exp( -Turb->dt/Turb->Tdecay );
+      double coeff2 = sqrt( 1 - SQR(coeff1) );
       for (int n = 0; n < Turb->NMode; ++n)
       {
-         double kk       = 0;
-         double k_dot_Nr = 0;
-         double k_dot_Ni = 0;
-         double Nr[3], Ni[3];
          for (int d = 0; d < 3; ++d)
          {
-//          get random number Nr and Ni
-            Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed );
-            Nr[d] *= Turb->OUvar;
-            Ni[d] *= Turb->OUvar;
-
-            kk       += SQR( Turb->Kmode[d][n] );
-            k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
-            k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
+            Turb->OUphase[1][2*3*n+2*d  ] = coeff1 * Turb->OUphase[0][2*3*n+2*d  ] + coeff2 * Turb->OUphase[1][2*3*n+2*d  ];
+            Turb->OUphase[1][2*3*n+2*d+1] = coeff1 * Turb->OUphase[0][2*3*n+2*d+1] + coeff2 * Turb->OUphase[1][2*3*n+2*d+1];
          }
-
-//       Helmholtz decomposition
-         for (int d = 0; d < 3; ++d)
-         {
-            Turb->OUphase[2*3*n+2*d  ] = TURB_ZETA*Nr[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
-            Turb->OUphase[2*3*n+2*d+1] = TURB_ZETA*Ni[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
-         }
-      } // for (int n = 0; n < Turb->NMode; ++n)
+      }
    }
 
 // initialize acc table, store values on box corner
    const long NPoint = TURB_TABLE_SIZE + 1;
    const double dh   = BOX_SIZE/TURB_TABLE_SIZE;
 
+   Turb->AccTable[0].resize( CUBE(NPoint) );
+   Turb->AccTable[1].resize( CUBE(NPoint) );
+
    for (int d = 0; d < 3; ++d)
    {
-      TurbAccTable[d] = new double [ CUBE(NPoint) ];
-      Turb->Sin   [d] = new double [ NPoint*Turb->NMode ];
-      Turb->Cos   [d] = new double [ NPoint*Turb->NMode ];
+      Turb->Sin[d] = new double [ NPoint*Turb->NMode ];
+      Turb->Cos[d] = new double [ NPoint*Turb->NMode ];
    }
 
 #  pragma omp parallel for schedule( runtime )
@@ -194,40 +215,12 @@ void Turb_Init()
       }
    }
 
-// fillin table
-#  pragma omp parallel for schedule( runtime )
-   for (int k = 0; k < NPoint; k++)  {
-   for (int j = 0; j < NPoint; j++)  {
-   for (int i = 0; i < NPoint; i++)  {
-      double Acc[3] = {0, 0, 0};
-      long  idx = IDX321( i, j, k, NPoint, NPoint );
-
-      for (int n = 0; n < Turb->NMode; n++)
-      {
-         double sinx = Turb->Sin[0][ n*NPoint + i ];
-         double cosx = Turb->Cos[0][ n*NPoint + i ];
-         double siny = Turb->Sin[1][ n*NPoint + j ];
-         double cosy = Turb->Cos[1][ n*NPoint + j ];
-         double sinz = Turb->Sin[2][ n*NPoint + k ];
-         double cosz = Turb->Cos[2][ n*NPoint + k ];
-         double amp  = Turb->Amplitude[n];
-
-         double real = ( cosx*cosy - sinx*siny ) * cosz - ( sinx*cosy + cosx*siny ) * sinz;
-         double imag = ( cosy*sinz + siny*cosz ) * cosx + ( cosy*cosz - siny*sinz ) * sinx;
-
-         for (int d = 0; d < 3; d++)
-         {
-            Acc[d] += amp*( Turb->OUphase[2*3*n+2*d]*real - Turb->OUphase[2*3*n+2*d+1]*imag );
-         }
-      } // for (int n = 0; n < Turb->NMode; n++)
-      for (int d = 0; d < 3; d++)
-      {
-         TurbAccTable[d][idx] = Acc[d]*TURB_AMPL_FACTOR;
-      }
-   }}} // for i, j, k
+// fillin both tables
+   Turb_FillinTable(0);
 
 // set next update time
-   Turb->Time += Turb->dt;
+   Turb->TimeLast = Time[0];
+   Turb->TimeNext = Time[0] + Turb->dt;
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
@@ -239,25 +232,24 @@ void Turb_Init()
 //-------------------------------------------------------------------------------------------------------
 void Turb_End()
 {
-   if ( Turb != NULL ) delete Turb;
+   if ( !TURB_ACTIVATE )   return;
 
-   for (int d =0; d<3; d++)
-      if ( TurbAccTable[d] != NULL ) delete [] TurbAccTable[d];
+   if ( Turb != NULL ) delete Turb;
 
 } // FUNCTION : Turb_End
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  GetRNG
-// Description :  Get random number using Box–Muller transformation based on RSeed
+// Description :  Get random number using Box–Muller transformation based on RSeed, and multiply by OUvar
 //
 // Return      :  Gaussian random number pair
 //-------------------------------------------------------------------------------------------------------
-void Turb_GetRNG( double& a, double& b, int& Seed )
+void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar )
 {
    double r1 = Turb_ran1s(Seed);
    double r2 = Turb_ran1s(Seed);
-   a = sqrt(2.0*log(1.0/r1))*cos(2*M_PI*r2);
-   b = sqrt(2.0*log(1.0/r1))*sin(2*M_PI*r2);
+   a = OUvar*sqrt(2.0*log(1.0/r1))*cos(2*M_PI*r2);
+   b = OUvar*sqrt(2.0*log(1.0/r1))*sin(2*M_PI*r2);
 }
 
 //-------------------------------------------------------------------------------------------------------

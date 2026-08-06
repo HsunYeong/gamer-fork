@@ -613,10 +613,14 @@ void EvolveLevel( const int lv, const double dTime_FaLv )
       {
          const int SaveSg_Tur = SaveSg_Flu;   // save in the same FluSg
 
+//       check if TimeNew > Turb->TimeNext at lv 0
+         if ( lv == 0 )
+            TIMING_FUNC( Turb_CheckUpdate(TimeNew), Timer_Tur_Advance[lv], TIMER_ON );
+
          if ( OPT__VERBOSE  &&  MPI_Rank == 0 )
             Aux_Message( stdout, "   Lv %2d: Turb_AdvanceDt, counter = %4ld ... ", lv, AdvanceCounter[lv] );
 
-         TIMING_FUNC(   Turb_AdvanceDt( lv, TimeNew, TimeOld, dt_SubStep, SaveSg_Tur ),
+         TIMING_FUNC(   Turb_AdvanceDt( lv, TimeNew, dt_SubStep, SaveSg_Tur ),
                         Timer_Tur_Advance[lv],   TIMER_ON   );
 
          if ( OPT__VERBOSE  &&  MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
