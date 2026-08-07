@@ -393,7 +393,6 @@ double CR_DIFF_MIN_B;
 bool    TURB_ACTIVATE;
 bool    TURB_VERBOSE;
 double  TURB_VEL;
-double  TURB_AMPL_COEFF;
 double  TURB_AMPL_FACTOR;
 double  TURB_KDRIV;
 double  TURB_KMIN;

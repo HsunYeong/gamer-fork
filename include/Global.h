@@ -426,7 +426,6 @@ extern double *TurbAccTable[3];
 extern bool    TURB_ACTIVATE;
 extern bool    TURB_VERBOSE;
 extern double  TURB_VEL;
-extern double  TURB_AMPL_COEFF;
 extern double  TURB_AMPL_FACTOR;
 extern double  TURB_KDRIV;
 extern double  TURB_KMIN;

@@ -768,7 +768,6 @@ struct InputPara_t
    int    Turb_Activate;
    int    Turb_Verbose;
    double Turb_Vel;
-   double Turb_AmplCoeff;
    double Turb_AmplFactor;
    double Turb_Kdriv;
    double Turb_Kmin;

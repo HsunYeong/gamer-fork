@@ -316,7 +316,6 @@ void Init_Load_Parameter()
    ReadPara->Add( "TURB_ACTIVATE",              &TURB_ACTIVATE,                   true,            Useless_bool,  Useless_bool   );
    ReadPara->Add( "TURB_VERBOSE",               &TURB_VERBOSE,                    true,            Useless_bool,  Useless_bool   );
    ReadPara->Add( "TURB_VEL",                   &TURB_VEL,                        0.2,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "TURB_AMPL_COEFF",            &TURB_AMPL_COEFF,                 0.15,            0.0,           NoMax_double   );
    ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             0.0,           NoMax_double   );
    ReadPara->Add( "TURB_KDRIV",                 &TURB_KDRIV,                      2.0,             Eps_double,    NoMax_double   );
    ReadPara->Add( "TURB_KMIN",                  &TURB_KMIN,                       1.0,             1.0,           NoMax_double   );

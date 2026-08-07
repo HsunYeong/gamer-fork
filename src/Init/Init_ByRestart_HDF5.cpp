@@ -2346,7 +2346,6 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Turb_Activate",           &RS.Turb_Activate,           SID, TID, NonFatal, &RT.Turb_Activate,            1, NonFatal );
    LoadField( "Turb_Verbose",            &RS.Turb_Verbose,            SID, TID, NonFatal, &RT.Turb_Verbose,             1, NonFatal );
    LoadField( "Turb_Vel",                &RS.Turb_Vel,                SID, TID, NonFatal, &RT.Turb_Vel,                 1, NonFatal );
-   LoadField( "Turb_AmplCoeff",          &RS.Turb_AmplCoeff,          SID, TID, NonFatal, &RT.Turb_AmplCoeff,           1, NonFatal );
    LoadField( "Turb_AmplFactor",         &RS.Turb_AmplFactor,         SID, TID, NonFatal, &RT.Turb_AmplFactor,          1, NonFatal );
    LoadField( "Turb_Kdriv",              &RS.Turb_Kdriv,              SID, TID, NonFatal, &RT.Turb_Kdriv,               1, NonFatal );
    LoadField( "Turb_Kmin",               &RS.Turb_Kmin,               SID, TID, NonFatal, &RT.Turb_Kmin,                1, NonFatal );

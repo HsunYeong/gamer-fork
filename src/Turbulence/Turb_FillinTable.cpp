@@ -48,7 +48,7 @@ void Turb_FillinTable(int time_idx)
 
       for (int t=time_idx; t<2; t++)
       for (int d=0; d<3; d++)
-         Turb->AccTable[t][idx][d] = (real)Acc[t][d]*TURB_AMPL_FACTOR;
+         Turb->AccTable[t][idx][d] = (real)Acc[t][d];
 
    }}} // for i, j, k
 

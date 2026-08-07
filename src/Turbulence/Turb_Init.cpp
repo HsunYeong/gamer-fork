@@ -28,7 +28,7 @@ void Turb_Init()
    Turb->RSeed    = TURB_RSEED_INIT;
 
    const double ZetaNorm = sqrt(3.0)/sqrt(1.0 - 2.0*TURB_ZETA + 3.0*SQR(TURB_ZETA));
-   const double EnergyInputRate = CUBE(TURB_AMPL_COEFF*TURB_VEL)/BOX_SIZE;
+   const double EnergyInputRate = CUBE(TURB_AMPL_FACTOR*0.15*TURB_VEL)/BOX_SIZE;
 
 // OUvar ~ a_rms
    Turb->OUvar = sqrt( EnergyInputRate/Turb->Tdecay );
@@ -102,7 +102,6 @@ void Turb_Init()
    {
        Aux_Message( stdout, "Turbulence parameters:\n" );
        Aux_Message( stdout, "   velocity dispersion    = %13.7e:\n", TURB_VEL         );
-       Aux_Message( stdout, "   amplitute coefficient  = %13.7e:\n", TURB_AMPL_COEFF  );
        Aux_Message( stdout, "   amplitute factor       = %13.7e:\n", TURB_AMPL_FACTOR );
        Aux_Message( stdout, "   energy injection rate  = %13.7e:\n", EnergyInputRate  );
        Aux_Message( stdout, "   kmin                   = %13.7e:\n", kmin             );
