@@ -34,6 +34,9 @@ void Src_End()
 #  if ( MODEL == HYDRO )
    if ( SrcTerms.Deleptonization )
       Src_End_Deleptonization();
+
+   if ( SrcTerms.Turbulence )
+      Src_End_Turbulence();
 #  endif
 
 // users may not define Src_End_User_Ptr

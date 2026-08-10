@@ -35,6 +35,7 @@ void Src_Init()
    if (
 #       if ( MODEL == HYDRO )
         SrcTerms.Deleptonization  ||
+        SrcTerms.Turbulence       ||
 #       endif
         SrcTerms.User
       )
@@ -69,6 +70,14 @@ void Src_Init()
    SrcTerms.Dlep_AuxArrayDevPtr_Int   = NULL;
    SrcTerms.Dlep_Profile_DataDevPtr   = NULL;
    SrcTerms.Dlep_Profile_RadiusDevPtr = NULL;
+
+   SrcTerms.Turb_FuncPtr              = NULL;
+   SrcTerms.Turb_CPUPtr               = NULL;
+#  ifdef GPU
+   SrcTerms.Turb_GPUPtr               = NULL;
+#  endif
+   SrcTerms.Turb_AuxArrayDevPtr_Flt   = NULL;
+   SrcTerms.Turb_AuxArrayDevPtr_Int   = NULL;
 #  endif
 
    SrcTerms.User_FuncPtr              = NULL;
@@ -81,8 +90,8 @@ void Src_Init()
 
 
 // initialize all source terms
-// (1) deleptonization
 #  if ( MODEL == HYDRO )
+// (1) deleptonization
    if ( SrcTerms.Deleptonization )
    {
       Src_Init_Deleptonization();
@@ -94,9 +103,22 @@ void Src_Init()
       if ( SrcTerms.Dlep_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Dlep_GPUPtr  == NULL !!\n" );
 #     endif
    }
-#  endif
 
-// (2) user-specified source term
+// (2) turbulence
+   if ( SrcTerms.Turbulence )
+   {
+      Src_Init_Turbulence();
+
+//    check if the source-term function is set properly
+      if ( SrcTerms.Turb_FuncPtr == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Turb_FuncPtr == NULL !!\n" );
+      if ( SrcTerms.Turb_CPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Turb_CPUPtr  == NULL !!\n" );
+#     ifdef GPU
+      if ( SrcTerms.Turb_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Turb_GPUPtr  == NULL !!\n" );
+#     endif
+   }
+#  endif // if ( MODEL == HYDRO )
+
+// (3) user-specified source term
    if ( SrcTerms.User )
    {
       if ( Src_Init_User_Ptr == NULL )       Aux_Error( ERROR_INFO, "Src_Init_User_Ptr == NULL !!\n" );

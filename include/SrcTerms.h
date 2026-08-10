@@ -4,6 +4,7 @@
 
 
 #include "EoS.h"
+#include "Turbulence.h"
 
 // forward declaration of SrcTerms_t since it is required by SrcFunc_t
 // --> its content will be specified later
@@ -26,6 +27,7 @@ typedef void (*SrcFunc_t)( real fluid[], const real B[],
 //
 // Data Member :  Any                       : True if at least one of the source terms is activated
 //                Deleptonization           : SRC_DELEPTONIZATION
+//                Turbulence                : SRC_TURBULENCE
 //                User                      : SRC_USER
 //                BoxCenter                 : Simulation box center
 //                Unit_*                    : Code units
@@ -74,7 +76,17 @@ struct SrcTerms_t
    real    (*Dlep_Profile_DataDevPtr)[SRC_DLEP_PROF_NBINMAX];
    real     *Dlep_Profile_RadiusDevPtr;
    int       Dlep_Profile_NBin;
+
+// turbulence
+   SrcFunc_t Turb_FuncPtr;
+   SrcFunc_t Turb_CPUPtr;
+#  ifdef GPU
+   SrcFunc_t Turb_GPUPtr;
 #  endif
+   double   *Turb_AuxArrayDevPtr_Flt;
+   int      *Turb_AuxArrayDevPtr_Int;
+   Turbulence_t Turb;
+#  endif // if ( MODEL == HYDRO )
 
 // user-specified source term
    SrcFunc_t User_FuncPtr;

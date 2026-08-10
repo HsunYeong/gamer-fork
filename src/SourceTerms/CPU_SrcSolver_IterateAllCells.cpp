@@ -107,14 +107,18 @@ void CPU_SrcSolver_IterateAllCells(
 
 
 //       add all source terms one by one
-//       (1) deleptonization
 #        if ( MODEL == HYDRO )
+//       (1) deleptonization
          if ( SrcTerms.Deleptonization )
             SrcTerms.Dlep_FuncPtr( fluid, B, &SrcTerms, dt, dh, x, y, z, TimeNew, TimeOld, MinDens, MinPres, MinEint, PassiveFloor, &EoS,
                                    SrcTerms.Dlep_AuxArrayDevPtr_Flt, SrcTerms.Dlep_AuxArrayDevPtr_Int );
-#        endif
+//       (2) turbulence
+         if ( SrcTerms.Turbulence )
+            SrcTerms.Turb_FuncPtr( fluid, B, &SrcTerms, dt, dh, x, y, z, TimeNew, TimeOld, MinDens, MinPres, MinEint, PassiveFloor, &EoS,
+                                   SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
+#        endif // if ( MODEL == HYDRO )
 
-//       (2) user-defined
+//       (3) user-defined
          if ( SrcTerms.User )
             SrcTerms.User_FuncPtr( fluid, B, &SrcTerms, dt, dh, x, y, z, TimeNew, TimeOld, MinDens, MinPres, MinEint, PassiveFloor, &EoS,
                                    SrcTerms.User_AuxArrayDevPtr_Flt, SrcTerms.User_AuxArrayDevPtr_Int );

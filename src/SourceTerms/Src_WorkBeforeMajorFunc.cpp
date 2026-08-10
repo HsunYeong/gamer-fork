@@ -42,9 +42,14 @@ void Src_WorkBeforeMajorFunc( const int lv, const double TimeNew, const double T
    if ( SrcTerms.Deleptonization )
       Src_WorkBeforeMajorFunc_Deleptonization( lv, TimeNew, TimeOld, dt,
                                                Src_Dlep_AuxArray_Flt, Src_Dlep_AuxArray_Int );
+// (2) turbulence
+   if ( SrcTerms.Turbulence && lv == 0 )
+      Src_WorkBeforeMajorFunc_Turbulence     ( lv, TimeNew, TimeOld, dt,
+                                               Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int );
 #  endif
 
-// (2) user-specified source term
+
+// (3) user-specified source term
 // --> users may not define Src_WorkBeforeMajorFunc_User_Ptr
    if ( SrcTerms.User  &&  Src_WorkBeforeMajorFunc_User_Ptr != NULL )
       Src_WorkBeforeMajorFunc_User_Ptr       ( lv, TimeNew, TimeOld, dt,
