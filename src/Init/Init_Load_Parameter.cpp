@@ -326,6 +326,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "CR_DIFF_MIN_B",              &CR_DIFF_MIN_B,                   0.0,             NoMin_double,  NoMax_double   );
 #  endif
 
+
 // fluid solvers in HYDRO
 #  if ( MODEL == HYDRO )
 #  if ( EOS == EOS_GAMMA )

@@ -500,6 +500,8 @@ real  *h_SrcDlepProf_Radius                                        = NULL;
 real  *h_Turb_AccTable[2]                                          = { NULL, NULL };
 #endif
 
+
+
 // 4. GPU (device) global memory arrays
 // =======================================================================================================
 #ifdef GPU
