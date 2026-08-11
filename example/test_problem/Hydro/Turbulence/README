@@ -34,8 +34,8 @@ Default setup:
 
 Reference:
 ========================================
-1. Turbulence Generator: source code: TurbGen (https://github.com/chfeder/turbulence_generator)
-                         paper:       Federrath et al. (2010), A&A 512, A81 (https://doi.org/10.1051/0004-6361/200912437)
+1. Turbulence Generator: paper:       Federrath et al. (2010), A&A 512, A81 (https://doi.org/10.1051/0004-6361/200912437)
+                         source code: TurbGen (https://github.com/chfeder/turbulence_generator)
 
 2. Test problem inspired by Pakmor et al. (2026) (arXiv:2607.06660)
 

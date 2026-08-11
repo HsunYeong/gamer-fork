@@ -68,6 +68,11 @@ extern void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 // Function    :  Src_SetAuxArray_Turbulence
 // Description :  Set the auxiliary arrays AuxArray_Flt/Int[]
 //
+//                   AuxArray_Flt[0] = Turb->TimeLast
+//                   AuxArray_Flt[1] = Turb->dt
+//                   AuxArray_Flt[2] = 1/table_dh
+//                   AuxArray_Int[0] = NPoints
+//
 // Note        :  1. Invoked by Src_Init_Turbulence()
 //                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB defined in Macro.h (default = 5)
 //                3. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
@@ -86,7 +91,7 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
    AuxArray_Flt[1] = Turb->dt;
    AuxArray_Flt[2] = double(TURB_TABLE_SIZE)/BOX_SIZE;
 
-   AuxArray_Int[0] = TURB_TABLE_SIZE;
+   AuxArray_Int[0] = TURB_TABLE_SIZE + 1;
 
 } // FUNCTION : Src_SetAuxArray_Turbulence
 #endif // #ifndef __CUDACC__
@@ -99,11 +104,13 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Src_Turbulence
-// Description :  Major source-term function
+// Description :  Major source-term function, get turbulence accleration from AccTable interpolation,
+//                and update fluid conserved variables
 //
 // Note        :  1. Invoked by CPU/GPU_SrcSolver_IterateAllCells()
 //                2. See Src_SetAuxArray_Turbulence() for the values stored in AuxArray_Flt/Int[]
 //                3. Shared by both CPU and GPU
+//                4. Tables can be accessed by SrcTerms->Turb_AccTableDevPtr[]
 //
 // Parameter   :  fluid             : Fluid array storing both the input and updated values
 //                                    --> Including both active and passive variables
@@ -137,40 +144,42 @@ static void Src_Turbulence( real fluid[], const real B[],
    if ( AuxArray_Int == NULL )   printf( "ERROR : AuxArray_Int == NULL in %s !!\n", __FUNCTION__ );
 #  endif
 
-   const int    TableSize = AuxArray_Int[0];
-   const long   NPoint    = TableSize + 1;
+   const long   NPoint    = AuxArray_Int[0];
    const long   didx_x    = 1;
    const long   didx_y    = NPoint;
    const long   didx_z    = SQR( NPoint );
-   const real   _dh_table = (real)AuxArray_Flt[2];
+   const double _dh_table = AuxArray_Flt[2];
    const double TimeLast  = AuxArray_Flt[0];
    const double Turb_dt   = AuxArray_Flt[1];
+   const real   ONE       = (real)1.0;
    const real   tfrac     = (real)( ( TimeNew - TimeLast )/Turb_dt );
-   const real   tfrac0    = (real)1.0 - tfrac;
+   const real   tfrac0    = ONE - tfrac;
 
-   real dx    = (real)x * _dh_table;
-   real dy    = (real)y * _dh_table;
-   real dz    = (real)z * _dh_table;
-   int  idx_x = (int)FLOOR( dx );
-   int  idx_y = (int)FLOOR( dy );
-   int  idx_z = (int)FLOOR( dz );
+   real dx    = (real)(x * _dh_table);
+   real dy    = (real)(y * _dh_table);
+   real dz    = (real)(z * _dh_table);
+   int  idx_x = (int)( dx );
+   int  idx_y = (int)( dy );
+   int  idx_z = (int)( dz );
    dx        -= (real)idx_x;
    dy        -= (real)idx_y;
    dz        -= (real)idx_z;
 
    const long idx0 = long( idx_x*didx_x + idx_y*didx_y ) + (long)idx_z*didx_z;
 
+// trilinear interpolation
    const real weight_xR = dx;
    const real weight_yR = dy;
    const real weight_zR = dz;
-   const real weight_xL = (real)1.0 - weight_xR;
-   const real weight_yL = (real)1.0 - weight_yR;
-   const real weight_zL = (real)1.0 - weight_zR;
+   const real weight_xL = ONE - weight_xR;
+   const real weight_yL = ONE - weight_yR;
+   const real weight_zL = ONE - weight_zR;
 
    real Acc[2][3] = {{ (real)0.0 }};
 
    for (int t=0; t<2; t++)
    {
+//    get Acc from TimeLast and TimeNext with spatial interpolation
       const real *Table = SrcTerms->Turb_AccTableDevPtr[t];
 
       for (int d=0; d<3; d++)
@@ -186,13 +195,16 @@ static void Src_Turbulence( real fluid[], const real B[],
       }
    }
 
+// get Acc with temporal interpolation
+   const real AccX  = tfrac0*Acc[0][0] + tfrac*Acc[1][0];
+   const real AccY  = tfrac0*Acc[0][1] + tfrac*Acc[1][1];
+   const real AccZ  = tfrac0*Acc[0][2] + tfrac*Acc[1][2];
+
+// update fluid conserved variables
    const real Dens  = fluid[DENS];
    const real VelX  = fluid[MOMX] / Dens;
    const real VelY  = fluid[MOMY] / Dens;
    const real VelZ  = fluid[MOMZ] / Dens;
-   const real AccX  = tfrac0*Acc[0][0] + tfrac*Acc[1][0];
-   const real AccY  = tfrac0*Acc[0][1] + tfrac*Acc[1][1];
-   const real AccZ  = tfrac0*Acc[0][2] + tfrac*Acc[1][2];
    const real dMomX = Dens*dt*AccX;
    const real dMomY = Dens*dt*AccY;
    const real dMomZ = Dens*dt*AccZ;

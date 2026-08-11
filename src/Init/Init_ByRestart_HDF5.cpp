@@ -2286,7 +2286,6 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Src_GPU_NPGroup",         &RS.Src_GPU_NPGroup,         SID, TID, NonFatal, &RT.Src_GPU_NPGroup,          1, NonFatal );
 // turbulence
 #  if ( MODEL == HYDRO )
-   LoadField( "Turb_Verbose",            &RS.Turb_Verbose,            SID, TID, NonFatal, &RT.Turb_Verbose,             1, NonFatal );
    LoadField( "Turb_Vel",                &RS.Turb_Vel,                SID, TID, NonFatal, &RT.Turb_Vel,                 1, NonFatal );
    LoadField( "Turb_AmplFactor",         &RS.Turb_AmplFactor,         SID, TID, NonFatal, &RT.Turb_AmplFactor,          1, NonFatal );
    LoadField( "Turb_Kdriv",              &RS.Turb_Kdriv,              SID, TID, NonFatal, &RT.Turb_Kdriv,               1, NonFatal );

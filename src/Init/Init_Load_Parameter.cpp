@@ -249,7 +249,6 @@ void Init_Load_Parameter()
    ReadPara->Add( "SRC_GPU_NPGROUP",            &SRC_GPU_NPGROUP,                -1,               NoMin_int,     NoMax_int      );
 // turbulence
 #  if ( MODEL == HYDRO )
-   ReadPara->Add( "TURB_VERBOSE",               &TURB_VERBOSE,                    true,            Useless_bool,  Useless_bool   );
    ReadPara->Add( "TURB_VEL",                   &TURB_VEL,                        0.2,             Eps_double,    NoMax_double   );
    ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             0.0,           NoMax_double   );
    ReadPara->Add( "TURB_KDRIV",                 &TURB_KDRIV,                      2.0,             Eps_double,    NoMax_double   );

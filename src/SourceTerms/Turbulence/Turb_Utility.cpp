@@ -7,10 +7,25 @@ void   Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 void   Turb_FillinTable( int IdxTable );
 double Turb_ran1s( int& Seed );
 
+/********************************************************************************************************
+Turbulence structure:
+
+1. Stores turbulence Fourier modes, amplitude, random phases, and sin, cos Fourier basis
+
+2. Use Helmholtz decomposition to separate compressive and solenoial components
+
+3. Update random phases by Ornstein-Uhlenbeck process
+
+4. References: Federrath et al. (2010), A&A 512, A81 (https://doi.org/10.1051/0004-6361/200912437)
+               TurbGen (https://github.com/chfeder/turbulence_generator)
+
+*********************************************************************************************************/
+
+
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_Init
-// Description :  Initialize turbulence data structure, parameters, kmodes, OU phases
+// Description :  Initialize turbulence data structure
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
 //                2. Don't fill in AccTable here since global arrays are not yet initialized.
@@ -103,7 +118,7 @@ void Turb_Init()
    } // for i, j, k
 
 // print turbulence information
-   if ( TURB_VERBOSE && MPI_Rank == 0 )
+   if ( MPI_Rank == 0 )
    {
        Aux_Message( stdout, "Turbulence parameters:\n" );
        Aux_Message( stdout, "   velocity dispersion    = %13.7e:\n", TURB_VEL         );

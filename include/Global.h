@@ -367,7 +367,6 @@ extern double     Src_User_AuxArray_Flt[SRC_NAUX_USER];
 extern int        Src_User_AuxArray_Int[SRC_NAUX_USER];
 // turbulence
 #if ( MODEL == HYDRO )
-extern bool    TURB_VERBOSE;
 extern double  TURB_VEL;
 extern double  TURB_AMPL_FACTOR;
 extern double  TURB_KDRIV;

@@ -2822,7 +2822,6 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.Src_GPU_NPGroup         = SRC_GPU_NPGROUP;
 // turbulence
 #  if ( MODEL == HYDRO )
-   InputPara.Turb_Verbose      = TURB_VERBOSE;
    InputPara.Turb_Vel          = TURB_VEL;
    InputPara.Turb_AmplFactor   = TURB_AMPL_FACTOR;
    InputPara.Turb_Kdriv        = TURB_KDRIV;
@@ -3942,7 +3941,6 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
    H5Tinsert( H5_TypeID, "Src_GPU_NPGroup",         HOFFSET(InputPara_t,Src_GPU_NPGroup        ), H5T_NATIVE_INT              );
 // turbulence
 #  if ( MODEL == HYDRO )
-   H5Tinsert( H5_TypeID, "Turb_Verbose",           HOFFSET(InputPara_t,Turb_Verbose           ), H5T_NATIVE_INT               );
    H5Tinsert( H5_TypeID, "Turb_Vel",               HOFFSET(InputPara_t,Turb_Vel               ), H5T_NATIVE_DOUBLE            );
    H5Tinsert( H5_TypeID, "Turb_AmplFactor",        HOFFSET(InputPara_t,Turb_AmplFactor        ), H5T_NATIVE_DOUBLE            );
    H5Tinsert( H5_TypeID, "Turb_Kdriv",             HOFFSET(InputPara_t,Turb_Kdriv             ), H5T_NATIVE_DOUBLE            );

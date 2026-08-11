@@ -706,7 +706,6 @@ struct InputPara_t
    int    Src_GPU_NPGroup;
 // turbulence
 # if ( MODEL == HYDRO )
-   int    Turb_Verbose;
    double Turb_Vel;
    double Turb_AmplFactor;
    double Turb_Kdriv;

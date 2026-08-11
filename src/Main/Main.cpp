@@ -346,7 +346,6 @@ double     Src_User_AuxArray_Flt[SRC_NAUX_USER];
 int        Src_User_AuxArray_Int[SRC_NAUX_USER];
 // turbulence
 #if ( MODEL == HYDRO )
-bool       TURB_VERBOSE;
 double     TURB_VEL;
 double     TURB_AMPL_FACTOR;
 double     TURB_KDRIV;
