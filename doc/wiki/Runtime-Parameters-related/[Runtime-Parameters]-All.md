@@ -471,7 +471,6 @@ For variables with `Default/Min/Max` labeled as `Depend`, click the parameter na
 | TURB_TABLE_SIZE                                                                                      |             128 |               0 |            None | turbulence: resolution of turbulence table [128] |
 | TURB_UPDATE_STEP                                                                                     |              10 |               1 |            None | turbulence: update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10] |
 | TURB_VEL                                                                                             |             0.2 | 2.22507386e-308 |            None | turbulence: target turbulence velocity dispersion (in code unit) [0.2] |
-| TURB_VERBOSE                                                                                         |               1 |            None |            None | turbulence: enable verbose output [1] |
 | TURB_ZETA                                                                                            |             1.0 |             0.0 |             1.0 | turbulence: solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0] |
 
 <a name="U"></a>
