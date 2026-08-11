@@ -170,6 +170,7 @@ OPT__LB_EXCHANGE_FATHER       1           # exchange all cells of all father pat
 
 # source terms
 SRC_DELEPTONIZATION           0           # deleptonization (for simulations of stellar core collapse) [0] ##HYDRO ONLY##
+SRC_TURBULENCE                1           # turbulence [0] ##HYDRO ONLY##
 SRC_USER                      0           # user-defined source terms -> edit "Src_User.cpp" [0]
 SRC_GPU_NPGROUP              -1           # number of patch groups sent into the CPU/GPU source-term solver (<=0=auto) [-1]
 TURB_VERBOSE                  1           # turbulence: enable verbose output [1]
@@ -237,7 +238,7 @@ CR_DIFF_MIN_B                 0.0         # disable diffusion locally when B fie
 
 
 # fluid solver in HYDRO (MODEL==HYDRO only)
-GAMMA                         1.666666667 # ratio of specific heats (i.e., adiabatic index) [5.0/3.0] ##EOS_GAMMA ONLY##
+GAMMA                         1.01        # ratio of specific heats (i.e., adiabatic index) [5.0/3.0] ##EOS_GAMMA ONLY##
 MOLECULAR_WEIGHT              1.0e4       # mean molecular weight [0.6]
 MU_NORM                      -1.0         # normalization of MOLECULAR_WEIGHT (<0=m_H, 0=amu, >0=input manually) [-1.0]
 ISO_TEMP                      1.0e4       # isothermal temperature in kelvin ##EOS_ISOTHERMAL ONLY##
