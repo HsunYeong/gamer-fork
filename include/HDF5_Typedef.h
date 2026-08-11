@@ -154,7 +154,6 @@ struct Makefile_t
    int LibYTJupyter;
 #  endif
    int SupportGrackle;
-   int Turbulence;
    int RandomNumber;
 
 #  ifdef GRAVITY
@@ -370,6 +369,7 @@ struct SymConst_t
    int    Src_NAuxDlep;
    int    Src_DlepProfNVar;
    int    Src_DlepProfNBinMax;
+   int    Src_NAuxTurb;
 #  endif
    int    Src_NAuxUser;
 
@@ -701,8 +701,25 @@ struct InputPara_t
 
 // source terms
    int    Src_Deleptonization;
+   int    Src_Turbulence;
    int    Src_User;
    int    Src_GPU_NPGroup;
+// turbulence
+# if ( MODEL == HYDRO )
+   int    Turb_Verbose;
+   double Turb_Vel;
+   double Turb_AmplFactor;
+   double Turb_Kdriv;
+   double Turb_Kmin;
+   double Turb_Kmax;
+   double Turb_Zeta;
+   int    Turb_SpecForm;
+   double Turb_Pow;
+   int    Turb_RSeedInit;
+   int    Turb_UpdateStep;
+   int    Turb_TableSize;
+   int    Turb_Reset;
+#  endif
 
 // Grackle
 #  ifdef SUPPORT_GRACKLE
@@ -762,22 +779,6 @@ struct InputPara_t
    double CR_Diffusion_PerpCoeff;
    double CR_Diffusion_MinB;
 #  endif
-
-// Turbulence
-   int    Turb_Activate;
-   int    Turb_Verbose;
-   double Turb_Vel;
-   double Turb_AmplFactor;
-   double Turb_Kdriv;
-   double Turb_Kmin;
-   double Turb_Kmax;
-   double Turb_Zeta;
-   int    Turb_SpecForm;
-   double Turb_Pow;
-   int    Turb_RSeedInit;
-   int    Turb_UpdateStep;
-   int    Turb_TableSize;
-   int    Turb_Reset;
 
 // initialization
    int    Opt__Init;

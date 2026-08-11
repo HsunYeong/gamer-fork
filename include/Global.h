@@ -9,8 +9,9 @@
 #include <libyt.h>
 #endif
 #include "GatherTree.h"
+#if ( MODEL == HYDRO )
 #include "Turbulence.h"
-
+#endif
 
 // **********************************************************************************************************
 // ** Variables in CAPITAL letters are loaded from the parameter file "Input__Parameter". Please refer to  **
@@ -364,6 +365,23 @@ extern int        Src_Turb_AuxArray_Int[SRC_NAUX_TURB];
 #endif
 extern double     Src_User_AuxArray_Flt[SRC_NAUX_USER];
 extern int        Src_User_AuxArray_Int[SRC_NAUX_USER];
+// turbulence
+#if ( MODEL == HYDRO )
+extern bool    TURB_VERBOSE;
+extern double  TURB_VEL;
+extern double  TURB_AMPL_FACTOR;
+extern double  TURB_KDRIV;
+extern double  TURB_KMIN;
+extern double  TURB_KMAX;
+extern double  TURB_ZETA;
+extern int     TURB_SPEC_FORM;
+extern double  TURB_POW;
+extern int     TURB_RSEED_INIT;
+extern int     TURB_UPDATE_STEP;
+extern int     TURB_TABLE_SIZE;
+extern bool    TURB_RESET;
+extern Turbulence_t *Turb;
+#endif
 
 
 // (2-11) user-defined derived fields
@@ -419,23 +437,6 @@ extern double DT__CR_DIFFUSION;
 extern double CR_DIFF_MIN_B;
 #endif
 
-
-// (2-15) turbulence
-// =======================================================================================================
-extern bool    TURB_VERBOSE;
-extern double  TURB_VEL;
-extern double  TURB_AMPL_FACTOR;
-extern double  TURB_KDRIV;
-extern double  TURB_KMIN;
-extern double  TURB_KMAX;
-extern double  TURB_ZETA;
-extern int     TURB_SPEC_FORM;
-extern double  TURB_POW;
-extern int     TURB_RSEED_INIT;
-extern int     TURB_UPDATE_STEP;
-extern int     TURB_TABLE_SIZE;
-extern bool    TURB_RESET;
-extern Turbulence_t *Turb;
 
 
 

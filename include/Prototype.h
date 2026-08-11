@@ -883,12 +883,5 @@ void EoS_End();
 #endif
 
 
-// turbulence
-void Turb_Init();
-void Turb_End();
-void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
-void Turb_FillinTable( int IdxTable );
-double Turb_ran1s( int& Seed );
-
 
 #endif // __PROTOTYPE_H__

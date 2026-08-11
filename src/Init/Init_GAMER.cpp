@@ -386,5 +386,4 @@ void Init_GAMER( int *argc, char ***argv )
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", "Initializing source-term fields" );
    } // if ( OPT__INIT != INIT_BY_RESTART )
 
-
 } // FUNCTION : Init_GAMER

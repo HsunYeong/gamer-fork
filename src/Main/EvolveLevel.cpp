@@ -8,7 +8,6 @@ extern Timer_t *Timer_Src_Advance[NLEVEL];
 extern Timer_t *Timer_Che_Advance[NLEVEL];
 extern Timer_t *Timer_SF         [NLEVEL];
 extern Timer_t *Timer_FB_Advance [NLEVEL];
-extern Timer_t *Timer_Tur_Advance[NLEVEL];
 extern Timer_t *Timer_FixUp      [NLEVEL];
 extern Timer_t *Timer_Flag       [NLEVEL];
 extern Timer_t *Timer_Refine     [NLEVEL];
@@ -603,7 +602,6 @@ void EvolveLevel( const int lv, const double dTime_FaLv )
          if ( OPT__VERBOSE  &&  MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
       }
 #     endif // #ifdef FEEDBACK
-
 
 // ===============================================================================================
 

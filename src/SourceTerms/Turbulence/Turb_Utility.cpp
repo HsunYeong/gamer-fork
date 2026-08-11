@@ -1,15 +1,24 @@
 #include "GAMER.h"
 
+#if ( MODEL == HYDRO )
+void   Turb_Init();
+void   Turb_End();
+void   Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
+void   Turb_FillinTable( int IdxTable );
+double Turb_ran1s( int& Seed );
+
+
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_Init
-// Description :  Initialize turbulence parameters, kmodes, OU phases
+// Description :  Initialize turbulence data structure, parameters, kmodes, OU phases
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
 //                2. Don't fill in AccTable here since global arrays are not yet initialized.
+//                3. When restart, load OU phases, times, and random seed.
 //
 // Parameter   :  None
 //
-// Return      :  None
+// Return      :  Turb
 //-------------------------------------------------------------------------------------------------------
 void Turb_Init()
 {
@@ -215,6 +224,7 @@ void Turb_Init()
 
 } // FUNCTION : Turb_Init
 
+
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_End
 // Description :  Free memories
@@ -225,8 +235,56 @@ void Turb_End()
 
 } // FUNCTION : Turb_End
 
+
 //-------------------------------------------------------------------------------------------------------
-// Function    :  GetRNG
+// Function    :  Turb_FillinTable
+// Description :  Fillin h_Turb_AccTable host array
+//
+// Note        :  1. Invoked by Turb_Init(), Turb_CheckUpdate()
+//
+// Parameter   :  IdxTable : Turbulence table index-> IdxLast or IdxNext
+//
+// Return      :  h_Turb_AccTable
+//-------------------------------------------------------------------------------------------------------
+void Turb_FillinTable( int IdxTable )
+{
+   const long NPoint = TURB_TABLE_SIZE + 1;
+
+#  pragma omp parallel for schedule( runtime )
+   for (int k = 0; k < NPoint; k++)  {
+   for (int j = 0; j < NPoint; j++)  {
+   for (int i = 0; i < NPoint; i++)  {
+      double Acc[3] = {0};
+      long  idx = IDX321( i, j, k, NPoint, NPoint );
+
+      for (int n = 0; n < Turb->NMode; n++)
+      {
+         double sinx = Turb->Sin[0][ n*NPoint + i ];
+         double cosx = Turb->Cos[0][ n*NPoint + i ];
+         double siny = Turb->Sin[1][ n*NPoint + j ];
+         double cosy = Turb->Cos[1][ n*NPoint + j ];
+         double sinz = Turb->Sin[2][ n*NPoint + k ];
+         double cosz = Turb->Cos[2][ n*NPoint + k ];
+         double amp  = Turb->Amplitude[n];
+
+         double real = ( cosx*cosy - sinx*siny ) * cosz - ( sinx*cosy + cosx*siny ) * sinz;
+         double imag = ( cosy*sinz + siny*cosz ) * cosx + ( cosy*cosz - siny*sinz ) * sinx;
+
+         for (int d=0; d<3; d++)
+            Acc[d] += amp*( Turb->OUphase[IdxTable][2*3*n+2*d]*real - Turb->OUphase[IdxTable][2*3*n+2*d+1]*imag );
+
+      } // for (int n = 0; n < Turb->NMode; n++)
+
+      for (int d=0; d<3; d++)
+         h_Turb_AccTable[IdxTable][3*idx + d] = (real)Acc[d];
+
+   }}} // for i, j, k
+
+} // FUNCTION : Turb_FillinTable
+
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  Turb_GetRNG
 // Description :  Get random number using Box–Muller transformation based on RSeed, and multiply by OUvar
 //
 // Return      :  Gaussian random number pair
@@ -239,8 +297,9 @@ void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar )
    b = OUvar*sqrt(2.0*log(1.0/r1))*sin(2*M_PI*r2);
 }
 
+
 //-------------------------------------------------------------------------------------------------------
-// Function    :  ran1s
+// Function    :  Turb_ran1s
 // Description :  Park–Miller random number generator, and update random seed
 //
 // Return      :  uniformly distributed random number in [0,1[
@@ -259,3 +318,4 @@ double Turb_ran1s(int& Seed)
 }
 
 
+#endif // if ( MODEL == HYDRO )

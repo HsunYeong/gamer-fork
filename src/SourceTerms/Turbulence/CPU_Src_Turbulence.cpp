@@ -28,10 +28,12 @@ void Src_SetCPUFunc_Turbulence( SrcFunc_t & );
 void Src_SetGPUFunc_Turbulence( SrcFunc_t & );
 #endif
 void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
-                                    double *&DevPtr_Flt, int *&DevPtr_Int );
+                                      double *&DevPtr_Flt, int *&DevPtr_Int );
 void Src_PassData2GPU_Turbulence( int IdxTable );
-void Turb_Init();
-void Turb_End();
+extern void Turb_Init();
+extern void Turb_End();
+extern void Turb_FillinTable( int IdxTable );
+extern void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 #endif
 
 
@@ -313,8 +315,6 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 // update turb acc table
    if ( hasUpdate > 0 )
    {
-      Src_SetAuxArray_Turbulence( AuxArray_Flt, AuxArray_Int );
-
 //    if there is only one OU update
       if ( hasUpdate == 1 )
       {
@@ -326,8 +326,9 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
       } // if ( hasUpdate == 1 )
       else
       {
-//       fillin both tables
+//       fill in both tables
 //       this should be prevented in general by choosing a large enough turbulence dt
+//       small turbulence dt will be block during Mis_GetTimeStep()
          Turb_FillinTable( Turb->IdxLast );
          Turb_FillinTable( Turb->IdxNext );
 #        ifdef GPU
@@ -337,6 +338,8 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 
       } // else
 
+//    update AuxArray
+      Src_SetAuxArray_Turbulence( AuxArray_Flt, AuxArray_Int );
 #     ifdef GPU
       Src_SetConstMemory_Turbulence( AuxArray_Flt, AuxArray_Int,
                                      SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );

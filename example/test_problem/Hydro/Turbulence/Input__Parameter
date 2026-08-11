@@ -172,6 +172,19 @@ OPT__LB_EXCHANGE_FATHER       1           # exchange all cells of all father pat
 SRC_DELEPTONIZATION           0           # deleptonization (for simulations of stellar core collapse) [0] ##HYDRO ONLY##
 SRC_USER                      0           # user-defined source terms -> edit "Src_User.cpp" [0]
 SRC_GPU_NPGROUP              -1           # number of patch groups sent into the CPU/GPU source-term solver (<=0=auto) [-1]
+TURB_VERBOSE                  1           # turbulence: enable verbose output [1]
+TURB_VEL                      0.2         # turbulence: target turbulence velocity dispersion (in code unit) [0.2]
+TURB_AMPL_FACTOR              1.0         # turbulence: adjust this factor if dispersion measured is different from target velocity [1.0]
+TURB_KDRIV                    2.0         # turbulence: driving wave number in units of 2*pi/L, determine the correlation time=BOXSIZE/(TURB_KDRIV*TURB_VEL) [2.0]
+TURB_KMIN                     1.0         # turbulence: minimum wave number in units of 2*pi/L [1.0]
+TURB_KMAX                     3.0         # turbulence: maximum wave number in units of 2*pi/L [3.0]
+TURB_ZETA                     1.0         # turbulence: solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0]
+TURB_SPEC_FORM                1           # turbulence: spectral form of the driving amplitude (0=constant, 1=parabolic, 2=power law) [1]
+TURB_POW                     -1.666666667 # turbulence: power law for energy power spectrum, only useful when TURB_SPEC_FORM=2 [-5.0/3.0]
+TURB_RSEED_INIT               123         # turbulence: initial random seed, useless when restart without reset [123]
+TURB_UPDATE_STEP              10          # turbulence: update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10]
+TURB_TABLE_SIZE               128         # turbulence: resolution of turbulence table [128]
+TURB_RESET                    0           # turbulence: reset turbulence field when restart [0]
 
 
 # Grackle library for chemistry and radiative cooling (SUPPORT_GRACKLE only)
@@ -221,23 +234,6 @@ GAMMA_CR                      1.333333333 # effective adiabatic index of cosmic 
 CR_DIFF_PARA                  0.05        # cosmic-ray diffusion coefficients parallel/perpendicular to the
 CR_DIFF_PERP                  0.0         # magnetic field [0.0] ##CR_DIFFUSION only##
 CR_DIFF_MIN_B                 0.0         # disable diffusion locally when B field amplitude is smaller than this threshold (<=0=off) [0.0] ##CR_DIFFUSION only##
-
-
-# turbulence (TURBULENCE)
-TURB_ACTIVATE                 1           # enable turbulence [1]
-TURB_VERBOSE                  1           # enable verbose output [1]
-TURB_VEL                      0.2         # target turbulence velocity dispersion (in code unit) [0.2]
-TURB_AMPL_FACTOR              1.0         # adjust this factor if dispersion measured is different from target velocity [1.0]
-TURB_KDRIV                    2.0         # driving wave number in units of 2*pi/L, determine the correlation time=BOXSIZE/(TURB_KDRIV*TURB_VEL) [2.0]
-TURB_KMIN                     1.0         # minimum wave number in units of 2*pi/L [1.0]
-TURB_KMAX                     3.0         # maximum wave number in units of 2*pi/L [3.0]
-TURB_ZETA                     1.0         # solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0]
-TURB_SPEC_FORM                1           # spectral form of the driving amplitude (0=constant, 1=parabolic, 2=power law) [1]
-TURB_POW                     -1.666666667 # power law for energy power spectrum, only useful when TURB_SPEC_FORM=2 [-5.0/3.0]
-TURB_RSEED_INIT               123         # initial random seed, useless when restart without reset [123]
-TURB_UPDATE_STEP              10          # update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10]
-TURB_TABLE_SIZE               128         # resolution of turbulence table [128]
-TURB_RESET                    0           # reset turbulence field when restart [0]
 
 
 # fluid solver in HYDRO (MODEL==HYDRO only)
