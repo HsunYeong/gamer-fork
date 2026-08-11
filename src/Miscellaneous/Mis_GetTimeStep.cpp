@@ -311,11 +311,9 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 
 
 // 2.7 turbulence
-#ifdef TURBULENCE
-   if ( TURB_ACTIVATE && lv == 0 && dTime_min > Turb->dt )
+   if ( SrcTerms.Turbulence && lv == 0 && dTime_min > Turb->dt )
       Aux_Error( ERROR_INFO, "dTime_min at lv 0 (%20.14e) > Turb->dt (%20.14e), "
                              "please adjust TURB_UPDATE_STEP in Input__Parameter !!\n", dTime_min, Turb->dt );
-#endif
 
 // 3. record the dt info
 // =============================================================================================================

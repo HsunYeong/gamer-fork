@@ -2342,7 +2342,6 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
 #  endif // #ifdef COSMIC_RAY
 
 // Turbulence
-#  ifdef TURBULENCE
    LoadField( "Turb_Activate",           &RS.Turb_Activate,           SID, TID, NonFatal, &RT.Turb_Activate,            1, NonFatal );
    LoadField( "Turb_Verbose",            &RS.Turb_Verbose,            SID, TID, NonFatal, &RT.Turb_Verbose,             1, NonFatal );
    LoadField( "Turb_Vel",                &RS.Turb_Vel,                SID, TID, NonFatal, &RT.Turb_Vel,                 1, NonFatal );
@@ -2357,7 +2356,6 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Turb_UpdateStep",         &RS.Turb_UpdateStep,         SID, TID, NonFatal, &RT.Turb_UpdateStep,          1, NonFatal );
    LoadField( "Turb_TableSize",          &RS.Turb_TableSize,          SID, TID, NonFatal, &RT.Turb_TableSize,           1, NonFatal );
    LoadField( "Turb_Reset",              &RS.Turb_Reset,              SID, TID, NonFatal, &RT.Turb_Reset,               1, NonFatal );
-#  endif
 
 // initialization
    LoadField( "Opt__Init",               &RS.Opt__Init,               SID, TID, NonFatal, &RT.Opt__Init,                1, NonFatal );

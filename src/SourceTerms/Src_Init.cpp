@@ -5,6 +5,7 @@
 // prototypes of built-in source terms
 #if ( MODEL == HYDRO )
 void Src_Init_Deleptonization();
+void Src_Init_Turbulence();
 #endif
 
 // this function pointer can be set by a test problem initializer for a user-specified source term
@@ -78,6 +79,8 @@ void Src_Init()
 #  endif
    SrcTerms.Turb_AuxArrayDevPtr_Flt   = NULL;
    SrcTerms.Turb_AuxArrayDevPtr_Int   = NULL;
+   SrcTerms.Turb_AccTableDevPtr[0]    = NULL;
+   SrcTerms.Turb_AccTableDevPtr[1]    = NULL;
 #  endif
 
    SrcTerms.User_FuncPtr              = NULL;

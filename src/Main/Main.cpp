@@ -339,11 +339,28 @@ SrcTerms_t SrcTerms;
 #if ( MODEL == HYDRO )
 double     Src_Dlep_AuxArray_Flt[SRC_NAUX_DLEP];
 int        Src_Dlep_AuxArray_Int[SRC_NAUX_DLEP];
-double     Src_Turb_AuxArray_Flt[SRC_NAUX_DLEP];
-int        Src_Turb_AuxArray_Int[SRC_NAUX_DLEP];
+double     Src_Turb_AuxArray_Flt[SRC_NAUX_TURB];
+int        Src_Turb_AuxArray_Int[SRC_NAUX_TURB];
 #endif
 double     Src_User_AuxArray_Flt[SRC_NAUX_USER];
 int        Src_User_AuxArray_Int[SRC_NAUX_USER];
+// turbulence
+#if ( MODEL == HYDRO )
+bool       TURB_VERBOSE;
+double     TURB_VEL;
+double     TURB_AMPL_FACTOR;
+double     TURB_KDRIV;
+double     TURB_KMIN;
+double     TURB_KMAX;
+double     TURB_ZETA;
+int        TURB_SPEC_FORM;
+double     TURB_POW;
+int        TURB_RSEED_INIT;
+int        TURB_UPDATE_STEP;
+int        TURB_TABLE_SIZE;
+bool       TURB_RESET;
+Turbulence_t *Turb = NULL;
+#endif
 
 // (2-11) user-defined derived fields
 bool OPT__OUTPUT_USER_FIELD;
@@ -387,25 +404,6 @@ double CR_DIFF_PARA;
 double CR_DIFF_PERP;
 double DT__CR_DIFFUSION;
 double CR_DIFF_MIN_B;
-#endif
-
-
-// (2-16) turbulence
-#ifdef TURBULENCE
-bool    TURB_ACTIVATE;
-bool    TURB_VERBOSE;
-double  TURB_VEL;
-double  TURB_AMPL_FACTOR;
-double  TURB_KDRIV;
-double  TURB_KMIN;
-double  TURB_KMAX;
-double  TURB_ZETA;
-int     TURB_SPEC_FORM;
-double  TURB_POW;
-int     TURB_RSEED_INIT;
-int     TURB_UPDATE_STEP;
-int     TURB_TABLE_SIZE;
-bool    TURB_RESET;
 #endif
 
 
@@ -500,7 +498,7 @@ double (*h_Corner_Array_S[2])[3]                                   = { NULL, NUL
 #if ( MODEL == HYDRO )
 real (*h_SrcDlepProf_Data)[SRC_DLEP_PROF_NBINMAX]                  = NULL;
 real  *h_SrcDlepProf_Radius                                        = NULL;
-real  *h_Turb_AccTable[2]                                          = NULL;
+real  *h_Turb_AccTable[2]                                          = { NULL, NULL };
 #endif
 
 // 4. GPU (device) global memory arrays
@@ -590,7 +588,7 @@ double (*d_Corner_Array_S)[3]                                      = NULL;
 #if ( MODEL == HYDRO )
 real (*d_SrcDlepProf_Data)[SRC_DLEP_PROF_NBINMAX]                  = NULL;
 real  *d_SrcDlepProf_Radius                                        = NULL;
-real  *d_Turb_AccTable[2]                                          = NULL;
+real  *d_Turb_AccTable[2]                                          = { NULL, NULL };
 #endif
 
 #endif // #ifdef GPU

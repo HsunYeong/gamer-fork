@@ -785,6 +785,7 @@ void Aux_TakeNote()
       fprintf( Note, "#define SRC_NAUX_DLEP          % d\n",      SRC_NAUX_DLEP         );
       fprintf( Note, "#define SRC_DLEP_PROF_NVAR     % d\n",      SRC_DLEP_PROF_NVAR    );
       fprintf( Note, "#define SRC_DLEP_PROF_NBINMAX  % d\n",      SRC_DLEP_PROF_NBINMAX );
+      fprintf( Note, "#define SRC_NAUX_TURB          % d\n",      SRC_NAUX_TURB         );
 #     endif
       fprintf( Note, "#define SRC_NAUX_USER          % d\n",      SRC_NAUX_USER         );
 #     ifdef GPU
@@ -1138,6 +1139,7 @@ void Aux_TakeNote()
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "SRC_ANY                        % d\n",      SrcTerms.Any              );
       fprintf( Note, "SRC_DELEPTONIZATION            % d\n",      SrcTerms.Deleptonization  );
+      fprintf( Note, "SRC_TURBULENCE                 % d\n",      SrcTerms.Turbulence       );
       fprintf( Note, "SRC_USER                       % d\n",      SrcTerms.User             );
       fprintf( Note, "SRC_GPU_NPGROUP                % d\n",      SRC_GPU_NPGROUP           );
       fprintf( Note, "***********************************************************************************\n" );

@@ -6,6 +6,8 @@
 #if ( MODEL == HYDRO )
 void Src_WorkBeforeMajorFunc_Deleptonization( const int lv, const double TimeNew, const double TimeOld, const double dt,
                                               double AuxArray_Flt[], int AuxArray_Int[] );
+void Src_WorkBeforeMajorFunc_Turbulence     ( const int lv, const double TimeNew, const double TimeOld, const double dt,
+                                              double AuxArray_Flt[], int AuxArray_Int[] );
 #endif
 
 // this function pointer can be set by a test problem initializer for a user-specified source term

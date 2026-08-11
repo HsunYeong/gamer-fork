@@ -1,12 +1,11 @@
 #include "GAMER.h"
 
-#ifdef TURBULENCE
-
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_Init
-// Description :  Initialize turbulence field
+// Description :  Initialize turbulence parameters, kmodes, OU phases
 //
-// Note        :  1. Invoked by Init_GAMER()
+// Note        :  1. Invoked by Src_Init_Turbulence()
+//                2. Don't fill in AccTable here since global arrays are not yet initialized.
 //
 // Parameter   :  None
 //
@@ -14,9 +13,6 @@
 //-------------------------------------------------------------------------------------------------------
 void Turb_Init()
 {
-// nothing to do if turbulence is disabled
-   if ( !TURB_ACTIVATE )   return;
-
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
 // initialize turbulence field
@@ -179,9 +175,6 @@ void Turb_Init()
    const long NPoint = TURB_TABLE_SIZE + 1;
    const double dh   = BOX_SIZE/TURB_TABLE_SIZE;
 
-   Turb->AccTable[0].resize( CUBE(NPoint) );
-   Turb->AccTable[1].resize( CUBE(NPoint) );
-
    for (int d = 0; d < 3; ++d)
    {
       Turb->Sin[d] = new double [ NPoint*Turb->NMode ];
@@ -214,9 +207,6 @@ void Turb_Init()
       }
    }
 
-// fillin both tables
-   Turb_FillinTable(0);
-
 // set next update time
    Turb->TimeLast = Time[0];
    Turb->TimeNext = Time[0] + Turb->dt;
@@ -231,8 +221,6 @@ void Turb_Init()
 //-------------------------------------------------------------------------------------------------------
 void Turb_End()
 {
-   if ( !TURB_ACTIVATE )   return;
-
    if ( Turb != NULL ) delete Turb;
 
 } // FUNCTION : Turb_End
@@ -271,4 +259,3 @@ double Turb_ran1s(int& Seed)
 }
 
 
-#endif // #ifdef TURBULENCE

@@ -44,6 +44,9 @@ void End_MemFree_Fluid()
       delete [] h_Flu_Array_S_In     [t];  h_Flu_Array_S_In     [t] = NULL;
       delete [] h_Flu_Array_S_Out    [t];  h_Flu_Array_S_Out    [t] = NULL;
       delete [] h_Corner_Array_S     [t];  h_Corner_Array_S     [t] = NULL;
+#     if ( MODEL == HYDRO )
+      delete [] h_Turb_AccTable      [t];  h_Turb_AccTable      [t] = NULL;
+#     endif
 #     ifdef MHD
       delete [] h_Mag_Array_F_In     [t];  h_Mag_Array_F_In     [t] = NULL;
       delete [] h_Mag_Array_F_Out    [t];  h_Mag_Array_F_Out    [t] = NULL;

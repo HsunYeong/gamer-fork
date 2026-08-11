@@ -701,13 +701,6 @@ def load_arguments( sys_setting : SystemSetting ):
                          help="Enable cosmic-ray diffusion. Must enable <--mhd> and <--cosmic_ray>.\n"
                        )
 
-    # A.7 turbulence generator
-    parser.add_argument( "--turb", type=str2bool, metavar="BOOLEAN", gamer_name="TURBULENCE",
-                         default=False,
-                         constraint={ True:{"model":"HYDRO"} },
-                         help="Enable turbulence.\n"
-                       )
-
     # B. miscellaneous options
     parser.add_argument( "--nlevel", type=int, metavar="INTEGER", gamer_name="NLEVEL",
                          default=10,

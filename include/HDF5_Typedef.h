@@ -764,7 +764,6 @@ struct InputPara_t
 #  endif
 
 // Turbulence
-#  ifdef TURBULENCE
    int    Turb_Activate;
    int    Turb_Verbose;
    double Turb_Vel;
@@ -779,7 +778,6 @@ struct InputPara_t
    int    Turb_UpdateStep;
    int    Turb_TableSize;
    int    Turb_Reset;
-#  endif
 
 // initialization
    int    Opt__Init;

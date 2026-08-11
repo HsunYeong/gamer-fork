@@ -49,6 +49,7 @@ struct SrcTerms_t
 
    bool   Any;
    bool   Deleptonization;
+   bool   Turbulence;
    bool   User;
 
    double BoxCenter[3];
@@ -85,7 +86,7 @@ struct SrcTerms_t
 #  endif
    double   *Turb_AuxArrayDevPtr_Flt;
    int      *Turb_AuxArrayDevPtr_Int;
-   Turbulence_t Turb;
+   real     *Turb_AccTableDevPtr[2];
 #  endif // if ( MODEL == HYDRO )
 
 // user-specified source term

@@ -33,6 +33,9 @@ extern real (*d_Flu_Array_T)[FLU_NIN_T][ CUBE(PS1) ];
 extern real (*d_Flu_Array_S_In )[FLU_NIN_S ][ CUBE(SRC_NXT) ];
 extern real (*d_Flu_Array_S_Out)[FLU_NOUT_S][ CUBE(PS1)     ];
 extern double (*d_Corner_Array_S)[3];
+#if ( MODEL == HYDRO )
+extern real *d_Turb_AccTable[2];
+#endif
 #if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
 extern real (*d_PriVar)      [NCOMP_LR            ][ CUBE(FLU_NXT)     ];
 extern real (*d_Slope_PPM)[3][NCOMP_LR            ][ CUBE(N_SLOPE_PPM) ];
@@ -110,6 +113,9 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
    const long Flu_MemSize_S_In    = sizeof(real  )*Src_NP*FLU_NIN_S *CUBE(SRC_NXT);
    const long Flu_MemSize_S_Out   = sizeof(real  )*Src_NP*FLU_NOUT_S*CUBE(PS1);
    const long Corner_MemSize_S    = sizeof(double)*Src_NP*3;
+#  if ( MODEL == HYDRO )
+   const long Src_Turb_MemSize    = sizeof(real  )*3*CUBE( TURB_TABLE_SIZE + 1 );
+#  endif
 
 // the size of the global memory arrays in different models
 #  if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
@@ -201,6 +207,10 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
       TotalSize += Mag_MemSize_S_In;
 #     endif
       TotalSize += Corner_MemSize_S;
+#     if ( MODEL == HYDRO )
+      if ( SrcTerms.Turbulence )
+         TotalSize += Src_Turb_MemSize*2;
+#     endif
    }
 
    if ( MPI_Rank == 0 )
@@ -261,6 +271,15 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
    CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_Mag_Array_S_In,       Mag_MemSize_S_In     )  );
 #  endif
    CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_Corner_Array_S,       Corner_MemSize_S     )  );
+
+#  if ( MODEL == HYDRO )
+   if ( SrcTerms.Turbulence )
+   for (int t=0; t<2; t++)
+   {
+      CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_Turb_AccTable[t],  Src_Turb_MemSize     )  );
+      SrcTerms.Turb_AccTableDevPtr[t] = d_Turb_AccTable[t];
+   }
+#  endif
    }
 
 
@@ -322,6 +341,10 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_Mag_Array_S_In     [t],  Mag_MemSize_S_In     )  );
 #     endif
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_Corner_Array_S     [t],  Corner_MemSize_S     )  );
+#     if ( MODEL == HYDRO )
+      if ( SrcTerms.Turbulence )
+      CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &d_Turb_AccTable      [t],  Src_Turb_MemSize     )  );
+#     endif
       }
 
 #     if ( MODEL == ELBDM )

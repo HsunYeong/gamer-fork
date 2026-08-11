@@ -2473,6 +2473,7 @@ void FillIn_SymConst( SymConst_t &SymConst )
    SymConst.Src_NAuxDlep         = SRC_NAUX_DLEP;
    SymConst.Src_DlepProfNVar     = SRC_DLEP_PROF_NVAR;
    SymConst.Src_DlepProfNBinMax  = SRC_DLEP_PROF_NBINMAX;
+   SymConst.Src_NAuxDlep         = SRC_NAUX_TURB;
 #  endif
    SymConst.Src_NAuxUser         = SRC_NAUX_USER;
 

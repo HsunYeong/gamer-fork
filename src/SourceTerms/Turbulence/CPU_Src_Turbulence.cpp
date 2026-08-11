@@ -3,6 +3,10 @@
 #if ( MODEL == HYDRO )
 
 
+extern real *h_Turb_AccTable[2];
+#ifdef GPU
+extern real *d_Turb_AccTable[2];
+#endif
 
 // external functions and GPU-related set-up
 #ifdef __CUDACC__
@@ -11,8 +15,6 @@
 #include "CUDA_CheckError.h"
 #include "CUFLU_Shared_FluUtility.cu"
 #include "CUDA_ConstMemory.h"
-
-extern real *d_Turb_AccTable[2];
 
 #endif // #ifdef __CUDACC__
 
@@ -27,8 +29,9 @@ void Src_SetGPUFunc_Turbulence( SrcFunc_t & );
 #endif
 void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
                                     double *&DevPtr_Flt, int *&DevPtr_Int );
-void Src_PassData2GPU_Turbulence();
-
+void Src_PassData2GPU_Turbulence( int IdxTable );
+void Turb_Init();
+void Turb_End();
 #endif
 
 
@@ -64,7 +67,7 @@ void Src_PassData2GPU_Turbulence();
 // Description :  Set the auxiliary arrays AuxArray_Flt/Int[]
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
-//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_DLEP defined in Macro.h (default = 5)
+//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB defined in Macro.h (default = 5)
 //                3. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
 //
 // Parameter   :  AuxArray_Flt/Int : Floating-point/Integer arrays to be filled up
@@ -74,8 +77,14 @@ void Src_PassData2GPU_Turbulence();
 #ifndef __CUDACC__
 void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 {
+   if ( Turb == NULL )
+      Aux_Error( ERROR_INFO, "Turb == NULL at rank %d !!\n", MPI_Rank );
 
-// TBF
+   AuxArray_Flt[0] = Turb->TimeLast;
+   AuxArray_Flt[1] = Turb->dt;
+   AuxArray_Flt[2] = double(TURB_TABLE_SIZE)/BOX_SIZE;
+
+   AuxArray_Int[0] = TURB_TABLE_SIZE;
 
 } // FUNCTION : Src_SetAuxArray_Turbulence
 #endif // #ifndef __CUDACC__
@@ -126,7 +135,71 @@ static void Src_Turbulence( real fluid[], const real B[],
    if ( AuxArray_Int == NULL )   printf( "ERROR : AuxArray_Int == NULL in %s !!\n", __FUNCTION__ );
 #  endif
 
-// TBF
+   const int    TableSize = AuxArray_Int[0];
+   const long   NPoint    = TableSize + 1;
+   const long   didx_x    = 1;
+   const long   didx_y    = NPoint;
+   const long   didx_z    = SQR( NPoint );
+   const real   _dh_table = (real)AuxArray_Flt[2];
+   const double TimeLast  = AuxArray_Flt[0];
+   const double Turb_dt   = AuxArray_Flt[1];
+   const real   tfrac     = (real)( ( TimeNew - TimeLast )/Turb_dt );
+   const real   tfrac0    = (real)1.0 - tfrac;
+
+   real dx    = (real)x * _dh_table;
+   real dy    = (real)y * _dh_table;
+   real dz    = (real)z * _dh_table;
+   int  idx_x = (int)FLOOR( dx );
+   int  idx_y = (int)FLOOR( dy );
+   int  idx_z = (int)FLOOR( dz );
+   dx        -= (real)idx_x;
+   dy        -= (real)idx_y;
+   dz        -= (real)idx_z;
+
+   const long idx0 = long( idx_x*didx_x + idx_y*didx_y ) + (long)idx_z*didx_z;
+
+   const real weight_xR = dx;
+   const real weight_yR = dy;
+   const real weight_zR = dz;
+   const real weight_xL = (real)1.0 - weight_xR;
+   const real weight_yL = (real)1.0 - weight_yR;
+   const real weight_zL = (real)1.0 - weight_zR;
+
+   real Acc[2][3] = {{ (real)0.0 }};
+
+   for (int t=0; t<2; t++)
+   {
+      const real *Table = SrcTerms->Turb_AccTableDevPtr[t];
+
+      for (int d=0; d<3; d++)
+      {
+         Acc[t][d] = Table[ 3*(idx0                           ) + d ] * weight_xL * weight_yL * weight_zL +
+                     Table[ 3*(idx0 + didx_x                  ) + d ] * weight_xR * weight_yL * weight_zL +
+                     Table[ 3*(idx0          + didx_y         ) + d ] * weight_xL * weight_yR * weight_zL +
+                     Table[ 3*(idx0                   + didx_z) + d ] * weight_xL * weight_yL * weight_zR +
+                     Table[ 3*(idx0 + didx_x + didx_y         ) + d ] * weight_xR * weight_yR * weight_zL +
+                     Table[ 3*(idx0          + didx_y + didx_z) + d ] * weight_xL * weight_yR * weight_zR +
+                     Table[ 3*(idx0 + didx_x          + didx_z) + d ] * weight_xR * weight_yL * weight_zR +
+                     Table[ 3*(idx0 + didx_x + didx_y + didx_z) + d ] * weight_xR * weight_yR * weight_zR;
+      }
+   }
+
+   const real Dens  = fluid[DENS];
+   const real VelX  = fluid[MOMX] / Dens;
+   const real VelY  = fluid[MOMY] / Dens;
+   const real VelZ  = fluid[MOMZ] / Dens;
+   const real AccX  = tfrac0*Acc[0][0] + tfrac*Acc[1][0];
+   const real AccY  = tfrac0*Acc[0][1] + tfrac*Acc[1][1];
+   const real AccZ  = tfrac0*Acc[0][2] + tfrac*Acc[1][2];
+   const real dMomX = Dens*dt*AccX;
+   const real dMomY = Dens*dt*AccY;
+   const real dMomZ = Dens*dt*AccZ;
+   const real dE    = VelX*dMomX + VelY*dMomY + VelZ*dMomZ + ( SQR(dMomX) + SQR(dMomY) + SQR(dMomZ) )/( (real)2.0*Dens );
+
+   fluid[MOMX] += dMomX;
+   fluid[MOMY] += dMomY;
+   fluid[MOMZ] += dMomZ;
+   fluid[ENGY] += dE;
 
 } // FUNCTION : Src_Turbulence
 
@@ -161,8 +234,115 @@ static void Src_Turbulence( real fluid[], const real B[],
 void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, const double TimeOld, const double dt,
                                          double AuxArray_Flt[], int AuxArray_Int[] )
 {
+   static bool FirstTime = true;
 
-   // check update
+// only update at lv 0
+   if ( lv != 0 ) return;
+
+   if ( FirstTime )
+   {
+//    fillin both tables
+      Turb_FillinTable( Turb->IdxLast );
+      Turb_FillinTable( Turb->IdxNext );
+#     ifdef GPU
+      Src_PassData2GPU_Turbulence( Turb->IdxLast );
+      Src_PassData2GPU_Turbulence( Turb->IdxNext );
+#     endif
+
+      FirstTime = false;
+   }
+
+   int hasUpdate = 0;
+
+   while ( TimeNew > Turb->TimeNext )
+   {
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, "TimeNew ( %13.7e ) > Turbulence TimeNext ( %13.7e ): Update turbulence pattern ...", TimeNew, Turb->TimeNext );
+
+      double coeff1 = exp( -Turb->dt/Turb->Tdecay );
+      double coeff2 = sqrt( 1 - SQR(coeff1) );
+
+//    swap last and next indices
+      std::swap( Turb->IdxLast, Turb->IdxNext );
+
+//    construct OU phase vector
+      for (int n = 0; n < Turb->NMode; ++n)
+      {
+         double kk       = 0;
+         double k_dot_Nr = 0;
+         double k_dot_Ni = 0;
+         double Nr[3], Ni[3];
+
+         for (int d = 0; d < 3; ++d)
+         {
+//          get random number Nr and Ni
+            Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed, Turb->OUvar );
+
+            kk       += SQR( Turb->Kmode[d][n] );
+            k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
+            k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
+         }
+
+         for (int d = 0; d < 3; ++d)
+         {
+//          Helmholtz decomposition
+            Nr[d] = TURB_ZETA*Nr[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+            Ni[d] = TURB_ZETA*Ni[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+
+//          Update OU phases to time_new
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Nr[d];
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Ni[d];
+         }
+
+      } // for (int n = 0; n < Turb->NMode; ++n)
+
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
+
+//    update turbulence time
+      Turb->TimeLast =  Turb->TimeNext;
+      Turb->TimeNext += Turb->dt;
+
+      hasUpdate += 1;
+
+   } // while ( Time[0] > Turb->Time )
+
+// check
+   if ( TimeNew > Turb->TimeNext || TimeNew < Turb->TimeLast )
+      Aux_Error( ERROR_INFO, "TimeNew of lv 0 outside turbulence time range ( TimeNew %24.17e, Turb->TimeLast %24.17e, Turb->TimeNext %24.17e ) !!\n",
+                              TimeNew, Turb->TimeLast, Turb->TimeNext );
+
+// update turb acc table
+   if ( hasUpdate > 0 )
+   {
+      Src_SetAuxArray_Turbulence( AuxArray_Flt, AuxArray_Int );
+
+//    if there is only one OU update
+      if ( hasUpdate == 1 )
+      {
+//       update new table
+         Turb_FillinTable( Turb->IdxNext );
+#        ifdef GPU
+         Src_PassData2GPU_Turbulence( Turb->IdxNext );
+#        endif
+      } // if ( hasUpdate == 1 )
+      else
+      {
+//       fillin both tables
+//       this should be prevented in general by choosing a large enough turbulence dt
+         Turb_FillinTable( Turb->IdxLast );
+         Turb_FillinTable( Turb->IdxNext );
+#        ifdef GPU
+         Src_PassData2GPU_Turbulence( Turb->IdxLast );
+         Src_PassData2GPU_Turbulence( Turb->IdxNext );
+#        endif
+
+      } // else
+
+#     ifdef GPU
+      Src_SetConstMemory_Turbulence( AuxArray_Flt, AuxArray_Int,
+                                     SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
+#     endif
+
+   } // if ( hasUpdate )
 
 } // FUNCTION : Src_WorkBeforeMajorFunc_Turbulence
 #endif
@@ -181,13 +361,13 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 //
 // Return      :  None
 //-------------------------------------------------------------------------------------------------------
-void Src_PassData2GPU_Turbulence()
+void Src_PassData2GPU_Turbulence( int IdxTable )
 {
 
-   const long Size_Data   = sizeof(real)*    ;
+   const long Size_Data = sizeof(real)*3*CUBE( TURB_TABLE_SIZE + 1 );
 
 // use synchronous transfer
-   CUDA_CHECK_ERROR(  cudaMemcpy( d_Turb_AccTable,   d_Turb_AccTable,   Size_Data,   cudaMemcpyHostToDevice )  );
+   CUDA_CHECK_ERROR(  cudaMemcpy( d_Turb_AccTable[IdxTable], h_Turb_AccTable[IdxTable], Size_Data, cudaMemcpyHostToDevice )  );
 
 } // FUNCTION : Src_PassData2GPU_Turbulence
 #endif // #ifdef __CUDACC__
@@ -242,24 +422,24 @@ void Src_SetCPUFunc_Turbulence( SrcFunc_t &SrcFunc_CPUPtr )
 //
 // Note        :  1. Adopt the suggested approach for CUDA version >= 5.0
 //                2. Invoked by Src_Init_Turbulence() and, if necessary, Src_WorkBeforeMajorFunc_Turbulence()
-//                3. SRC_NAUX_DLEP is defined in Macro.h
+//                3. SRC_NAUX_TURB is defined in Macro.h
 //
 // Parameter   :  AuxArray_Flt/Int : Auxiliary arrays to be copied to the constant memory
 //                DevPtr_Flt/Int   : Pointers to store the addresses of constant memory arrays
 //
-// Return      :  c_Src_Dlep_AuxArray_Flt[], c_Src_Dlep_AuxArray_Int[], DevPtr_Flt, DevPtr_Int
+// Return      :  c_Src_Turb_AuxArray_Flt[], c_Src_Turb_AuxArray_Int[], DevPtr_Flt, DevPtr_Int
 //---------------------------------------------------------------------------------------------------
 void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
                                     double *&DevPtr_Flt, int *&DevPtr_Int )
 {
 
 // copy data to constant memory
-   CUDA_CHECK_ERROR(  cudaMemcpyToSymbol( c_Src_Dlep_AuxArray_Flt, AuxArray_Flt, SRC_NAUX_DLEP*sizeof(double) )  );
-   CUDA_CHECK_ERROR(  cudaMemcpyToSymbol( c_Src_Dlep_AuxArray_Int, AuxArray_Int, SRC_NAUX_DLEP*sizeof(int   ) )  );
+   CUDA_CHECK_ERROR(  cudaMemcpyToSymbol( c_Src_Turb_AuxArray_Flt, AuxArray_Flt, SRC_NAUX_TURB*sizeof(double) )  );
+   CUDA_CHECK_ERROR(  cudaMemcpyToSymbol( c_Src_Turb_AuxArray_Int, AuxArray_Int, SRC_NAUX_TURB*sizeof(int   ) )  );
 
 // obtain the constant-memory pointers
-   CUDA_CHECK_ERROR(  cudaGetSymbolAddress( (void **)&DevPtr_Flt, c_Src_Dlep_AuxArray_Flt )  );
-   CUDA_CHECK_ERROR(  cudaGetSymbolAddress( (void **)&DevPtr_Int, c_Src_Dlep_AuxArray_Int )  );
+   CUDA_CHECK_ERROR(  cudaGetSymbolAddress( (void **)&DevPtr_Flt, c_Src_Turb_AuxArray_Flt )  );
+   CUDA_CHECK_ERROR(  cudaGetSymbolAddress( (void **)&DevPtr_Int, c_Src_Turb_AuxArray_Int )  );
 
 } // FUNCTION : Src_SetConstMemory_Turbulence
 #endif // #ifdef __CUDACC__
@@ -277,6 +457,8 @@ void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxAr
 //                2. Set the source-term function by invoking Src_SetCPU/GPUFunc_*()
 //                3. Invoked by Src_Init()
 //                4. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
+//                5. Global arrays h_Turb_AccTable and d_Turb_AccTable and pointer Turb_AccTableDevPtr
+//                   will be initialize later during Init_MemAllocate_Fluid() and CUAPI_MemAllocate_Fluid()
 //
 // Parameter   :  None
 //
@@ -284,6 +466,8 @@ void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxAr
 //-----------------------------------------------------------------------------------------
 void Src_Init_Turbulence()
 {
+
+   Turb_Init();
 
 // set the auxiliary arrays
    Src_SetAuxArray_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int );
@@ -317,6 +501,8 @@ void Src_Init_Turbulence()
 //
 // Note        :  1. Invoked by Src_End()
 //                2. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
+//                3. Global arrays h_Turb_AccTable and d_Turb_AccTable will be free during
+//                   End_MemFree_Fluid() and CUAPI_MemFree_Fluid()
 //
 // Parameter   :  None
 //
@@ -324,8 +510,10 @@ void Src_Init_Turbulence()
 //-----------------------------------------------------------------------------------------
 void Src_End_Turbulence()
 {
+   SrcTerms.Turb_AccTableDevPtr[0] = NULL;
+   SrcTerms.Turb_AccTableDevPtr[1] = NULL;
 
-// TBF
+   Turb_End();
 
 } // FUNCTION : Src_End_Turbulence
 
