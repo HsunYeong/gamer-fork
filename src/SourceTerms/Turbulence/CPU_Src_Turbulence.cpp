@@ -289,7 +289,7 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
          for (int d = 0; d < 3; ++d)
          {
 //          get random number Nr and Ni
-            Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed, Turb->OUvar );
+            Turb->GetRNG( Nr[d], Ni[d] );
 
             kk       += SQR( Turb->Kmode[d][n] );
             k_dot_Nr += Turb->Kmode[d][n]*Nr[d];

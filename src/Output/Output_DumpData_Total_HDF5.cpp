@@ -581,37 +581,57 @@ void Output_DumpData_Total_HDF5( const char *FileName )
       } // if ( Output_HDF5_UserPara_Ptr != NULL )
 
       H5_Status = H5Gclose( H5_GroupID_User );
-      H5_Status = H5Fclose( H5_FileID );
-/*
-//    3-6. Turb data
+
+
+//    3-6. turbulence data
 #     if ( MODEL == HYDRO )
-      int     Turb_Step      = Turb->Step;
-      int     Turb_RandSeed  = Turb->RSeed;
-      int     Turb_OUArrSize = Turb->NMode*3*2;
-      double *Turb_OUArr     = Turb->get_OUphases();
-      H5_GroupID_Turb = H5Gcreate( H5_FileID, "Turb", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
-      if ( H5_GroupID_Turb < 0 )     Aux_Error( ERROR_INFO, "failed to create the group \"%s\" !!\n", "Turb" );
+      if ( SrcTerms.Turbulence )
+      {
+         double   TimeLast  = Turb->TimeLast;
+         double   TimeNext  = Turb->TimeNext;
+         int      NMode     = Turb->NMode;
+         uint64_t RNGState  = Turb->RNGState;
+         double  *OUArrLast = Turb->OUphase[Turb->IdxLast];
+         double  *OUArrNext = Turb->OUphase[Turb->IdxNext];
 
-      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_Step", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_Step);
-      H5Dclose(H5_SetID_Turb);
+         hsize_t H5_SetDims_OUArr = (hsize_t)(NMode * 6);
+         hid_t   H5_SpaceID_OUArr = H5Screate_simple(1, &H5_SetDims_OUArr, NULL);
+         hid_t   H5_GroupID_Turb, H5_SetID_Turb;
 
-      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_RSeed", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_RandSeed);
-      H5Dclose(H5_SetID_Turb);
+         H5_GroupID_Turb = H5Gcreate( H5_FileID, "Turbulence", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         if ( H5_GroupID_Turb < 0 )     Aux_Error( ERROR_INFO, "failed to create the group \"%s\" !!\n", "Turbulence" );
 
-      H5_SetID_Turb = H5Dcreate(H5_GroupID_Turb, "Turb_OUArrSize", H5T_NATIVE_INT, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb_OUArrSize);
-      H5Dclose(H5_SetID_Turb);
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "TimeLast", H5T_NATIVE_DOUBLE, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &TimeLast );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
 
-      H5_SetDims_OUArr = Turb_OUArrSize;
-      H5_SpaceID_OUArr = H5Screate_simple(1, &H5_SetDims_OUArr, NULL);
-      H5_SetID_Turb = H5Dcreate(H5_GroupID, "Turb_OUArr", H5T_NATIVE_DOUBLE, H5_SpaceID_OUArr, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-      H5Dwrite(H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Turb_OUArr);
-      H5Dclose(H5_SetID_Turb);
-      H5Sclose(H5_SpaceID_OUArr);
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "TimeNext", H5T_NATIVE_DOUBLE, H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &TimeNext );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "NMode",    H5T_NATIVE_INT,    H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_INT,    H5S_ALL, H5S_ALL, H5P_DEFAULT, &NMode    );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "RNGState", H5T_STD_U64LE,     H5_SpaceID_Scalar, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, &RNGState );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "OUArrLast", H5T_NATIVE_DOUBLE, H5_SpaceID_OUArr, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, OUArrLast );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dcreate( H5_GroupID_Turb, "OUArrNext", H5T_NATIVE_DOUBLE, H5_SpaceID_OUArr, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+         H5_Status     = H5Dwrite ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, OUArrNext );
+         H5_Status     = H5Dclose ( H5_SetID_Turb );
+
+         H5_Status     = H5Sclose ( H5_SpaceID_OUArr );
+         H5_Status     = H5Gclose ( H5_GroupID_Turb  );
+      } // if ( Src.Turbulence )
 #     endif
-*/
+
+      H5_Status = H5Fclose( H5_FileID );
+
 //    3-7. free memory
       for (int lv=0; lv<NLEVEL-1; lv++)   free( InputPara.FlagTable_User[lv].p );
    } // if ( MPI_Rank == 0 )

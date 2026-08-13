@@ -4,15 +4,14 @@
 
 
 #include "Macro.h"
-
-
+#include <stdint.h>
 
 //-------------------------------------------------------------------------------------------------------
 // Structure   :  Turbulence_t
 // Description :  Data structure of turbulence
 //
 // Data Member :  NMode            : Number of non-zero k modes
-//                RSeed            : Current random seed value
+//                RNGState         : Current random state
 //                Tdecay           : Turbulence correlation time
 //                dt               : dt to update turbulence pattern
 //                OUvar            : Ornstein-Uhlenbeck process variance
@@ -34,7 +33,6 @@ struct Turbulence_t
 
 // data members
 // ===================================================================================
-   int     RSeed;
    long    NMode;
    double  Tdecay;
    double  dt;
@@ -49,6 +47,11 @@ struct Turbulence_t
    double *Sin  [3];
    double *Cos  [3];
    double *OUphase[2];
+   uint64_t RNGState;
+
+// used for pcg32 rng process
+   const uint64_t multiplier = 6364136223846793005ULL;
+   const uint64_t increment  = 1442695040888963407ULL;
 
    //===================================================================================
    // Constructor :  Turbulence_t
@@ -61,7 +64,6 @@ struct Turbulence_t
    Turbulence_t()
    {
       NMode    =  0;
-      RSeed    =  1;
       Tdecay   =  1.0;
       dt       =  1.0;
       OUvar    =  1.0;
@@ -69,6 +71,7 @@ struct Turbulence_t
       TimeNext = -1.0;
       IdxLast  =  0;
       IdxNext  =  1;
+      RNGState =  (uint64_t) 123;
 
       Amplitude  = NULL;
 
@@ -107,6 +110,43 @@ struct Turbulence_t
          if ( OUphase[i] != NULL ) delete [] OUphase[i];
 
    } // METHOD : ~Turbulence_t
+
+   void SetRNGState(int seed)
+   {
+      RNGState = (uint64_t)seed + increment;
+   }
+
+   uint32_t rotr32(uint32_t x, unsigned r)
+   {
+      return x >> r | x << (-r & 31);
+   }
+
+// uniformly distributed random number between (0, 1)
+   double uniform( uint64_t& state )
+   {
+//    PCG-XSH-RR rng sequence
+      uint64_t x = state;
+      unsigned count = (unsigned)(x >> 59);
+
+      state = x * multiplier + increment;
+      x ^= x >> 18;
+      uint32_t result = rotr32( (uint32_t)(x >> 27), count );
+
+      return ( (double)result + 0.5 ) / 4294967296.0;
+   }
+
+// get random pair using Box–Muller transformation
+   void GetRNG( double& a, double& b )
+   {
+      double r1 = uniform( RNGState );
+      double r2 = uniform( RNGState );
+
+      double mag = OUvar*sqrt(2.0*log(1.0/r1));
+      double phi = 2*M_PI*r2;
+
+      a = mag*cos( phi );
+      b = mag*sin( phi );
+   }
 
 }; // struct Turbulence_t
 

@@ -3,9 +3,7 @@
 #if ( MODEL == HYDRO )
 void   Turb_Init();
 void   Turb_End();
-void   Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 void   Turb_FillinTable( int IdxTable );
-double Turb_ran1s( int& Seed );
 
 /********************************************************************************************************
 Turbulence structure:
@@ -45,7 +43,7 @@ void Turb_Init()
 // assign values to structure members
    Turb->Tdecay   = BOX_SIZE/TURB_KDRIV/TURB_VEL;
    Turb->dt       = Turb->Tdecay/TURB_UPDATE_STEP;
-   Turb->RSeed    = TURB_RSEED_INIT;
+   Turb->SetRNGState( TURB_RSEED_INIT );
 
    const double ZetaNorm = sqrt(3.0)/sqrt(1.0 - 2.0*TURB_ZETA + 3.0*SQR(TURB_ZETA));
    const double EnergyInputRate = CUBE(TURB_AMPL_FACTOR*0.15*TURB_VEL)/BOX_SIZE;
@@ -142,15 +140,79 @@ void Turb_Init()
    for (int t = 0; t < 2; t++)
       if ( Turb->OUphase[t] == NULL ) Turb->OUphase[t] = new double [6*nmodes];
 
-// when restart, load turbulence field
+// when restart, load turbulence field, this will happen before Init_ByRestart_HDF5()
    if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
    {
-//    read random seed, step, OUarr size from restart file
+//    load with rank 0
+      if ( MPI_Rank == 0 )
+      {
+#ifndef  SUPPORT_HDF5
+         Aux_Error( ERROR_INFO, "restart turbulence field must enable SUPPORT_HDF5!!\n" );
+#else
+         const char FileName[] = "RESTART";
 
-//    read OUphase, check size
+         if ( !Aux_CheckFileExist(FileName) )
+            Aux_Error( ERROR_INFO, "restart HDF5 file \"%s\" does not exist !!\n", FileName );
 
-      Aux_Error( ERROR_INFO, "Turbulence from restart is not supported yet !!\n" );
-   }
+         if ( !H5Fis_hdf5(FileName) )
+            Aux_Error( ERROR_INFO, "restart HDF5 file \"%s\" is not in the HDF5 format !!\n", FileName );
+
+         hid_t  H5_FileID, H5_GroupID_Turb, H5_SetID_Turb;
+         herr_t H5_Status;
+
+         H5_FileID = H5Fopen( FileName, H5F_ACC_RDONLY, H5P_DEFAULT );
+         if ( H5_FileID < 0 )
+            Aux_Error( ERROR_INFO, "failed to open the restart HDF5 file \"%s\" !!\n", FileName );
+
+         H5_GroupID_Turb = H5Gopen( H5_FileID, "Turbulence", H5P_DEFAULT );
+         if ( H5_GroupID_Turb < 0 )   Aux_Error( ERROR_INFO, "failed to open the group \"%s\" !!\n"
+                                                             "enable TURB_RESET to turn on tubulence when restart !\n", "Turbulence" );
+
+         double RS_NMode;
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "NMode", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &RS_NMode );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+//       check
+         if ( Turb->NMode != RS_NMode )
+             Aux_Error( ERROR_INFO, "number of modes (%d) != number of modes from RESTART (%d) !!\n"
+                                    "enable TURB_RESET to change the spectrum !\n" , Turb->NMode, RS_NMode );
+
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "TimeLast", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb->TimeLast );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "TimeNext", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb->TimeNext );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "RNGState", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb->RNGState );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "OUArrLast", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Turb->OUphase[Turb->IdxLast] );
+         if ( H5_Status < 0 ) Aux_Error( ERROR_INFO, "Failed to load OUphase from RESTART !!\n" );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+         H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "OUArrNext", H5P_DEFAULT);
+         H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, Turb->OUphase[Turb->IdxNext] );
+         if ( H5_Status < 0 ) Aux_Error( ERROR_INFO, "Failed to load OUphase from RESTART !!\n" );
+         H5_Status     = H5Dclose( H5_SetID_Turb );
+
+//       close file
+         H5_Status = H5Gclose( H5_GroupID_Turb  );
+         H5_Status = H5Fclose( H5_FileID        );
+#        endif // ifdef SUPPORT_HDF5
+      } // if ( MPI_Rank == 0 )
+
+      MPI_Bcast( &Turb->TimeLast, 1, MPI_DOUBLE,   0, MPI_COMM_WORLD );
+      MPI_Bcast( &Turb->TimeNext, 1, MPI_DOUBLE,   0, MPI_COMM_WORLD );
+      MPI_Bcast( &Turb->RNGState, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD );
+      MPI_Bcast( Turb->OUphase[Turb->IdxLast], Turb->NMode*6, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+      MPI_Bcast( Turb->OUphase[Turb->IdxNext], Turb->NMode*6, MPI_DOUBLE, 0, MPI_COMM_WORLD );
+
+   } // if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
    else
    {
 //    loop through two sets
@@ -166,7 +228,7 @@ void Turb_Init()
             for (int d = 0; d < 3; ++d)
             {
 //             get random number Nr and Ni
-               Turb_GetRNG( Nr[d], Ni[d], Turb->RSeed, Turb->OUvar );
+               Turb->GetRNG( Nr[d], Ni[d] );
 
                kk       += SQR( Turb->Kmode[d][n] );
                k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
@@ -193,7 +255,7 @@ void Turb_Init()
             Turb->OUphase[1][2*3*n+2*d+1] = coeff1 * Turb->OUphase[0][2*3*n+2*d+1] + coeff2 * Turb->OUphase[1][2*3*n+2*d+1];
          }
       }
-   }
+   } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
 // initialize acc table, store values on box corner
    const long NPoint = TURB_TABLE_SIZE + 1;
@@ -296,41 +358,6 @@ void Turb_FillinTable( int IdxTable )
    }}} // for i, j, k
 
 } // FUNCTION : Turb_FillinTable
-
-
-//-------------------------------------------------------------------------------------------------------
-// Function    :  Turb_GetRNG
-// Description :  Get random number using Box–Muller transformation based on RSeed, and multiply by OUvar
-//
-// Return      :  Gaussian random number pair
-//-------------------------------------------------------------------------------------------------------
-void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar )
-{
-   double r1 = Turb_ran1s(Seed);
-   double r2 = Turb_ran1s(Seed);
-   a = OUvar*sqrt(2.0*log(1.0/r1))*cos(2*M_PI*r2);
-   b = OUvar*sqrt(2.0*log(1.0/r1))*sin(2*M_PI*r2);
-}
-
-
-//-------------------------------------------------------------------------------------------------------
-// Function    :  Turb_ran1s
-// Description :  Park–Miller random number generator, and update random seed
-//
-// Return      :  uniformly distributed random number in [0,1[
-//-------------------------------------------------------------------------------------------------------
-double Turb_ran1s(int& Seed)
-{
-   static const int IA=16807, IM=2147483647, IQ=127773, IR=2836;
-   static const double AM=1.0/IM, RNMX=1.0-1.2e-7;
-   if (Seed <= 0) Seed = MAX(-Seed, 1);
-   int k = Seed/IQ;
-   Seed = IA*(Seed-k*IQ)-IR*k;
-   if (Seed < 0) Seed = Seed+IM;
-   int iy = Seed;
-
-   return MIN(AM*iy, RNMX);
-}
 
 
 #endif // if ( MODEL == HYDRO )
