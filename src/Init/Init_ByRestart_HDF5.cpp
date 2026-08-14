@@ -1921,6 +1921,8 @@ void Check_SymConst( const char *FileName, const int FormatVersion )
    LoadField( "Src_NAuxDlep",         &RS.Src_NAuxDlep,         SID, TID, NonFatal, &RT.Src_NAuxDlep,          1, NonFatal );
    LoadField( "Src_DlepProfNVar",     &RS.Src_DlepProfNVar,     SID, TID, NonFatal, &RT.Src_DlepProfNVar,      1, NonFatal );
    LoadField( "Src_DlepProfNBinMax",  &RS.Src_DlepProfNBinMax,  SID, TID, NonFatal, &RT.Src_DlepProfNBinMax,   1, NonFatal );
+#  endif
+#  ifdef TURBULENCE
    LoadField( "Src_NAuxTurb",         &RS.Src_NAuxTurb,         SID, TID, NonFatal, &RT.Src_NAuxTurb,          1, NonFatal );
 #  endif
    LoadField( "Src_NAuxUser",         &RS.Src_NAuxUser,         SID, TID, NonFatal, &RT.Src_NAuxUser,          1, NonFatal );

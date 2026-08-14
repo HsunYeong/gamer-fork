@@ -9,7 +9,7 @@
 #include <libyt.h>
 #endif
 #include "GatherTree.h"
-#if ( MODEL == HYDRO )
+#ifdef TURBULENCE
 #include "Turbulence.h"
 #endif
 

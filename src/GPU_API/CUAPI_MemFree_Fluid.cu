@@ -27,9 +27,6 @@ extern real (*d_Flu_Array_T)[FLU_NIN_T][ CUBE(PS1) ];
 extern real (*d_Flu_Array_S_In )[FLU_NIN_S ][ CUBE(SRC_NXT) ];
 extern real (*d_Flu_Array_S_Out)[FLU_NOUT_S][ CUBE(PS1)     ];
 extern double (*d_Corner_Array_S)[3];
-#if ( MODEL == HYDRO )
-extern real *d_SrcTurb_AccTable[2];
-#endif
 #if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
 extern real (*d_PriVar)      [NCOMP_LR            ][ CUBE(FLU_NXT)     ];
 extern real (*d_Slope_PPM)[3][NCOMP_LR            ][ CUBE(N_SLOPE_PPM) ];
@@ -40,6 +37,9 @@ extern real (*d_FC_Mag_Half)[NCOMP_MAG][ FLU_NXT_P1*SQR(FLU_NXT) ];
 extern real (*d_EC_Ele     )[NCOMP_MAG][ CUBE(N_EC_ELE)          ];
 #endif
 #endif // FLU_SCHEME
+#ifdef TURBULENCE
+extern real *d_SrcTurb_AccTable[2];
+#endif
 
 #if ( MODEL == ELBDM )
 extern bool (*d_IsCompletelyRefined);
@@ -94,10 +94,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    if ( d_Flu_Array_S_In      != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_S_In      )  );  d_Flu_Array_S_In      = NULL; }
    if ( d_Flu_Array_S_Out     != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_S_Out     )  );  d_Flu_Array_S_Out     = NULL; }
    if ( d_Corner_Array_S      != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Corner_Array_S      )  );  d_Corner_Array_S      = NULL; }
-#  if ( Model == HYDRO )
-   if ( d_SrcTurb_AccTable[0] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[0] )  );  d_SrcTurb_AccTable[0] = NULL; }
-   if ( d_SrcTurb_AccTable[1] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[1] )  );  d_SrcTurb_AccTable[1] = NULL; }
-#  endif
 #  if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
    if ( d_PriVar              != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_PriVar              )  );  d_PriVar              = NULL; }
    if ( d_Slope_PPM           != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Slope_PPM           )  );  d_Slope_PPM           = NULL; }
@@ -108,6 +104,10 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    if ( d_EC_Ele              != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_EC_Ele              )  );  d_EC_Ele              = NULL; }
 #  endif
 #  endif // FLU_SCHEME
+#  ifdef TURBULENCE
+   if ( d_SrcTurb_AccTable[0] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[0] )  );  d_SrcTurb_AccTable[0] = NULL; }
+   if ( d_SrcTurb_AccTable[1] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[1] )  );  d_SrcTurb_AccTable[1] = NULL; }
+#  endif
 
 #  if ( MODEL == ELBDM )
    if ( d_IsCompletelyRefined != NULL ) {  CUDA_CHECK_ERROR (  cudaFree( d_IsCompletelyRefined)  );  d_IsCompletelyRefined = NULL; }

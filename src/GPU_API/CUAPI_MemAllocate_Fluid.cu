@@ -33,9 +33,6 @@ extern real (*d_Flu_Array_T)[FLU_NIN_T][ CUBE(PS1) ];
 extern real (*d_Flu_Array_S_In )[FLU_NIN_S ][ CUBE(SRC_NXT) ];
 extern real (*d_Flu_Array_S_Out)[FLU_NOUT_S][ CUBE(PS1)     ];
 extern double (*d_Corner_Array_S)[3];
-#ifdef TURBULENCE
-extern real *d_SrcTurb_AccTable[2];
-#endif
 #if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
 extern real (*d_PriVar)      [NCOMP_LR            ][ CUBE(FLU_NXT)     ];
 extern real (*d_Slope_PPM)[3][NCOMP_LR            ][ CUBE(N_SLOPE_PPM) ];
@@ -46,6 +43,9 @@ extern real (*d_FC_Mag_Half)[NCOMP_MAG][ FLU_NXT_P1*SQR(FLU_NXT) ];
 extern real (*d_EC_Ele     )[NCOMP_MAG][ CUBE(N_EC_ELE)          ];
 #endif
 #endif // FLU_SCHEME
+#ifdef TURBULENCE
+extern real *d_SrcTurb_AccTable[2];
+#endif
 
 #if ( MODEL == ELBDM )
 extern bool (*d_IsCompletelyRefined);
@@ -218,6 +218,7 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
    if ( SrcTerms.ExactCooling )
       TotalSize += EC_TEF_lambda_MemSize + EC_TEF_alpha_MemSize + EC_TEFc_MemSize;
 #  endif
+
 #  ifdef TURBULENCE
    if ( SrcTerms.Turbulence )
       TotalSize += Turb_MemSize*2;
@@ -281,16 +282,15 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
    CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_Mag_Array_S_In,       Mag_MemSize_S_In     )  );
 #  endif
    CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_Corner_Array_S,       Corner_MemSize_S     )  );
+   }
 
-#  if ( MODEL == HYDRO )
+#  ifdef TURBULENCE
    if ( SrcTerms.Turbulence )
-   for (int t=0; t<2; t++)
-   {
-      CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_SrcTurb_AccTable[t],  Turb_MemSize      )  );
-      SrcTerms.Turb_AccTableDevPtr[t] = d_SrcTurb_AccTable[t];
+   for (int t=0; t<2; t++) {
+   CUDA_CHECK_MALLOC(  cudaMalloc( (void**) &d_SrcTurb_AccTable[t],  Turb_MemSize         )  );
+   SrcTerms.Turb_AccTableDevPtr[t] = d_SrcTurb_AccTable[t];
    }
 #  endif
-   }
 
 
 #  if ( MODEL == ELBDM )
@@ -351,11 +351,11 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_Mag_Array_S_In     [t],  Mag_MemSize_S_In     )  );
 #     endif
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_Corner_Array_S     [t],  Corner_MemSize_S     )  );
-#     if ( MODEL == HYDRO )
+      }
+#     ifdef TURBULENCE
       if ( SrcTerms.Turbulence )
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_SrcTurb_AccTable   [t],  Turb_MemSize         )  );
 #     endif
-      }
 
 #     if ( MODEL == ELBDM )
       CUDA_CHECK_MALLOC(  cudaMallocHost( (void**) &h_IsCompletelyRefined[t],  Flu_MemSize_IsCompletelyRefined  )  );

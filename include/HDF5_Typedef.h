@@ -370,6 +370,8 @@ struct SymConst_t
    int    Src_NAuxDlep;
    int    Src_DlepProfNVar;
    int    Src_DlepProfNBinMax;
+#  endif
+#  ifdef TURBULENCE
    int    Src_NAuxTurb;
 #  endif
    int    Src_NAuxUser;
@@ -711,7 +713,7 @@ struct InputPara_t
    int    Src_EC_subcycling;
    double Src_EC_dtCoef;
 #  endif
-# ifdef TURBULENCE
+#  ifdef TURBULENCE
    double Src_Turb_Vel;
    double Src_Turb_AmplFactor;
    double Src_Turb_Kdriv;

@@ -5,10 +5,12 @@
 // prototypes of built-in source terms
 #if ( MODEL == HYDRO )
 void Src_Init_Deleptonization();
-void Src_Init_Turbulence();
 #endif
 #ifdef EXACT_COOLING
 void Src_Init_ExactCooling();
+#endif
+#ifdef TURBULENCE
+void Src_Init_Turbulence();
 #endif
 
 // this function pointer can be set by a test problem initializer for a user-specified source term
@@ -107,8 +109,8 @@ void Src_Init()
 
 
 // initialize all source terms
-#  if ( MODEL == HYDRO )
 // (1) deleptonization
+#  if ( MODEL == HYDRO )
    if ( SrcTerms.Deleptonization )
    {
       Src_Init_Deleptonization();
@@ -120,7 +122,7 @@ void Src_Init()
       if ( SrcTerms.Dlep_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Dlep_GPUPtr  == NULL !!\n" );
 #     endif
    }
-#  endif // if ( MODEL == HYDRO )
+#  endif
 
 // (2) exact cooling
 #  ifdef EXACT_COOLING

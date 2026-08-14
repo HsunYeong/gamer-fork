@@ -78,7 +78,7 @@ struct SrcTerms_t
    real    (*Dlep_Profile_DataDevPtr)[SRC_DLEP_PROF_NBINMAX];
    real     *Dlep_Profile_RadiusDevPtr;
    int       Dlep_Profile_NBin;
-#  endif // if ( MODEL == HYDRO )
+#  endif
 
 // exact cooling
 #  ifdef EXACT_COOLING

@@ -75,13 +75,14 @@ void Init_MemAllocate_Fluid( const int Flu_NPatchGroup, const int Pot_NPatchGrou
       h_Mag_Array_S_In     [t] = new real [Src_NPatch][NCOMP_MAG ][ SRC_NXT_P1*SQR(SRC_NXT) ];
 #     endif
       h_Corner_Array_S     [t] = new double [Src_NPatch][3];
+      }
+
 #     ifdef TURBULENCE
       if ( SrcTerms.Turbulence ) {
       h_SrcTurb_AccTable   [t] = new real [ 3*CUBE( SrcTerms.Turb_TableSize + 1 ) ];
       SrcTerms.Turb_AccTableDevPtr[t] = h_SrcTurb_AccTable[t];
       }
 #     endif
-      }
 
 #     if ( MODEL == ELBDM )
       h_IsCompletelyRefined[t] = new bool [Flu_NPatchGroup];

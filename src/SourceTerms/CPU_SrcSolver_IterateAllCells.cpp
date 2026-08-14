@@ -107,12 +107,12 @@ void CPU_SrcSolver_IterateAllCells(
 
 
 //       add all source terms one by one
-#        if ( MODEL == HYDRO )
 //       (1) deleptonization
+#        if ( MODEL == HYDRO )
          if ( SrcTerms.Deleptonization )
             SrcTerms.Dlep_FuncPtr( fluid, B, &SrcTerms, dt, dh, x, y, z, TimeNew, TimeOld, MinDens, MinPres, MinEint, PassiveFloor, &EoS,
                                    SrcTerms.Dlep_AuxArrayDevPtr_Flt, SrcTerms.Dlep_AuxArrayDevPtr_Int );
-#        endif // if ( MODEL == HYDRO )
+#        endif
 
 #        ifdef EXACT_COOLING
 //       (2) exact cooling
