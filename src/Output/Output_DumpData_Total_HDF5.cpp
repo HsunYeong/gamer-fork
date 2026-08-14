@@ -89,7 +89,7 @@ Procedure for outputting new variables:
 //                   and different levels, GID is unique among all patches at all ranks and all levels
 //                   --> Each patch has an unique GID
 //                3. Both "Father, Son, and Sibling[26]" are GID instead of PID
-//                4. Currently we always use HDF5 NATVIE datatypes for both memory and dataset
+//                4. Currently we always use HDF5 NATIVE datatypes for both memory and dataset
 //                5. All arrays in the "Tree" group (e.g., Corner, LBIdx, ...) and the "GridData" group (e.g., Dens, MomX, ...)
 //                   have been sorted according to GID
 //                   --> Moreover, currently we store all patches at the same level together
@@ -165,7 +165,7 @@ Procedure for outputting new variables:
 //                2300 : 2018/07/15 --> replace PAR_NVAR and PAR_NPASSIVE by PAR_NATT_STORED and PAR_NATT_USER;
 //                                      use the new infrastructure for adding user-defined grid fields and
 //                                      particle attributes
-//                                      --> imcompatible with version 2266 for the data with user-defined grid fields
+//                                      --> incompatible with version 2266 for the data with user-defined grid fields
 //                                          and particle attributes as their labels may have changed
 //                2301 : 2018/07/24 --> add OPT__UM_IC_FORMAT, PAR_IC_FORMAT, and PAR_IC_MASS
 //                2302 : 2018/07/24 --> replace GRACKLE_MODE by GRACKLE_ACTIVATE
@@ -289,6 +289,7 @@ Procedure for outputting new variables:
 //                2508 : 2026/03/26 --> output particle unique id
 //                2509 : 2026/04/18 --> output OPT__FLAG_PAR_TARGET, OPT__FLAG_PAR_TARGET_SIB, Par->FlagInit, particle integer attribute PAR_FLAG
 //                2510 : 2026/06/07 --> output EXTRA_EOS_CHECK, CHECK_UNPHY_ROUNDING, CHECK_UNPHY_ROUNDING_FACTOR
+//                2511 : 2026/07/02 --> output exact-cooling parameters
 //-------------------------------------------------------------------------------------------------------
 void Output_DumpData_Total_HDF5( const char *FileName )
 {
@@ -584,7 +585,7 @@ void Output_DumpData_Total_HDF5( const char *FileName )
 
 
 //    3-6. turbulence data
-#     if ( MODEL == HYDRO )
+#     ifdef TURBULENCE
       if ( SrcTerms.Turbulence )
       {
          double   TimeLast  = Turb->TimeLast;
@@ -628,7 +629,7 @@ void Output_DumpData_Total_HDF5( const char *FileName )
          H5_Status     = H5Sclose ( H5_SpaceID_OUArr );
          H5_Status     = H5Gclose ( H5_GroupID_Turb  );
       } // if ( Src.Turbulence )
-#     endif
+#     endif // #ifdef TURBULENCE
 
       H5_Status = H5Fclose( H5_FileID );
 
@@ -1804,7 +1805,7 @@ void FillIn_KeyInfo( KeyInfo_t &KeyInfo, const int NFieldStored )
 
    const time_t CalTime = time( NULL );   // calendar time
 
-   KeyInfo.FormatVersion        = 2510;
+   KeyInfo.FormatVersion        = 2511;
    KeyInfo.Model                = MODEL;
    KeyInfo.NLevel               = NLEVEL;
    KeyInfo.NCompFluid           = NCOMP_FLUID;
@@ -2143,6 +2144,12 @@ void FillIn_Makefile( Makefile_t &Makefile )
    Makefile.BarotropicEoS          = 1;
 #  else
    Makefile.BarotropicEoS          = 0;
+#  endif
+
+#  ifdef EXACT_COOLING
+   Makefile.ExactCooling           = 1;
+#  else
+   Makefile.ExactCooling           = 0;
 #  endif
 
 
@@ -2839,22 +2846,27 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.Src_Deleptonization     = SrcTerms.Deleptonization;
    InputPara.Src_Turbulence          = SrcTerms.Turbulence;
    InputPara.Src_User                = SrcTerms.User;
-   InputPara.Src_GPU_NPGroup         = SRC_GPU_NPGROUP;
-// turbulence
-#  if ( MODEL == HYDRO )
-   InputPara.Turb_Vel          = TURB_VEL;
-   InputPara.Turb_AmplFactor   = TURB_AMPL_FACTOR;
-   InputPara.Turb_Kdriv        = TURB_KDRIV;
-   InputPara.Turb_Kmin         = TURB_KMIN;
-   InputPara.Turb_Kmax         = TURB_KMAX;
-   InputPara.Turb_Zeta         = TURB_ZETA;
-   InputPara.Turb_SpecForm     = TURB_SPEC_FORM;
-   InputPara.Turb_Pow          = TURB_POW;
-   InputPara.Turb_RSeedInit    = TURB_RSEED_INIT;
-   InputPara.Turb_UpdateStep   = TURB_UPDATE_STEP;
-   InputPara.Turb_TableSize    = TURB_TABLE_SIZE;
-   InputPara.Turb_Reset        = TURB_RESET;
+   InputPara.Src_ExactCooling        = SrcTerms.ExactCooling;
+#  ifdef EXACT_COOLING
+   InputPara.Src_EC_TEF_N            = SrcTerms.EC_TEF_N;
+   InputPara.Src_EC_subcycling       = SrcTerms.EC_subcycling;
+   InputPara.Src_EC_dtCoef           = SrcTerms.EC_dtCoef;
 #  endif
+#  ifdef TURBULENCE
+   InputPara.Src_Turb_Vel            = SrcTerms.Turb_Vel;
+   InputPara.Src_Turb_AmplFactor     = SrcTerms.Turb_AmplFactor;
+   InputPara.Src_Turb_Kdriv          = SrcTerms.Turb_Kdriv;
+   InputPara.Src_Turb_Kmin           = SrcTerms.Turb_Kmin;
+   InputPara.Src_Turb_Kmax           = SrcTerms.Turb_Kmax;
+   InputPara.Src_Turb_Zeta           = SrcTerms.Turb_Zeta;
+   InputPara.Src_Turb_SpecForm       = SrcTerms.Turb_SpecForm;
+   InputPara.Src_Turb_Pow            = SrcTerms.Turb_Pow;
+   InputPara.Src_Turb_RSeedInit      = SrcTerms.Turb_RSeedInit;
+   InputPara.Src_Turb_UpdateStep     = SrcTerms.Turb_UpdateStep;
+   InputPara.Src_Turb_TableSize      = SrcTerms.Turb_TableSize;
+   InputPara.Src_Turb_Reset          = SrcTerms.Turb_Reset;
+#  endif
+   InputPara.Src_GPU_NPGroup         = SRC_GPU_NPGROUP;
 
 // Grackle
 #  ifdef SUPPORT_GRACKLE
@@ -3342,6 +3354,7 @@ void GetCompound_Makefile( hid_t &H5_TypeID )
    H5Tinsert( H5_TypeID, "CosmicRay",              HOFFSET(Makefile_t,CosmicRay              ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "EoS",                    HOFFSET(Makefile_t,EoS                    ), H5T_NATIVE_INT );
    H5Tinsert( H5_TypeID, "BarotropicEoS",          HOFFSET(Makefile_t,BarotropicEoS          ), H5T_NATIVE_INT );
+   H5Tinsert( H5_TypeID, "ExactCooling",           HOFFSET(Makefile_t,ExactCooling           ), H5T_NATIVE_INT );
 
 #  elif ( MODEL == ELBDM )
    H5Tinsert( H5_TypeID, "ELBDMScheme",            HOFFSET(Makefile_t,ELBDMScheme            ), H5T_NATIVE_INT );
@@ -3956,23 +3969,28 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
 
 // source terms
    H5Tinsert( H5_TypeID, "Src_Deleptonization",     HOFFSET(InputPara_t,Src_Deleptonization    ), H5T_NATIVE_INT              );
-   H5Tinsert( H5_TypeID, "Src_Turbulence",          HOFFSET(InputPara_t,Src_Turbulence         ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Src_User",                HOFFSET(InputPara_t,Src_User               ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Src_GPU_NPGroup",         HOFFSET(InputPara_t,Src_GPU_NPGroup        ), H5T_NATIVE_INT              );
-// turbulence
-#  if ( MODEL == HYDRO )
-   H5Tinsert( H5_TypeID, "Turb_Vel",               HOFFSET(InputPara_t,Turb_Vel               ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_AmplFactor",        HOFFSET(InputPara_t,Turb_AmplFactor        ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_Kdriv",             HOFFSET(InputPara_t,Turb_Kdriv             ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_Kmin",              HOFFSET(InputPara_t,Turb_Kmin              ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_Kmax",              HOFFSET(InputPara_t,Turb_Kmax              ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_Zeta",              HOFFSET(InputPara_t,Turb_Zeta              ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_SpecForm",          HOFFSET(InputPara_t,Turb_SpecForm          ), H5T_NATIVE_INT               );
-   H5Tinsert( H5_TypeID, "Turb_Pow",               HOFFSET(InputPara_t,Turb_Pow               ), H5T_NATIVE_DOUBLE            );
-   H5Tinsert( H5_TypeID, "Turb_RSeedInit",         HOFFSET(InputPara_t,Turb_RSeedInit         ), H5T_NATIVE_INT               );
-   H5Tinsert( H5_TypeID, "Turb_UpdateStep",        HOFFSET(InputPara_t,Turb_UpdateStep        ), H5T_NATIVE_INT               );
-   H5Tinsert( H5_TypeID, "Turb_TableSize",         HOFFSET(InputPara_t,Turb_TableSize         ), H5T_NATIVE_INT               );
-   H5Tinsert( H5_TypeID, "Turb_Reset",             HOFFSET(InputPara_t,Turb_Reset             ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Src_ExactCooling",        HOFFSET(InputPara_t,Src_ExactCooling       ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Src_Turbulence",          HOFFSET(InputPara_t,Src_Turbulence         ), H5T_NATIVE_INT              );
+#  ifdef EXACT_COOLING
+   H5Tinsert( H5_TypeID, "Src_EC_TEF_N",            HOFFSET(InputPara_t,Src_EC_TEF_N           ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Src_EC_subcycling",       HOFFSET(InputPara_t,Src_EC_subcycling      ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Src_EC_dtCoef",           HOFFSET(InputPara_t,Src_EC_dtCoef          ), H5T_NATIVE_DOUBLE           );
+#  endif
+#  ifdef TURBULENCE
+   H5Tinsert( H5_TypeID, "Src_Turb_Vel",            HOFFSET(InputPara_t,Src_Turb_Vel           ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_AmplFactor",     HOFFSET(InputPara_t,Src_Turb_AmplFactor    ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_Kdriv",          HOFFSET(InputPara_t,Src_Turb_Kdriv         ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_Kmin",           HOFFSET(InputPara_t,Src_Turb_Kmin          ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_Kmax",           HOFFSET(InputPara_t,Src_Turb_Kmax          ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_Zeta",           HOFFSET(InputPara_t,Src_Turb_Zeta          ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_SpecForm",       HOFFSET(InputPara_t,Src_Turb_SpecForm      ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Src_Turb_Pow",            HOFFSET(InputPara_t,Src_Turb_Pow           ), H5T_NATIVE_DOUBLE            );
+   H5Tinsert( H5_TypeID, "Src_Turb_RSeedInit",      HOFFSET(InputPara_t,Src_Turb_RSeedInit     ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Src_Turb_UpdateStep",     HOFFSET(InputPara_t,Src_Turb_UpdateStep    ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Src_Turb_TableSize",      HOFFSET(InputPara_t,Src_Turb_TableSize     ), H5T_NATIVE_INT               );
+   H5Tinsert( H5_TypeID, "Src_Turb_Reset",          HOFFSET(InputPara_t,Src_Turb_Reset         ), H5T_NATIVE_INT               );
 #  endif
 
 // Grackle

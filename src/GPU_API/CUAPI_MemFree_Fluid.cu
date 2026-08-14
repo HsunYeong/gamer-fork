@@ -28,7 +28,7 @@ extern real (*d_Flu_Array_S_In )[FLU_NIN_S ][ CUBE(SRC_NXT) ];
 extern real (*d_Flu_Array_S_Out)[FLU_NOUT_S][ CUBE(PS1)     ];
 extern double (*d_Corner_Array_S)[3];
 #if ( MODEL == HYDRO )
-extern real *d_Turb_AccTable[2];
+extern real *d_SrcTurb_AccTable[2];
 #endif
 #if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
 extern real (*d_PriVar)      [NCOMP_LR            ][ CUBE(FLU_NXT)     ];
@@ -95,8 +95,8 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    if ( d_Flu_Array_S_Out     != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Flu_Array_S_Out     )  );  d_Flu_Array_S_Out     = NULL; }
    if ( d_Corner_Array_S      != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Corner_Array_S      )  );  d_Corner_Array_S      = NULL; }
 #  if ( Model == HYDRO )
-   if ( d_Turb_AccTable[0]    != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Turb_AccTable[0]    )  );  d_Turb_AccTable[0]    = NULL; }
-   if ( d_Turb_AccTable[1]    != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_Turb_AccTable[1]    )  );  d_Turb_AccTable[1]    = NULL; }
+   if ( d_SrcTurb_AccTable[0] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[0] )  );  d_SrcTurb_AccTable[0] = NULL; }
+   if ( d_SrcTurb_AccTable[1] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[1] )  );  d_SrcTurb_AccTable[1] = NULL; }
 #  endif
 #  if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
    if ( d_PriVar              != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_PriVar              )  );  d_PriVar              = NULL; }
@@ -151,7 +151,7 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       if ( h_Flu_Array_S_In     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_In     [t] )  );  h_Flu_Array_S_In     [t] = NULL; }
       if ( h_Flu_Array_S_Out    [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_Out    [t] )  );  h_Flu_Array_S_Out    [t] = NULL; }
       if ( h_Corner_Array_S     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Corner_Array_S     [t] )  );  h_Corner_Array_S     [t] = NULL; }
-      if ( h_Turb_AccTable      [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Turb_AccTable      [t] )  );  h_Turb_AccTable      [t] = NULL; }
+      if ( h_SrcTurb_AccTable   [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_SrcTurb_AccTable   [t] )  );  h_SrcTurb_AccTable   [t] = NULL; }
 
 #     if ( MODEL == ELBDM )
       if ( h_IsCompletelyRefined[t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_IsCompletelyRefined[t] )  );  h_IsCompletelyRefined[t] = NULL; }

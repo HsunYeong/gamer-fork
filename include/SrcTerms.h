@@ -26,6 +26,7 @@ typedef void (*SrcFunc_t)( real fluid[], const real B[],
 //
 // Data Member :  Any                       : True if at least one of the source terms is activated
 //                Deleptonization           : SRC_DELEPTONIZATION
+//                ExactCooling              : SRC_EXACTCOOLING
 //                Turbulence                : SRC_TURBULENCE
 //                User                      : SRC_USER
 //                BoxCenter                 : Simulation box center
@@ -48,6 +49,7 @@ struct SrcTerms_t
 
    bool   Any;
    bool   Deleptonization;
+   bool   ExactCooling;
    bool   Turbulence;
    bool   User;
 
@@ -76,8 +78,27 @@ struct SrcTerms_t
    real    (*Dlep_Profile_DataDevPtr)[SRC_DLEP_PROF_NBINMAX];
    real     *Dlep_Profile_RadiusDevPtr;
    int       Dlep_Profile_NBin;
+#  endif // if ( MODEL == HYDRO )
+
+// exact cooling
+#  ifdef EXACT_COOLING
+   SrcFunc_t EC_FuncPtr;
+   SrcFunc_t EC_CPUPtr;
+#  ifdef GPU
+   SrcFunc_t EC_GPUPtr;
+#  endif
+   double   *EC_AuxArrayDevPtr_Flt;
+   int      *EC_AuxArrayDevPtr_Int;
+   int       EC_TEF_N;
+   double   *EC_TEF_lambda_DevPtr;
+   double   *EC_TEF_alpha_DevPtr;
+   double   *EC_TEFc_DevPtr;
+   bool      EC_subcycling;
+   double    EC_dtCoef;
+#  endif
 
 // turbulence
+#  ifdef TURBULENCE
    SrcFunc_t Turb_FuncPtr;
    SrcFunc_t Turb_CPUPtr;
 #  ifdef GPU
@@ -86,7 +107,19 @@ struct SrcTerms_t
    double   *Turb_AuxArrayDevPtr_Flt;
    int      *Turb_AuxArrayDevPtr_Int;
    real     *Turb_AccTableDevPtr[2];
-#  endif // if ( MODEL == HYDRO )
+   double    Turb_Vel;
+   double    Turb_AmplFactor;
+   double    Turb_Kdriv;
+   double    Turb_Kmin;
+   double    Turb_Kmax;
+   double    Turb_Zeta;
+   int       Turb_SpecForm;
+   double    Turb_Pow;
+   int       Turb_RSeedInit;
+   int       Turb_UpdateStep;
+   int       Turb_TableSize;
+   bool      Turb_Reset;
+#  endif
 
 // user-specified source term
    SrcFunc_t User_FuncPtr;

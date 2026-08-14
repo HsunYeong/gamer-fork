@@ -7,6 +7,9 @@
 void Src_Init_Deleptonization();
 void Src_Init_Turbulence();
 #endif
+#ifdef EXACT_COOLING
+void Src_Init_ExactCooling();
+#endif
 
 // this function pointer can be set by a test problem initializer for a user-specified source term
 void (*Src_Init_User_Ptr)() = NULL;
@@ -33,17 +36,13 @@ void Src_Init()
 
 
 // check if at least one source term is activated
-   if (
-#       if ( MODEL == HYDRO )
-        SrcTerms.Deleptonization  ||
-        SrcTerms.Turbulence       ||
-#       endif
-        SrcTerms.User
-      )
-      SrcTerms.Any = true;
-   else
-      SrcTerms.Any = false;
-
+   SrcTerms.Any = false;
+#  if ( MODEL == HYDRO )
+   SrcTerms.Any |= SrcTerms.Deleptonization;
+   SrcTerms.Any |= SrcTerms.ExactCooling;
+   SrcTerms.Any |= SrcTerms.Turbulence;
+#  endif
+   SrcTerms.Any |= SrcTerms.User;
 
 // set auxiliary parameters
    for (int d=0; d<3; d++)    SrcTerms.BoxCenter[d] = amr->BoxCenter[d];
@@ -71,7 +70,22 @@ void Src_Init()
    SrcTerms.Dlep_AuxArrayDevPtr_Int   = NULL;
    SrcTerms.Dlep_Profile_DataDevPtr   = NULL;
    SrcTerms.Dlep_Profile_RadiusDevPtr = NULL;
+#  endif
 
+#  ifdef EXACT_COOLING
+   SrcTerms.EC_FuncPtr                = NULL;
+   SrcTerms.EC_CPUPtr                 = NULL;
+#  ifdef GPU
+   SrcTerms.EC_GPUPtr                 = NULL;
+#  endif
+   SrcTerms.EC_AuxArrayDevPtr_Flt     = NULL;
+   SrcTerms.EC_AuxArrayDevPtr_Int     = NULL;
+   SrcTerms.EC_TEF_lambda_DevPtr      = NULL;
+   SrcTerms.EC_TEF_alpha_DevPtr       = NULL;
+   SrcTerms.EC_TEFc_DevPtr            = NULL;
+#  endif // #ifdef EXACT_COOLING
+
+#  ifdef TURBULENCE
    SrcTerms.Turb_FuncPtr              = NULL;
    SrcTerms.Turb_CPUPtr               = NULL;
 #  ifdef GPU
@@ -81,7 +95,7 @@ void Src_Init()
    SrcTerms.Turb_AuxArrayDevPtr_Int   = NULL;
    SrcTerms.Turb_AccTableDevPtr[0]    = NULL;
    SrcTerms.Turb_AccTableDevPtr[1]    = NULL;
-#  endif
+#  endif // #ifdef TURBULENCE
 
    SrcTerms.User_FuncPtr              = NULL;
    SrcTerms.User_CPUPtr               = NULL;
@@ -106,8 +120,25 @@ void Src_Init()
       if ( SrcTerms.Dlep_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Dlep_GPUPtr  == NULL !!\n" );
 #     endif
    }
+#  endif // if ( MODEL == HYDRO )
 
-// (2) turbulence
+// (2) exact cooling
+#  ifdef EXACT_COOLING
+   if ( SrcTerms.ExactCooling )
+   {
+      Src_Init_ExactCooling();
+
+//    check if the source-term function is set properly
+      if ( SrcTerms.EC_FuncPtr == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.EC_FuncPtr == NULL !!\n" );
+      if ( SrcTerms.EC_CPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.EC_CPUPtr  == NULL !!\n" );
+#     ifdef GPU
+      if ( SrcTerms.EC_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.EC_GPUPtr  == NULL !!\n" );
+#     endif
+   }
+#  endif // #ifdef EXACT_COOLING
+
+#  ifdef TURBULENCE
+// (3) turbulence
    if ( SrcTerms.Turbulence )
    {
       Src_Init_Turbulence();
@@ -119,9 +150,9 @@ void Src_Init()
       if ( SrcTerms.Turb_GPUPtr  == NULL )   Aux_Error( ERROR_INFO, "SrcTerms.Turb_GPUPtr  == NULL !!\n" );
 #     endif
    }
-#  endif // if ( MODEL == HYDRO )
+#  endif
 
-// (3) user-specified source term
+// (4) user-specified source term
    if ( SrcTerms.User )
    {
       if ( Src_Init_User_Ptr == NULL )       Aux_Error( ERROR_INFO, "Src_Init_User_Ptr == NULL !!\n" );

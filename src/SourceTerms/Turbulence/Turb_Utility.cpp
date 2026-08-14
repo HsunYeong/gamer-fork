@@ -42,25 +42,25 @@ void Turb_Init_Modes()
    if ( Turb == NULL )     Aux_Error( ERROR_INFO, "Turb == NULL !!\n" );
 
 // assign values to structure members
-   Turb->Tdecay   = BOX_SIZE/TURB_KDRIV/TURB_VEL;
-   Turb->dt       = Turb->Tdecay/TURB_UPDATE_STEP;
-   Turb->SetRNGState( TURB_RSEED_INIT );
+   Turb->Tdecay   = BOX_SIZE / SrcTerms.Turb_Kdriv / SrcTerms.Turb_Vel;
+   Turb->dt       = Turb->Tdecay / SrcTerms.Turb_UpdateStep;
+   Turb->SetRNGState( SrcTerms.Turb_RSeedInit );
 
-   const double ZetaNorm = sqrt(3.0)/sqrt(1.0 - 2.0*TURB_ZETA + 3.0*SQR(TURB_ZETA));
-   const double EnergyInputRate = CUBE(TURB_AMPL_FACTOR*0.15*TURB_VEL)/BOX_SIZE;
+   const double ZetaNorm = sqrt(3.0) / sqrt( 1.0 - 2.0*SrcTerms.Turb_Zeta + 3.0*SQR( SrcTerms.Turb_Zeta ) );
+   const double EnergyInputRate = CUBE( SrcTerms.Turb_AmplFactor*0.15*SrcTerms.Turb_Vel ) / BOX_SIZE;
 
 // OUvar ~ a_rms
    Turb->OUvar = sqrt( EnergyInputRate/Turb->Tdecay );
 
 // initialize k modes
-   double kmin   = (TURB_KMIN - __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
-   double kmax   = (TURB_KMAX + __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
+   double kmin   = (SrcTerms.Turb_Kmin - __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
+   double kmax   = (SrcTerms.Turb_Kmax + __DBL_EPSILON__) * 2*M_PI / BOX_SIZE;
 
    if ( kmax < kmin )
       Aux_Error( ERROR_INFO, "Turbulence: kmax ( %13.7e ) < kmin ( %13.7e )!!\n", kmax, kmin );
 
    double kmid   = 0.5*(kmin + kmax);
-   int    Nmax   = 2*TURB_KMAX + 1;
+   int    Nmax   = 2*SrcTerms.Turb_Kmax + 1;
    int    nmodes = 0;
    double kmodes[Nmax];
    for (int i = 0; i < Nmax; ++ i)
@@ -99,16 +99,16 @@ void Turb_Init_Modes()
       double kmag = sqrt( SQR(kmodes[i]) + SQR(kmodes[j]) + SQR(kmodes[k]) );
       if ( kmag >= kmin && kmag <= kmax ) {
 //       constant
-         if ( TURB_SPEC_FORM == 0)
+         if ( SrcTerms.Turb_SpecForm == 0)
             amp = 1.0*kmin/kmag;
 //       parabolic
-         else if ( TURB_SPEC_FORM == 1 )
+         else if ( SrcTerms.Turb_SpecForm == 1 )
             amp = sqrt( fabs(-4 * SQR( (kmag - kmid)/(kmax - kmin) ) + 1) )*kmid/kmag;
 //       power law
-         else if ( TURB_SPEC_FORM == 2 )
-            amp = sqrt( pow(kmag/kmin, TURB_POW) )*kmin/kmag;
+         else if ( SrcTerms.Turb_SpecForm == 2 )
+            amp = sqrt( pow(kmag/kmin, SrcTerms.Turb_Pow) )*kmin/kmag;
          else
-            Aux_Error( ERROR_INFO, "Unknown TURB_SPEC_FORM = %d!!\n", TURB_SPEC_FORM );
+            Aux_Error( ERROR_INFO, "Unknown TURB_SPEC_FORM = %d!!\n", SrcTerms.Turb_SpecForm );
 
          Turb->Kmode[0][n] = kmodes[i];
          Turb->Kmode[1][n] = kmodes[j];
@@ -123,15 +123,15 @@ void Turb_Init_Modes()
    if ( MPI_Rank == 0 )
    {
        Aux_Message( stdout, "Turbulence parameters:\n" );
-       Aux_Message( stdout, "   velocity dispersion    = %13.7e:\n", TURB_VEL         );
-       Aux_Message( stdout, "   amplitute factor       = %13.7e:\n", TURB_AMPL_FACTOR );
-       Aux_Message( stdout, "   energy injection rate  = %13.7e:\n", EnergyInputRate  );
-       Aux_Message( stdout, "   kmin                   = %13.7e:\n", kmin             );
-       Aux_Message( stdout, "   kmax                   = %13.7e:\n", kmax             );
-       Aux_Message( stdout, "   correlation time       = %13.7e:\n", Turb->Tdecay     );
-       Aux_Message( stdout, "   update pattern dt      = %13.7e:\n", Turb->dt         );
-       Aux_Message( stdout, "   OU variance            = %13.7e:\n", Turb->OUvar      );
-       Aux_Message( stdout, "   solenoidal weight norm = %13.7e:\n", ZetaNorm         );
+       Aux_Message( stdout, "   velocity dispersion    = %13.7e\n", SrcTerms.Turb_Vel        );
+       Aux_Message( stdout, "   amplitute factor       = %13.7e\n", SrcTerms.Turb_AmplFactor );
+       Aux_Message( stdout, "   energy injection rate  = %13.7e\n", EnergyInputRate          );
+       Aux_Message( stdout, "   kmin                   = %13.7e\n", kmin                     );
+       Aux_Message( stdout, "   kmax                   = %13.7e\n", kmax                     );
+       Aux_Message( stdout, "   correlation time       = %13.7e\n", Turb->Tdecay             );
+       Aux_Message( stdout, "   update pattern dt      = %13.7e\n", Turb->dt                 );
+       Aux_Message( stdout, "   OU variance            = %13.7e\n", Turb->OUvar              );
+       Aux_Message( stdout, "   solenoidal weight norm = %13.7e\n", ZetaNorm                 );
        Aux_Message( stdout, "\n");
 
       for (int n = 0; n < Turb->NMode; ++n)
@@ -164,7 +164,7 @@ void Turb_Init_Field()
       if ( Turb->OUphase[t] == NULL ) Turb->OUphase[t] = new double [6*Turb->NMode];
 
 // when restart, load turbulence field
-   if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
+   if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !SrcTerms.Turb_Reset )
    {
 //    load with rank 0
       if ( MPI_Rank == 0 )
@@ -238,6 +238,7 @@ void Turb_Init_Field()
    } // if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
    else
    {
+      const double Zeta = SrcTerms.Turb_Zeta;
 //    loop through two sets
       for (int t = 0; t < 2 ; t++)
       {
@@ -261,8 +262,8 @@ void Turb_Init_Field()
 //          Helmholtz decomposition
             for (int d = 0; d < 3; ++d)
             {
-               Turb->OUphase[t][2*3*n+2*d  ] = TURB_ZETA*Nr[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
-               Turb->OUphase[t][2*3*n+2*d+1] = TURB_ZETA*Ni[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+               Turb->OUphase[t][2*3*n+2*d  ] = Zeta*Nr[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+               Turb->OUphase[t][2*3*n+2*d+1] = Zeta*Ni[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Ni/kk;
             }
          } // for (int n = 0; n < Turb->NMode; ++n)
       } // for t
@@ -286,8 +287,9 @@ void Turb_Init_Field()
    } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
 // initialize acc table, store values on box corner
-   const long NPoint = TURB_TABLE_SIZE + 1;
-   const double dh   = BOX_SIZE/TURB_TABLE_SIZE;
+   const long TSize  = SrcTerms.Turb_TableSize;
+   const long NPoint = TSize + 1;
+   const double dh   = BOX_SIZE / TSize;
 
    for (int d = 0; d < 3; ++d)
    {
@@ -299,17 +301,17 @@ void Turb_Init_Field()
 #  pragma omp parallel for schedule( runtime )
    for (int n = 0; n < Turb->NMode; n++)
    {
-      for (int i = 0; i < TURB_TABLE_SIZE; i++)
+      for (int i = 0; i < TSize; i++)
       {
          Turb->Sin[0][ n*NPoint + i ] = sin( Turb->Kmode[0][n]*i*dh );
          Turb->Cos[0][ n*NPoint + i ] = cos( Turb->Kmode[0][n]*i*dh );
       }
-      for (int j = 0; j < TURB_TABLE_SIZE; j++)
+      for (int j = 0; j < TSize; j++)
       {
          Turb->Sin[1][ n*NPoint + j ] = sin( Turb->Kmode[1][n]*j*dh );
          Turb->Cos[1][ n*NPoint + j ] = cos( Turb->Kmode[1][n]*j*dh );
       }
-      for (int k = 0; k < TURB_TABLE_SIZE; k++)
+      for (int k = 0; k < TSize; k++)
       {
          Turb->Sin[2][ n*NPoint + k ] = sin( Turb->Kmode[2][n]*k*dh );
          Turb->Cos[2][ n*NPoint + k ] = cos( Turb->Kmode[2][n]*k*dh );
@@ -317,8 +319,8 @@ void Turb_Init_Field()
 //    apply periodicity
       for (int d = 0; d < 3; d++)
       {
-         Turb->Sin[d][ n*NPoint + TURB_TABLE_SIZE ] = Turb->Sin[d][ n*NPoint ];
-         Turb->Cos[d][ n*NPoint + TURB_TABLE_SIZE ] = Turb->Cos[d][ n*NPoint ];
+         Turb->Sin[d][ n*NPoint + TSize ] = Turb->Sin[d][ n*NPoint ];
+         Turb->Cos[d][ n*NPoint + TSize ] = Turb->Cos[d][ n*NPoint ];
       }
    }
 
@@ -346,17 +348,17 @@ void Turb_Init_Field()
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_FillinTable
-// Description :  Fillin h_Turb_AccTable host array
+// Description :  Fillin h_SrcTurb_AccTable host array
 //
 // Note        :  1. Invoked by Turb_Init(), Turb_CheckUpdate()
 //
 // Parameter   :  IdxTable : Turbulence table index-> IdxLast or IdxNext
 //
-// Return      :  h_Turb_AccTable
+// Return      :  h_SrcTurb_AccTable
 //-------------------------------------------------------------------------------------------------------
 void Turb_FillinTable( int IdxTable )
 {
-   const long NPoint = TURB_TABLE_SIZE + 1;
+   const long NPoint = SrcTerms.Turb_TableSize + 1;
 
 #  pragma omp parallel for schedule( runtime )
    for (int k = 0; k < NPoint; k++)  {
@@ -384,7 +386,7 @@ void Turb_FillinTable( int IdxTable )
       } // for (int n = 0; n < Turb->NMode; n++)
 
       for (int d=0; d<3; d++)
-         h_Turb_AccTable[IdxTable][3*idx + d] = (real)Acc[d];
+         h_SrcTurb_AccTable[IdxTable][3*idx + d] = (real)Acc[d];
 
    }}} // for i, j, k
 

@@ -7,6 +7,9 @@
 void Src_End_Deleptonization();
 void Src_End_Turbulence();
 #endif
+#ifdef EXACT_COOLING
+void Src_End_ExactCooling();
+#endif
 
 // this function pointer can be set by a test problem initializer for a non-built-in source term
 void (*Src_End_User_Ptr)() = NULL;
@@ -35,7 +38,12 @@ void Src_End()
 #  if ( MODEL == HYDRO )
    if ( SrcTerms.Deleptonization )
       Src_End_Deleptonization();
-
+#  endif
+#  ifdef EXACT_COOLING
+   if ( SrcTerms.ExactCooling )
+      Src_End_ExactCooling();
+#  endif
+#  ifdef TURBULENCE
    if ( SrcTerms.Turbulence )
       Src_End_Turbulence();
 #  endif

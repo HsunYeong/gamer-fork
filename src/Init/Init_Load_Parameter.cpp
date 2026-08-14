@@ -243,25 +243,30 @@ void Init_Load_Parameter()
 
 // source terms
    ReadPara->Add( "SRC_DELEPTONIZATION",        &SrcTerms.Deleptonization,        false,           Useless_bool,  Useless_bool   );
+   ReadPara->Add( "SRC_EXACTCOOLING",           &SrcTerms.ExactCooling,           false,           Useless_bool,  Useless_bool   );
    ReadPara->Add( "SRC_TURBULENCE",             &SrcTerms.Turbulence,             false,           Useless_bool,  Useless_bool   );
+#  ifdef EXACT_COOLING
+   ReadPara->Add( "SRC_EC_TEF_N",               &SrcTerms.EC_TEF_N,               1501,            1,             NoMax_int      );
+   ReadPara->Add( "SRC_EC_SUBCYCLING",          &SrcTerms.EC_subcycling,          false,           Useless_bool,  Useless_bool   );
+   ReadPara->Add( "SRC_EC_DTCOEF",              &SrcTerms.EC_dtCoef,              0.5,             Eps_double,    NoMax_double   );
+#  endif
+#  ifdef TURBULENCE
+   ReadPara->Add( "SRC_TURB_VEL",               &SrcTerms.Turb_Vel,               0.2,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_AMPL_FACTOR",       &SrcTerms.Turb_AmplFactor,        1.0,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KDRIV",             &SrcTerms.Turb_Kdriv,             2.0,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KMIN",              &SrcTerms.Turb_Kmin,              1.0,             1.0,           NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KMAX",              &SrcTerms.Turb_Kmax,              3.0,             1.0,           NoMax_double   );
+   ReadPara->Add( "SRC_TURB_ZETA",              &SrcTerms.Turb_Zeta,              1.0,             0.0,           1.0            );
+   ReadPara->Add( "SRC_TURB_SPEC_FORM",         &SrcTerms.Turb_SpecForm,          1,               0,             2              );
+   ReadPara->Add( "SRC_TURB_POW",               &SrcTerms.Turb_Pow,              -1.666666667,     NoMin_double,  NoMax_double   );
+   ReadPara->Add( "SRC_TURB_RSEED_INIT",        &SrcTerms.Turb_RSeedInit,         123,             0,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_UPDATE_STEP",       &SrcTerms.Turb_UpdateStep,        10,              1,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_TABLE_SIZE",        &SrcTerms.Turb_TableSize,         128,             0,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_RESET",             &SrcTerms.Turb_Reset,             false,           Useless_bool,  Useless_bool   );
+#  endif
    ReadPara->Add( "SRC_USER",                   &SrcTerms.User,                   false,           Useless_bool,  Useless_bool   );
 // do not check SRC_GPU_NPGROUP since it may be reset by either Init_ResetParameter() or CUAPI_SetMemSize()
    ReadPara->Add( "SRC_GPU_NPGROUP",            &SRC_GPU_NPGROUP,                -1,               NoMin_int,     NoMax_int      );
-// turbulence
-#  if ( MODEL == HYDRO )
-   ReadPara->Add( "TURB_VEL",                   &TURB_VEL,                        0.2,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "TURB_KDRIV",                 &TURB_KDRIV,                      2.0,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "TURB_KMIN",                  &TURB_KMIN,                       1.0,             1.0,           NoMax_double   );
-   ReadPara->Add( "TURB_KMAX",                  &TURB_KMAX,                       3.0,             1.0,           NoMax_double   );
-   ReadPara->Add( "TURB_ZETA",                  &TURB_ZETA,                       1.0,             0.0,           1.0            );
-   ReadPara->Add( "TURB_SPEC_FORM",             &TURB_SPEC_FORM,                  1,               0,             2              );
-   ReadPara->Add( "TURB_POW",                   &TURB_POW,                       -1.666666667,     NoMin_double,  NoMax_double   );
-   ReadPara->Add( "TURB_RSEED_INIT",            &TURB_RSEED_INIT,                 123,             0,             NoMax_int      );
-   ReadPara->Add( "TURB_UPDATE_STEP",           &TURB_UPDATE_STEP,                10,              1,             NoMax_int      );
-   ReadPara->Add( "TURB_TABLE_SIZE",            &TURB_TABLE_SIZE,                 128,             0,             NoMax_int      );
-   ReadPara->Add( "TURB_RESET",                 &TURB_RESET,                      false,           Useless_bool,  Useless_bool   );
-#  endif
 
 // Grackle
 #  ifdef SUPPORT_GRACKLE

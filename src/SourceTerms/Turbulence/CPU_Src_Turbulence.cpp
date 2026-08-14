@@ -3,9 +3,9 @@
 #if ( MODEL == HYDRO )
 
 
-extern real *h_Turb_AccTable[2];
+extern real *h_SrcTurb_AccTable[2];
 #ifdef GPU
-extern real *d_Turb_AccTable[2];
+extern real *d_SrcTurb_AccTable[2];
 #endif
 
 // external functions and GPU-related set-up
@@ -82,9 +82,9 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 {
    AuxArray_Flt[0] = Turb->TimeLast;
    AuxArray_Flt[1] = Turb->dt;
-   AuxArray_Flt[2] = double(TURB_TABLE_SIZE)/BOX_SIZE;
+   AuxArray_Flt[2] = double(SrcTerms.Turb_TableSize)/BOX_SIZE;
 
-   AuxArray_Int[0] = TURB_TABLE_SIZE + 1;
+   AuxArray_Int[0] = SrcTerms.Turb_TableSize + 1;
 
 } // FUNCTION : Src_SetAuxArray_Turbulence
 #endif // #ifndef __CUDACC__
@@ -250,8 +250,9 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
    {
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "TimeNew ( %13.7e ) > Turbulence TimeNext ( %13.7e ): Update turbulence pattern ...", TimeNew, Turb->TimeNext );
 
-      double coeff1 = exp( -Turb->dt/Turb->Tdecay );
-      double coeff2 = sqrt( 1 - SQR(coeff1) );
+      const double coeff1 = exp( -Turb->dt/Turb->Tdecay );
+      const double coeff2 = sqrt( 1 - SQR(coeff1) );
+      const double Zeta = SrcTerms.Turb_Zeta;
 
 //    swap last and next indices
       std::swap( Turb->IdxLast, Turb->IdxNext );
@@ -277,8 +278,8 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
          for (int d = 0; d < 3; ++d)
          {
 //          Helmholtz decomposition
-            Nr[d] = TURB_ZETA*Nr[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
-            Ni[d] = TURB_ZETA*Ni[d] + (1 - 2*TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+            Nr[d] = Zeta*Nr[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+            Ni[d] = Zeta*Ni[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Ni/kk;
 
 //          Update OU phases to time_new
             Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Nr[d];
@@ -357,10 +358,10 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 void Src_PassData2GPU_Turbulence( int IdxTable )
 {
 
-   const long Size_Data = sizeof(real)*3*CUBE( TURB_TABLE_SIZE + 1 );
+   const long Size_Data = sizeof(real)*3*CUBE( SrcTerms.Turb_TableSize + 1 );
 
 // use synchronous transfer
-   CUDA_CHECK_ERROR(  cudaMemcpy( d_Turb_AccTable[IdxTable], h_Turb_AccTable[IdxTable], Size_Data, cudaMemcpyHostToDevice )  );
+   CUDA_CHECK_ERROR(  cudaMemcpy( d_SrcTurb_AccTable[IdxTable], h_SrcTurb_AccTable[IdxTable], Size_Data, cudaMemcpyHostToDevice )  );
 
 } // FUNCTION : Src_PassData2GPU_Turbulence
 #endif // #ifdef __CUDACC__

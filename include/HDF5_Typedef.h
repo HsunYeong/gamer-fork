@@ -176,6 +176,7 @@ struct Makefile_t
    int CosmicRay;
    int EoS;
    int BarotropicEoS;
+   int ExactCooling;
 
 #  elif ( MODEL == ELBDM )
    int ELBDMScheme;
@@ -701,23 +702,28 @@ struct InputPara_t
 
 // source terms
    int    Src_Deleptonization;
-   int    Src_Turbulence;
    int    Src_User;
    int    Src_GPU_NPGroup;
-// turbulence
-# if ( MODEL == HYDRO )
-   double Turb_Vel;
-   double Turb_AmplFactor;
-   double Turb_Kdriv;
-   double Turb_Kmin;
-   double Turb_Kmax;
-   double Turb_Zeta;
-   int    Turb_SpecForm;
-   double Turb_Pow;
-   int    Turb_RSeedInit;
-   int    Turb_UpdateStep;
-   int    Turb_TableSize;
-   int    Turb_Reset;
+   int    Src_ExactCooling;
+   int    Src_Turbulence;
+#  ifdef EXACT_COOLING
+   int    Src_EC_TEF_N;
+   int    Src_EC_subcycling;
+   double Src_EC_dtCoef;
+#  endif
+# ifdef TURBULENCE
+   double Src_Turb_Vel;
+   double Src_Turb_AmplFactor;
+   double Src_Turb_Kdriv;
+   double Src_Turb_Kmin;
+   double Src_Turb_Kmax;
+   double Src_Turb_Zeta;
+   int    Src_Turb_SpecForm;
+   double Src_Turb_Pow;
+   int    Src_Turb_RSeedInit;
+   int    Src_Turb_UpdateStep;
+   int    Src_Turb_TableSize;
+   int    Src_Turb_Reset;
 #  endif
 
 // Grackle

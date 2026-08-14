@@ -209,21 +209,25 @@ OPT__LB_EXCHANGE_FATHER       1           # exchange all cells of all father pat
 
 # source terms
 SRC_DELEPTONIZATION           0           # deleptonization (for simulations of stellar core collapse) [0] ##HYDRO ONLY##
+SRC_EXACTCOOLING              0           # exact cooling scheme from Gaspari (2009) [0] ##HYDRO ONLY##
+SRC_EC_TEF_N                  1501        # number of points for lambda(T) sampling in LOG [1501]
+SRC_EC_SUBCYCLING             0           # perform subcycling when the cooling time step is small [0]
+SRC_EC_DTCOEF                 0.5         # the coefficient of the cooling time step [0.5]
 SRC_TURBULENCE                0           # turbulence [0] ##HYDRO ONLY##
+SRC_TURB_VEL                  0.2         # turbulence: target turbulence velocity dispersion (in code unit) [0.2]
+SRC_TURB_AMPL_FACTOR          1.0         # turbulence: adjust this factor if dispersion measured is different from target velocity [1.0]
+SRC_TURB_KDRIV                2.0         # turbulence: driving wave number in units of 2*pi/BOX_SIZE, determine the correlation time=BOX_SIZE/(TURB_KDRIV*TURB_VEL) [2.0]
+SRC_TURB_KMIN                 1.0         # turbulence: minimum wave number in units of 2*pi/BOX_SIZE [1.0]
+SRC_TURB_KMAX                 3.0         # turbulence: maximum wave number in units of 2*pi/BOX_SIZE [3.0]
+SRC_TURB_ZETA                 1.0         # turbulence: solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0]
+SRC_TURB_SPEC_FORM            1           # turbulence: spectral form of the driving amplitude (0=constant, 1=parabolic, 2=power law) [1]
+SRC_TURB_POW                 -1.666666667 # turbulence: power law for energy power spectrum, only useful when TURB_SPEC_FORM=2 [-5.0/3.0]
+SRC_TURB_RSEED_INIT           123         # turbulence: initial random seed, useless when restart without reset [123]
+SRC_TURB_UPDATE_STEP          10          # turbulence: update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10]
+SRC_TURB_TABLE_SIZE           128         # turbulence: resolution of turbulence table [128]
+SRC_TURB_RESET                0           # turbulence: reset turbulence field when restart [0]
 SRC_USER                      0           # user-defined source terms -> edit "Src_User.cpp" [0]
 SRC_GPU_NPGROUP              -1           # number of patch groups sent into the CPU/GPU source-term solver (<=0=auto) [-1]
-TURB_VEL                      0.2         # turbulence: target turbulence velocity dispersion (in code unit) [0.2]
-TURB_AMPL_FACTOR              1.0         # turbulence: adjust this factor if dispersion measured is different from target velocity [1.0]
-TURB_KDRIV                    2.0         # turbulence: driving wave number in units of 2*pi/BOX_SIZE, determine the correlation time=BOX_SIZE/(TURB_KDRIV*TURB_VEL) [2.0]
-TURB_KMIN                     1.0         # turbulence: minimum wave number in units of 2*pi/BOX_SIZE [1.0]
-TURB_KMAX                     3.0         # turbulence: maximum wave number in units of 2*pi/BOX_SIZE [3.0]
-TURB_ZETA                     1.0         # turbulence: solenoidal weighting (0.0=fully compressive, 1.0=fully solenoidal) [1.0]
-TURB_SPEC_FORM                1           # turbulence: spectral form of the driving amplitude (0=constant, 1=parabolic, 2=power law) [1]
-TURB_POW                     -1.666666667 # turbulence: power law for energy power spectrum, only useful when TURB_SPEC_FORM=2 [-5.0/3.0]
-TURB_RSEED_INIT               123         # turbulence: initial random seed, useless when restart without reset [123]
-TURB_UPDATE_STEP              10          # turbulence: update turbulence pattern every dt=(correlation time/TURB_UPDATE_STEP) [10]
-TURB_TABLE_SIZE               128         # turbulence: resolution of turbulence table [128]
-TURB_RESET                    0           # turbulence: reset turbulence field when restart [0]
 
 
 # Grackle library for chemistry and radiative cooling (SUPPORT_GRACKLE only)
