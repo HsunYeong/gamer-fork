@@ -60,7 +60,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 <a name="TURB_KDRIV"></a>
 * #### `TURB_KDRIV` &ensp; (>0.0) &ensp; [2.0]
     * **Description:**
-Turbulence driving wave number in units of 2*$\pi$/BOX_SIZE, determine the correlation time$\tau$=BOX_SIZE/(TURB_KDRIV*TURB_VEL)
+Turbulence driving wave number in units of 2π/BOX_SIZE, determine the correlation time τ=BOX_SIZE/(TURB_KDRIV*TURB_VEL)
     * **Restriction:**
 Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.
@@ -68,7 +68,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 <a name="TURB_KMIN"></a>
 * #### `TURB_KMIN` &ensp; (&#8805;1.0) &ensp; [1.0]
     * **Description:**
-Turbulence minimum wave number in units of 2*$\pi$/BOX_SIZE.
+Turbulence minimum wave number in units of 2π/BOX_SIZE.
     * **Restriction:**
 Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.
