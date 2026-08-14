@@ -250,14 +250,14 @@ void Init_Load_Parameter()
 // turbulence
 #  if ( MODEL == HYDRO )
    ReadPara->Add( "TURB_VEL",                   &TURB_VEL,                        0.2,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             0.0,           NoMax_double   );
+   ReadPara->Add( "TURB_AMPL_FACTOR",           &TURB_AMPL_FACTOR,                1.0,             Eps_double,    NoMax_double   );
    ReadPara->Add( "TURB_KDRIV",                 &TURB_KDRIV,                      2.0,             Eps_double,    NoMax_double   );
    ReadPara->Add( "TURB_KMIN",                  &TURB_KMIN,                       1.0,             1.0,           NoMax_double   );
    ReadPara->Add( "TURB_KMAX",                  &TURB_KMAX,                       3.0,             1.0,           NoMax_double   );
    ReadPara->Add( "TURB_ZETA",                  &TURB_ZETA,                       1.0,             0.0,           1.0            );
    ReadPara->Add( "TURB_SPEC_FORM",             &TURB_SPEC_FORM,                  1,               0,             2              );
-   ReadPara->Add( "TURB_POW",                   &TURB_POW,                        1.0,             NoMin_double,  NoMax_double   );
-   ReadPara->Add( "TURB_RSEED_INIT",            &TURB_RSEED_INIT,                 1,               0,             NoMax_int      );
+   ReadPara->Add( "TURB_POW",                   &TURB_POW,                       -1.666666667,     NoMin_double,  NoMax_double   );
+   ReadPara->Add( "TURB_RSEED_INIT",            &TURB_RSEED_INIT,                 123,             0,             NoMax_int      );
    ReadPara->Add( "TURB_UPDATE_STEP",           &TURB_UPDATE_STEP,                10,              1,             NoMax_int      );
    ReadPara->Add( "TURB_TABLE_SIZE",            &TURB_TABLE_SIZE,                 128,             0,             NoMax_int      );
    ReadPara->Add( "TURB_RESET",                 &TURB_RESET,                      false,           Useless_bool,  Useless_bool   );

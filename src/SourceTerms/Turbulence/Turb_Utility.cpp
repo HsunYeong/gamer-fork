@@ -1,9 +1,13 @@
 #include "GAMER.h"
 
 #if ( MODEL == HYDRO )
-void   Turb_Init();
-void   Turb_End();
-void   Turb_FillinTable( int IdxTable );
+
+extern void Src_SetAuxArray_Turbulence( double [], int [] );
+extern void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
+                                           double *&DevPtr_Flt, int *&DevPtr_Int );
+extern void Src_PassData2GPU_Turbulence( int IdxTable );
+
+#define MAX_NMODE 100000
 
 /********************************************************************************************************
 Turbulence structure:
@@ -22,23 +26,20 @@ Turbulence structure:
 
 
 //-------------------------------------------------------------------------------------------------------
-// Function    :  Turb_Init
-// Description :  Initialize turbulence data structure
+// Function    :  Turb_Init_Modes
+// Description :  Initialize turbulence modes, amplitudes
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
-//                2. Don't fill in AccTable here since global arrays are not yet initialized.
-//                3. When restart, load OU phases, times, and random seed.
 //
 // Parameter   :  None
 //
 // Return      :  Turb
 //-------------------------------------------------------------------------------------------------------
-void Turb_Init()
+void Turb_Init_Modes()
 {
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
-// initialize turbulence field
-   Turb = new Turbulence_t;
+   if ( Turb == NULL )     Aux_Error( ERROR_INFO, "Turb == NULL !!\n" );
 
 // assign values to structure members
    Turb->Tdecay   = BOX_SIZE/TURB_KDRIV/TURB_VEL;
@@ -73,6 +74,9 @@ void Turb_Init()
       if ( kmag >= kmin && kmag <= kmax ) nmodes++;
 
    }}}
+
+   if ( nmodes > MAX_NMODE )  Aux_Error( ERROR_INFO, "number of turbulence modes ( %d ) exceeds maximum mode (%d) !!\n"
+                                                     "try lowering KMAX !!\n" , nmodes, MAX_NMODE );
 
    if ( MPI_Rank == 0 ) Aux_Message( stdout, "   initialize %d turbulence modes\n", nmodes );
 
@@ -135,12 +139,31 @@ void Turb_Init()
          Aux_Message( stdout, "    mode = %3d, amplitude = %13.7e\n", n, Turb->Amplitude[n] );
       }
    }
+}
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  Turb_Init_Field
+// Description :  Initialize turbulence OU phases, and fill in AccTable
+//
+// Note        :  1. Invoked by Init_GAMER()
+//                2. When restart, load OU phases, times, and rng state.
+//
+// Parameter   :  None
+//
+// Return      :  Turb
+//-------------------------------------------------------------------------------------------------------
+void Turb_Init_Field()
+{
+
+   if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
+
+   if ( Turb == NULL )     Aux_Error( ERROR_INFO, "Turb == NULL !!\n" );
 
 // initialize OU noise
    for (int t = 0; t < 2; t++)
-      if ( Turb->OUphase[t] == NULL ) Turb->OUphase[t] = new double [6*nmodes];
+      if ( Turb->OUphase[t] == NULL ) Turb->OUphase[t] = new double [6*Turb->NMode];
 
-// when restart, load turbulence field, this will happen before Init_ByRestart_HDF5()
+// when restart, load turbulence field
    if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
    {
 //    load with rank 0
@@ -168,7 +191,7 @@ void Turb_Init()
          if ( H5_GroupID_Turb < 0 )   Aux_Error( ERROR_INFO, "failed to open the group \"%s\" !!\n"
                                                              "enable TURB_RESET to turn on tubulence when restart !\n", "Turbulence" );
 
-         double RS_NMode;
+         int RS_NMode;
          H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "NMode", H5P_DEFAULT);
          H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &RS_NMode );
          H5_Status     = H5Dclose( H5_SetID_Turb );
@@ -251,10 +274,15 @@ void Turb_Init()
       {
          for (int d = 0; d < 3; ++d)
          {
-            Turb->OUphase[1][2*3*n+2*d  ] = coeff1 * Turb->OUphase[0][2*3*n+2*d  ] + coeff2 * Turb->OUphase[1][2*3*n+2*d  ];
-            Turb->OUphase[1][2*3*n+2*d+1] = coeff1 * Turb->OUphase[0][2*3*n+2*d+1] + coeff2 * Turb->OUphase[1][2*3*n+2*d+1];
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ];
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1];
          }
       }
+
+//    set next update time
+      Turb->TimeLast = Time[0];
+      Turb->TimeNext = Time[0] + Turb->dt;
+
    } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
 // initialize acc table, store values on box corner
@@ -267,6 +295,7 @@ void Turb_Init()
       Turb->Cos[d] = new double [ NPoint*Turb->NMode ];
    }
 
+// pre-compute Fourier basis
 #  pragma omp parallel for schedule( runtime )
    for (int n = 0; n < Turb->NMode; n++)
    {
@@ -293,24 +322,26 @@ void Turb_Init()
       }
    }
 
-// set next update time
-   Turb->TimeLast = Time[0];
-   Turb->TimeNext = Time[0] + Turb->dt;
+// fillin both tables
+   Turb_FillinTable( Turb->IdxLast );
+   Turb_FillinTable( Turb->IdxNext );
+#  ifdef GPU
+   Src_PassData2GPU_Turbulence( Turb->IdxLast );
+   Src_PassData2GPU_Turbulence( Turb->IdxNext );
+#  endif
+
+// update AuxArray
+   Src_SetAuxArray_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int );
+#  ifdef GPU
+   Src_SetConstMemory_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int,
+                                  SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
+#  endif
+
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
 } // FUNCTION : Turb_Init
 
-
-//-------------------------------------------------------------------------------------------------------
-// Function    :  Turb_End
-// Description :  Free memories
-//-------------------------------------------------------------------------------------------------------
-void Turb_End()
-{
-   if ( Turb != NULL ) delete Turb;
-
-} // FUNCTION : Turb_End
 
 
 //-------------------------------------------------------------------------------------------------------

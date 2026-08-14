@@ -30,10 +30,6 @@ void Src_SetGPUFunc_Turbulence( SrcFunc_t & );
 void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
                                       double *&DevPtr_Flt, int *&DevPtr_Int );
 void Src_PassData2GPU_Turbulence( int IdxTable );
-extern void Turb_Init();
-extern void Turb_End();
-extern void Turb_FillinTable( int IdxTable );
-extern void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 #endif
 
 
@@ -84,9 +80,6 @@ extern void Turb_GetRNG( double& a, double& b, int& Seed, const double OUvar );
 #ifndef __CUDACC__
 void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 {
-   if ( Turb == NULL )
-      Aux_Error( ERROR_INFO, "Turb == NULL at rank %d !!\n", MPI_Rank );
-
    AuxArray_Flt[0] = Turb->TimeLast;
    AuxArray_Flt[1] = Turb->dt;
    AuxArray_Flt[2] = double(TURB_TABLE_SIZE)/BOX_SIZE;
@@ -248,23 +241,8 @@ static void Src_Turbulence( real fluid[], const real B[],
 void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, const double TimeOld, const double dt,
                                          double AuxArray_Flt[], int AuxArray_Int[] )
 {
-   static bool FirstTime = true;
-
 // only update at lv 0
    if ( lv != 0 ) return;
-
-   if ( FirstTime )
-   {
-//    fillin both tables
-      Turb_FillinTable( Turb->IdxLast );
-      Turb_FillinTable( Turb->IdxNext );
-#     ifdef GPU
-      Src_PassData2GPU_Turbulence( Turb->IdxLast );
-      Src_PassData2GPU_Turbulence( Turb->IdxNext );
-#     endif
-
-      FirstTime = false;
-   }
 
    int hasUpdate = 0;
 
@@ -481,8 +459,11 @@ void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxAr
 //-----------------------------------------------------------------------------------------
 void Src_Init_Turbulence()
 {
+// initialize turbulence structure
+   Turb = new Turbulence_t;
 
-   Turb_Init();
+// initialize turbulence modes
+   Turb_Init_Modes();
 
 // set the auxiliary arrays
    Src_SetAuxArray_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int );
@@ -528,7 +509,7 @@ void Src_End_Turbulence()
    SrcTerms.Turb_AccTableDevPtr[0] = NULL;
    SrcTerms.Turb_AccTableDevPtr[1] = NULL;
 
-   Turb_End();
+   if ( Turb != NULL ) delete Turb;
 
 } // FUNCTION : Src_End_Turbulence
 

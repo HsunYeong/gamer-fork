@@ -33,7 +33,7 @@ struct Turbulence_t
 
 // data members
 // ===================================================================================
-   long    NMode;
+   int     NMode;
    double  Tdecay;
    double  dt;
    double  OUvar;
