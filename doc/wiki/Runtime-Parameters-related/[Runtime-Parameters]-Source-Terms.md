@@ -76,7 +76,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 <a name="TURB_KMAX"></a>
 * #### `TURB_KMAX` &ensp; (&#8805;1.0) &ensp; [3.0]
     * **Description:**
-Turbulence maximum wave number in units of 2*$\pi$/BOX_SIZE.
+Turbulence maximum wave number in units of 2π/BOX_SIZE.
     * **Restriction:**
 Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.
