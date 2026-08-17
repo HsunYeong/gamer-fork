@@ -1,5 +1,5 @@
 #include "GAMER.h"
-#include "fstream"
+
 #if ( MODEL == HYDRO )
 
 extern void Src_SetAuxArray_Turbulence( double [], int [] );
@@ -390,17 +390,6 @@ void Turb_FillinTable( int IdxTable )
 
    }}} // for i, j, k
 
-   if ( IdxTable == Turb->IdxNext && MPI_Rank == 0 )
-   {
-      size_t arr_size = 3*CUBE( SrcTerms.Turb_TableSize + 1 )*sizeof(real);
-
-      std::ofstream file("Table" + std::to_string( Turb->TimeNext ), std::ios::binary);
-
-      file.write(reinterpret_cast<const char*>(h_SrcTurb_AccTable[IdxTable]),
-                 arr_size );
-
-      file.close();
-   }
 } // FUNCTION : Turb_FillinTable
 
 
