@@ -139,8 +139,8 @@ void Src_Init()
    }
 #  endif // #ifdef EXACT_COOLING
 
-#  ifdef TURBULENCE
 // (3) turbulence
+#  ifdef TURBULENCE
    if ( SrcTerms.Turbulence )
    {
       Src_Init_Turbulence();

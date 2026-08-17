@@ -37,6 +37,10 @@ void Validate()
    Aux_Error( ERROR_INFO, "EOS != ISOTHERMAL !!\n" );
 #  endif
 
+#  ifndef TURBULENCE
+   Aux_Error( ERROR_INFO, "TURBULENCE must be enabled !!\n" );
+#  endif
+
 #  ifdef GRAVITY
    Aux_Error( ERROR_INFO, "GRAVITY must be disabled !!\n" );
 #  endif

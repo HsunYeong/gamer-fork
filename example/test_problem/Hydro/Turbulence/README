@@ -1,6 +1,6 @@
 Compilation flags:
 ========================================
-Enable : MODEL=HYDRO, EOS=ISOTHERMAL
+Enable : MODEL=HYDRO, EOS=ISOTHERMAL, TURBULENCE
 Disable: COMOVING, PARTICLE, GRAVITY
 
 
@@ -22,15 +22,15 @@ Default setup:
 4. END_T            default to 100 code unit
 
 5. Turbulence parameters:
-   SRC_TURBULENCE    1    enable turbulence
-   TURB_VEL          0.2  target velocity dispersion in code unit
-   TURB_KDRIV        2.0  driving scale, this will affect Ornstein-Uhlenbeck auto-correlation time (turnover time): Tdecay = BOX_SIZE/(TURB_VEL*TURB_KDRIV)
-   TURB_KMIN         1.0  minimum wave number in units of 2*pi/BOX_SIZE
-   TURB_KMAX         3.0  maximum wave number in units of 2*pi/BOX_SIZE
-   TURB_ZETA         1.0  fully solenoidal
-   TURB_SPEC_FORM    1    parabolic spectrum
-   TURB_UPDATE_STEP  10   number of turbulence driving pattern updates per turnover time, so dt for OU process = Tdecay/TURB_UPDATE_STEP
-   TURB_TABLE_SIZE   128  resolution of turbulence table, actual table size is (TURB_TABLE_SIZE + 1)^3
+   SRC_TURBULENCE        1    enable turbulence
+   SRC_TURB_VEL          0.2  target velocity dispersion in code unit
+   SRC_TURB_KDRIV        2.0  driving scale, this will affect Ornstein-Uhlenbeck auto-correlation time (turnover time): Tdecay = BOX_SIZE/(SRC_TURB_VEL*SRC_TURB_KDRIV)
+   SRC_TURB_KMIN         1.0  minimum wave number in units of 2*pi/BOX_SIZE
+   SRC_TURB_KMAX         3.0  maximum wave number in units of 2*pi/BOX_SIZE
+   SRC_TURB_ZETA         1.0  fully solenoidal
+   SRC_TURB_SPEC_FORM    1    parabolic spectrum
+   SRC_TURB_UPDATE_STEP  10   number of turbulence driving pattern updates per turnover time, so dt for OU process = Tdecay/SRC_TURB_UPDATE_STEP
+   SRC_TURB_TABLE_SIZE   128  resolution of turbulence table, must be a power of 2. The actual table size is (SRC_TURB_TABLE_SIZE + 1)^3
 
 Reference:
 ========================================

@@ -307,7 +307,7 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
       if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
 
 //    update turbulence time
-      Turb->TimeLast =  Turb->TimeNext;
+      Turb->TimeLast  = Turb->TimeNext;
       Turb->TimeNext += Turb->dt;
 
       hasUpdate += 1;
@@ -335,7 +335,7 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
       {
 //       fill in both tables
 //       this should be prevented in general by choosing a large enough turbulence dt
-//       small turbulence dt will be block during Mis_GetTimeStep()
+//       small turbulence dt will be blocked during Mis_GetTimeStep()
          Turb_FillinTable( Turb->IdxLast );
          Turb_FillinTable( Turb->IdxNext );
 #        ifdef GPU

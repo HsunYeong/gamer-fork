@@ -145,7 +145,7 @@ void Turb_Init_Modes()
 // Function    :  Turb_Init_Field
 // Description :  Initialize turbulence OU phases, and fill in AccTable
 //
-// Note        :  1. Invoked by Init_GAMER()
+// Note        :  1. Invoked by Init_GAMER() after Time[lv] is initialized
 //                2. When restart, load OU phases, times, and rng state.
 //
 // Parameter   :  None
@@ -267,7 +267,7 @@ void Turb_Init_Field()
          } // for (int n = 0; n < Turb->NMode; ++n)
       } // for t
 
-//    perform Ornstein-Uhlenbeck process to update OUphase[1]
+//    perform Ornstein-Uhlenbeck process to update OUphase[Next]
       double coeff1 = exp( -Turb->dt/Turb->Tdecay );
       double coeff2 = sqrt( 1 - SQR(coeff1) );
       for (int n = 0; n < Turb->NMode; ++n)
@@ -322,7 +322,7 @@ void Turb_Init_Field()
       }
    }
 
-// fillin both tables
+// fill in both tables
    Turb_FillinTable( Turb->IdxLast );
    Turb_FillinTable( Turb->IdxNext );
 #  ifdef GPU
