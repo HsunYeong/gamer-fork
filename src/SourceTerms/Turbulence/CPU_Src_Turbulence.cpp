@@ -67,7 +67,8 @@ void Src_PassData2GPU_Turbulence( int IdxTable );
 //                   AuxArray_Flt[0] = Turb->TimeLast
 //                   AuxArray_Flt[1] = Turb->dt
 //                   AuxArray_Flt[2] = 1/table_dh
-//                   AuxArray_Int[0] = NPoints
+//                   AuxArray_Int[0] = TableSize + 1 (NPoints)
+//                   AuxArray_Int[1] = TableSize - 1
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
 //                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB defined in Macro.h (default = 5)
@@ -85,6 +86,7 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
    AuxArray_Flt[2] = double(SrcTerms.Turb_TableSize)/BOX_SIZE;
 
    AuxArray_Int[0] = SrcTerms.Turb_TableSize + 1;
+   AuxArray_Int[1] = SrcTerms.Turb_TableSize - 1;
 
 } // FUNCTION : Src_SetAuxArray_Turbulence
 #endif // #ifndef __CUDACC__
@@ -137,26 +139,35 @@ static void Src_Turbulence( real fluid[], const real B[],
    if ( AuxArray_Int == NULL )   printf( "ERROR : AuxArray_Int == NULL in %s !!\n", __FUNCTION__ );
 #  endif
 
-   const long   NPoint    = AuxArray_Int[0];
-   const long   didx_x    = 1;
-   const long   didx_y    = NPoint;
-   const long   didx_z    = SQR( NPoint );
-   const double _dh_table = AuxArray_Flt[2];
-   const double TimeLast  = AuxArray_Flt[0];
-   const double Turb_dt   = AuxArray_Flt[1];
-   const real   ONE       = (real)1.0;
-   const real   tfrac     = (real)( ( TimeNew - TimeLast )/Turb_dt );
-   const real   tfrac0    = ONE - tfrac;
+   const int    NPoint       = AuxArray_Int[0];
+   const int    TableSize_m1 = AuxArray_Int[1];
+   const long   didx_x       = 1;
+   const long   didx_y       = NPoint;
+   const long   didx_z       = SQR( NPoint );
+   const double _dh_table    = AuxArray_Flt[2];
+   const double TimeLast     = AuxArray_Flt[0];
+   const double Turb_dt      = AuxArray_Flt[1];
+   const real   ONE          = (real)1.0;
+   const real   tfrac        = (real)( ( TimeNew - TimeLast )/Turb_dt );
+   const real   tfrac0       = ONE - tfrac;
 
    real dx    = (real)(x * _dh_table);
    real dy    = (real)(y * _dh_table);
    real dz    = (real)(z * _dh_table);
-   int  idx_x = (int)( dx );
-   int  idx_y = (int)( dy );
-   int  idx_z = (int)( dz );
+
+// use FLOOR if dx is somehow negative (e.g. ghost zones)
+   int  idx_x = (int)FLOOR( dx );
+   int  idx_y = (int)FLOOR( dy );
+   int  idx_z = (int)FLOOR( dz );
    dx        -= (real)idx_x;
    dy        -= (real)idx_y;
    dz        -= (real)idx_z;
+
+// apply periodicity
+// smae as idx %= TableSize, but must ensure TableSize is power of 2
+   idx_x &= TableSize_m1;
+   idx_y &= TableSize_m1;
+   idx_z &= TableSize_m1;
 
    const long idx0 = long( idx_x*didx_x + idx_y*didx_y ) + (long)idx_z*didx_z;
 

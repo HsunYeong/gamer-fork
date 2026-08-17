@@ -1,5 +1,5 @@
 #include "GAMER.h"
-
+#include "fstream"
 #if ( MODEL == HYDRO )
 
 extern void Src_SetAuxArray_Turbulence( double [], int [] );
@@ -287,9 +287,9 @@ void Turb_Init_Field()
    } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
 // initialize acc table, store values on box corner
-   const long TSize  = SrcTerms.Turb_TableSize;
-   const long NPoint = TSize + 1;
-   const double dh   = BOX_SIZE / TSize;
+   const long TableSize  = SrcTerms.Turb_TableSize;
+   const long NPoint = TableSize + 1;
+   const double dh   = BOX_SIZE / TableSize;
 
    for (int d = 0; d < 3; ++d)
    {
@@ -301,17 +301,17 @@ void Turb_Init_Field()
 #  pragma omp parallel for schedule( runtime )
    for (int n = 0; n < Turb->NMode; n++)
    {
-      for (int i = 0; i < TSize; i++)
+      for (int i = 0; i < TableSize; i++)
       {
          Turb->Sin[0][ n*NPoint + i ] = sin( Turb->Kmode[0][n]*i*dh );
          Turb->Cos[0][ n*NPoint + i ] = cos( Turb->Kmode[0][n]*i*dh );
       }
-      for (int j = 0; j < TSize; j++)
+      for (int j = 0; j < TableSize; j++)
       {
          Turb->Sin[1][ n*NPoint + j ] = sin( Turb->Kmode[1][n]*j*dh );
          Turb->Cos[1][ n*NPoint + j ] = cos( Turb->Kmode[1][n]*j*dh );
       }
-      for (int k = 0; k < TSize; k++)
+      for (int k = 0; k < TableSize; k++)
       {
          Turb->Sin[2][ n*NPoint + k ] = sin( Turb->Kmode[2][n]*k*dh );
          Turb->Cos[2][ n*NPoint + k ] = cos( Turb->Kmode[2][n]*k*dh );
@@ -319,8 +319,8 @@ void Turb_Init_Field()
 //    apply periodicity
       for (int d = 0; d < 3; d++)
       {
-         Turb->Sin[d][ n*NPoint + TSize ] = Turb->Sin[d][ n*NPoint ];
-         Turb->Cos[d][ n*NPoint + TSize ] = Turb->Cos[d][ n*NPoint ];
+         Turb->Sin[d][ n*NPoint + TableSize ] = Turb->Sin[d][ n*NPoint ];
+         Turb->Cos[d][ n*NPoint + TableSize ] = Turb->Cos[d][ n*NPoint ];
       }
    }
 
@@ -390,6 +390,17 @@ void Turb_FillinTable( int IdxTable )
 
    }}} // for i, j, k
 
+   if ( IdxTable == Turb->IdxNext && MPI_Rank == 0 )
+   {
+      size_t arr_size = 3*CUBE( SrcTerms.Turb_TableSize + 1 )*sizeof(real);
+
+      std::ofstream file("Table" + std::to_string( Turb->TimeNext ), std::ios::binary);
+
+      file.write(reinterpret_cast<const char*>(h_SrcTurb_AccTable[IdxTable]),
+                 arr_size );
+
+      file.close();
+   }
 } // FUNCTION : Turb_FillinTable
 
 

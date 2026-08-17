@@ -117,7 +117,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 <a name="SRC_TURB_TABLE_SIZE"></a>
 * #### `SRC_TURB_TABLE_SIZE` &ensp; (&#8805;0) &ensp; [128]
     * **Description:**
-Resolution of turbulence table.
+Resolution of turbulence table, must be a power of 2.
     * **Restriction:**
 Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.

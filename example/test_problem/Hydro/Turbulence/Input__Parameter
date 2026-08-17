@@ -185,7 +185,7 @@ SRC_TURB_SPEC_FORM            1           # turbulence: spectral form of the dri
 SRC_TURB_POW                 -1.666666667 # turbulence: power law for energy power spectrum, only useful when SRC_TURB_SPEC_FORM=2 [-5.0/3.0]
 SRC_TURB_RSEED_INIT           123         # turbulence: initial random seed, useless when restart without reset [123]
 SRC_TURB_UPDATE_STEP          10          # turbulence: update turbulence pattern every dt=(correlation time/SRC_TURB_UPDATE_STEP) [10]
-SRC_TURB_TABLE_SIZE           128         # turbulence: resolution of turbulence table [128]
+SRC_TURB_TABLE_SIZE           128         # turbulence: resolution of turbulence table, must be a power of 2 (e.g. 64, 128, 256, ...) [128]
 SRC_TURB_RESET                0           # turbulence: reset turbulence field when restart [0]
 SRC_USER                      0           # user-defined source terms -> edit "Src_User.cpp" [0]
 SRC_GPU_NPGROUP              -1           # number of patch groups sent into the CPU/GPU source-term solver (<=0=auto) [-1]

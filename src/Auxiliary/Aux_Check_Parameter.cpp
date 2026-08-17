@@ -1877,9 +1877,6 @@ void Aux_Check_Parameter()
 #  if ( MODEL != HYDRO )
    if ( SrcTerms.Deleptonization )
       Aux_Error( ERROR_INFO, "SRC_DELEPTONIZATION is only supported in HYDRO !!\n" );
-
-   if ( SrcTerms.Turbulence )
-      Aux_Error( ERROR_INFO, "SRC_TURBULENCE is only supported in HYDRO !!\n" );
 #  endif
 
    if ( SrcTerms.ExactCooling )
@@ -1889,6 +1886,20 @@ void Aux_Check_Parameter()
    if ( SrcTerms.ExactCooling )
       Aux_Error( ERROR_INFO, "SRC_EXACTCOOLING is only supported when EXACT_COOLING is enabled !!\n" );
 #  endif
+
+   if ( SrcTerms.Turbulence )
+   {
+#     ifdef TURBULENCE
+      if ( SrcTerms.Turb_TableSize <= 0 || (SrcTerms.Turb_TableSize & (SrcTerms.Turb_TableSize - 1)) != 0 )
+         Aux_Error( ERROR_INFO, "SRC_TURB_TABLE_SIZE must be a power of 2 !!\n" );
+
+      if ( SrcTerms.Turb_Kmax <= SrcTerms.Turb_Kmin )
+         Aux_Error( ERROR_INFO, "SRC_TURB_KMAX must be greater than SRC_TURB_KMIN !!\n" );
+
+#     else
+      Aux_Error( ERROR_INFO, "SRC_TURBULENCE is only supported when TURBULENCE is enabled !!\n" );
+#     endif
+   }
 
 // warning
 // ------------------------------
