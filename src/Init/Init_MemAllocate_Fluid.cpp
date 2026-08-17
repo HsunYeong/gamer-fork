@@ -79,7 +79,7 @@ void Init_MemAllocate_Fluid( const int Flu_NPatchGroup, const int Pot_NPatchGrou
 
 #     ifdef TURBULENCE
       if ( SrcTerms.Turbulence ) {
-      h_SrcTurb_AccTable   [t] = new real [ 3*CUBE( SrcTerms.Turb_TableSize + 1 ) ];
+      h_SrcTurb_AccTable   [t] = new real [ 3*CUBE( SRC_TURB_TABLE_SIZE + 1 ) ];
       SrcTerms.Turb_AccTableDevPtr[t] = h_SrcTurb_AccTable[t];
       }
 #     endif

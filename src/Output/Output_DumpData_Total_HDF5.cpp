@@ -2853,18 +2853,18 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.Src_EC_dtCoef           = SrcTerms.EC_dtCoef;
 #  endif
 #  ifdef TURBULENCE
-   InputPara.Src_Turb_Vel            = SrcTerms.Turb_Vel;
-   InputPara.Src_Turb_AmplFactor     = SrcTerms.Turb_AmplFactor;
-   InputPara.Src_Turb_Kdriv          = SrcTerms.Turb_Kdriv;
-   InputPara.Src_Turb_Kmin           = SrcTerms.Turb_Kmin;
-   InputPara.Src_Turb_Kmax           = SrcTerms.Turb_Kmax;
-   InputPara.Src_Turb_Zeta           = SrcTerms.Turb_Zeta;
-   InputPara.Src_Turb_SpecForm       = SrcTerms.Turb_SpecForm;
-   InputPara.Src_Turb_Pow            = SrcTerms.Turb_Pow;
-   InputPara.Src_Turb_RSeedInit      = SrcTerms.Turb_RSeedInit;
-   InputPara.Src_Turb_UpdateStep     = SrcTerms.Turb_UpdateStep;
-   InputPara.Src_Turb_TableSize      = SrcTerms.Turb_TableSize;
-   InputPara.Src_Turb_Reset          = SrcTerms.Turb_Reset;
+   InputPara.Src_Turb_Vel            = SRC_TURB_VEL;
+   InputPara.Src_Turb_AmplFactor     = SRC_TURB_AMPL_FACTOR;
+   InputPara.Src_Turb_Kdriv          = SRC_TURB_KDRIV;
+   InputPara.Src_Turb_Kmin           = SRC_TURB_KMIN;
+   InputPara.Src_Turb_Kmax           = SRC_TURB_KMAX;
+   InputPara.Src_Turb_Zeta           = SRC_TURB_ZETA;
+   InputPara.Src_Turb_SpecForm       = SRC_TURB_SPEC_FORM;
+   InputPara.Src_Turb_Pow            = SRC_TURB_POW;
+   InputPara.Src_Turb_RSeedInit      = SRC_TURB_RSEED_INIT;
+   InputPara.Src_Turb_UpdateStep     = SRC_TURB_UPDATE_STEP;
+   InputPara.Src_Turb_TableSize      = SRC_TURB_TABLE_SIZE;
+   InputPara.Src_Turb_Reset          = SRC_TURB_RESET;
 #  endif
    InputPara.Src_GPU_NPGroup         = SRC_GPU_NPGROUP;
 

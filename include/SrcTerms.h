@@ -107,18 +107,6 @@ struct SrcTerms_t
    double   *Turb_AuxArrayDevPtr_Flt;
    int      *Turb_AuxArrayDevPtr_Int;
    real     *Turb_AccTableDevPtr[2];
-   double    Turb_Vel;
-   double    Turb_AmplFactor;
-   double    Turb_Kdriv;
-   double    Turb_Kmin;
-   double    Turb_Kmax;
-   double    Turb_Zeta;
-   int       Turb_SpecForm;
-   double    Turb_Pow;
-   int       Turb_RSeedInit;
-   int       Turb_UpdateStep;
-   int       Turb_TableSize;
-   bool      Turb_Reset;
 #  endif
 
 // user-specified source term

@@ -1156,18 +1156,18 @@ void Aux_TakeNote()
 #     endif
 #     ifdef TURBULENCE
       if ( SrcTerms.Turbulence ) {
-      fprintf( Note, "SRC_TURB_VEL                   % 14.7e\n",  SrcTerms.Turb_Vel         );
-      fprintf( Note, "SRC_TURB_AMPL_FACTOR           % 14.7e\n",  SrcTerms.Turb_AmplFactor  );
-      fprintf( Note, "SRC_TURB_KDRIV                 % 14.7e\n",  SrcTerms.Turb_Kdriv       );
-      fprintf( Note, "SRC_TURB_KMIN                  % 14.7e\n",  SrcTerms.Turb_Kmin        );
-      fprintf( Note, "SRC_TURB_KMAX                  % 14.7e\n",  SrcTerms.Turb_Kmax        );
-      fprintf( Note, "SRC_TURB_ZETA                  % 14.7e\n",  SrcTerms.Turb_Zeta        );
-      fprintf( Note, "SRC_TURB_SPEC_FORM             % d\n",      SrcTerms.Turb_SpecForm    );
-      fprintf( Note, "SRC_TURB_POW                   % 14.7e\n",  SrcTerms.Turb_Pow         );
-      fprintf( Note, "SRC_TURB_RSEED_INIT            % d\n",      SrcTerms.Turb_RSeedInit   );
-      fprintf( Note, "SRC_TURB_UPDATE_STEP           % d\n",      SrcTerms.Turb_UpdateStep  );
-      fprintf( Note, "SRC_TURB_TABLE_SIZE            % d\n",      SrcTerms.Turb_TableSize   );
-      fprintf( Note, "SRC_TURB_RESET                 % d\n",      SrcTerms.Turb_Reset       ); }
+      fprintf( Note, "SRC_TURB_VEL                   % 14.7e\n",  SRC_TURB_VEL              );
+      fprintf( Note, "SRC_TURB_AMPL_FACTOR           % 14.7e\n",  SRC_TURB_AMPL_FACTOR      );
+      fprintf( Note, "SRC_TURB_KDRIV                 % 14.7e\n",  SRC_TURB_KDRIV            );
+      fprintf( Note, "SRC_TURB_KMIN                  % 14.7e\n",  SRC_TURB_KMIN             );
+      fprintf( Note, "SRC_TURB_KMAX                  % 14.7e\n",  SRC_TURB_KMAX             );
+      fprintf( Note, "SRC_TURB_ZETA                  % 14.7e\n",  SRC_TURB_ZETA             );
+      fprintf( Note, "SRC_TURB_SPEC_FORM             % d\n",      SRC_TURB_SPEC_FORM        );
+      fprintf( Note, "SRC_TURB_POW                   % 14.7e\n",  SRC_TURB_POW              );
+      fprintf( Note, "SRC_TURB_RSEED_INIT            % d\n",      SRC_TURB_RSEED_INIT       );
+      fprintf( Note, "SRC_TURB_UPDATE_STEP           % d\n",      SRC_TURB_UPDATE_STEP      );
+      fprintf( Note, "SRC_TURB_TABLE_SIZE            % d\n",      SRC_TURB_TABLE_SIZE       );
+      fprintf( Note, "SRC_TURB_RESET                 % d\n",      SRC_TURB_RESET            ); }
 #     endif
       fprintf( Note, "SRC_USER                       % d\n",      SrcTerms.User             );
       fprintf( Note, "SRC_GPU_NPGROUP                % d\n",      SRC_GPU_NPGROUP           );

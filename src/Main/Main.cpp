@@ -350,6 +350,18 @@ int        Src_User_AuxArray_Int[SRC_NAUX_USER];
 #ifdef TURBULENCE
 double     Src_Turb_AuxArray_Flt[SRC_NAUX_TURB];
 int        Src_Turb_AuxArray_Int[SRC_NAUX_TURB];
+double     SRC_TURB_VEL;
+double     SRC_TURB_AMPL_FACTOR;
+double     SRC_TURB_KDRIV;
+double     SRC_TURB_KMIN;
+double     SRC_TURB_KMAX;
+double     SRC_TURB_ZETA;
+int        SRC_TURB_SPEC_FORM;
+double     SRC_TURB_POW;
+int        SRC_TURB_RSEED_INIT;
+int        SRC_TURB_UPDATE_STEP;
+int        SRC_TURB_TABLE_SIZE;
+bool       SRC_TURB_RESET;
 Turbulence_t *Turb = NULL;
 #endif
 

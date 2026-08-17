@@ -251,18 +251,18 @@ void Init_Load_Parameter()
    ReadPara->Add( "SRC_EC_DTCOEF",              &SrcTerms.EC_dtCoef,              0.5,             Eps_double,    NoMax_double   );
 #  endif
 #  ifdef TURBULENCE
-   ReadPara->Add( "SRC_TURB_VEL",               &SrcTerms.Turb_Vel,               0.2,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "SRC_TURB_AMPL_FACTOR",       &SrcTerms.Turb_AmplFactor,        1.0,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "SRC_TURB_KDRIV",             &SrcTerms.Turb_Kdriv,             2.0,             Eps_double,    NoMax_double   );
-   ReadPara->Add( "SRC_TURB_KMIN",              &SrcTerms.Turb_Kmin,              1.0,             1.0,           NoMax_double   );
-   ReadPara->Add( "SRC_TURB_KMAX",              &SrcTerms.Turb_Kmax,              3.0,             1.0,           NoMax_double   );
-   ReadPara->Add( "SRC_TURB_ZETA",              &SrcTerms.Turb_Zeta,              1.0,             0.0,           1.0            );
-   ReadPara->Add( "SRC_TURB_SPEC_FORM",         &SrcTerms.Turb_SpecForm,          1,               0,             2              );
-   ReadPara->Add( "SRC_TURB_POW",               &SrcTerms.Turb_Pow,              -1.666666667,     NoMin_double,  NoMax_double   );
-   ReadPara->Add( "SRC_TURB_RSEED_INIT",        &SrcTerms.Turb_RSeedInit,         123,             0,             NoMax_int      );
-   ReadPara->Add( "SRC_TURB_UPDATE_STEP",       &SrcTerms.Turb_UpdateStep,        10,              1,             NoMax_int      );
-   ReadPara->Add( "SRC_TURB_TABLE_SIZE",        &SrcTerms.Turb_TableSize,         128,             0,             NoMax_int      );
-   ReadPara->Add( "SRC_TURB_RESET",             &SrcTerms.Turb_Reset,             false,           Useless_bool,  Useless_bool   );
+   ReadPara->Add( "SRC_TURB_VEL",               &SRC_TURB_VEL,                    0.2,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_AMPL_FACTOR",       &SRC_TURB_AMPL_FACTOR,            1.0,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KDRIV",             &SRC_TURB_KDRIV,                  2.0,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KMIN",              &SRC_TURB_KMIN,                   1.0,             1.0,           NoMax_double   );
+   ReadPara->Add( "SRC_TURB_KMAX",              &SRC_TURB_KMAX,                   3.0,             1.0,           NoMax_double   );
+   ReadPara->Add( "SRC_TURB_ZETA",              &SRC_TURB_ZETA,                   1.0,             0.0,           1.0            );
+   ReadPara->Add( "SRC_TURB_SPEC_FORM",         &SRC_TURB_SPEC_FORM,              1,               0,             2              );
+   ReadPara->Add( "SRC_TURB_POW",               &SRC_TURB_POW,                   -1.666666667,     NoMin_double,  NoMax_double   );
+   ReadPara->Add( "SRC_TURB_RSEED_INIT",        &SRC_TURB_RSEED_INIT,             123,             0,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_UPDATE_STEP",       &SRC_TURB_UPDATE_STEP,            10,              1,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_TABLE_SIZE",        &SRC_TURB_TABLE_SIZE,             128,             0,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_RESET",             &SRC_TURB_RESET,                  false,           Useless_bool,  Useless_bool   );
 #  endif
    ReadPara->Add( "SRC_USER",                   &SrcTerms.User,                   false,           Useless_bool,  Useless_bool   );
 // do not check SRC_GPU_NPGROUP since it may be reset by either Init_ResetParameter() or CUAPI_SetMemSize()

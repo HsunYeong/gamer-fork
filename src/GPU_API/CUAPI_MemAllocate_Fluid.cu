@@ -119,7 +119,7 @@ int CUAPI_MemAllocate_Fluid( const int Flu_NPG, const int Pot_NPG, const int Src
    const long EC_TEFc_MemSize       = sizeof(double)*SrcTerms.EC_TEF_N;
 #  endif
 #  ifdef TURBULENCE
-   const long Turb_MemSize          = sizeof(real  )*3*CUBE( SrcTerms.Turb_TableSize + 1 );
+   const long Turb_MemSize          = sizeof(real  )*3*CUBE( SRC_TURB_TABLE_SIZE + 1 );
 #  endif
 
 // the size of the global memory arrays in different models

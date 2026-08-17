@@ -1890,10 +1890,10 @@ void Aux_Check_Parameter()
    if ( SrcTerms.Turbulence )
    {
 #     ifdef TURBULENCE
-      if ( SrcTerms.Turb_TableSize <= 0 || (SrcTerms.Turb_TableSize & (SrcTerms.Turb_TableSize - 1)) != 0 )
+      if ( SRC_TURB_TABLE_SIZE <= 0 || (SRC_TURB_TABLE_SIZE & (SRC_TURB_TABLE_SIZE - 1)) != 0 )
          Aux_Error( ERROR_INFO, "SRC_TURB_TABLE_SIZE must be a power of 2 !!\n" );
 
-      if ( SrcTerms.Turb_Kmax <= SrcTerms.Turb_Kmin )
+      if ( SRC_TURB_KMAX <= SRC_TURB_KMIN )
          Aux_Error( ERROR_INFO, "SRC_TURB_KMAX must be greater than SRC_TURB_KMIN !!\n" );
 
 #     else

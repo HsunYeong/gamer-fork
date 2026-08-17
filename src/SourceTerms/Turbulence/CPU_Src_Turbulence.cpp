@@ -69,6 +69,8 @@ void Src_PassData2GPU_Turbulence( int IdxTable );
 //                   AuxArray_Flt[2] = 1/table_dh
 //                   AuxArray_Int[0] = TableSize + 1 (NPoints)
 //                   AuxArray_Int[1] = TableSize - 1
+//                   AuxArray_Int[2] = IdxLast
+//                   AuxArray_Int[3] = IdxNext
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
 //                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB defined in Macro.h (default = 5)
@@ -83,10 +85,10 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 {
    AuxArray_Flt[0] = Turb->TimeLast;
    AuxArray_Flt[1] = Turb->dt;
-   AuxArray_Flt[2] = double(SrcTerms.Turb_TableSize)/BOX_SIZE;
+   AuxArray_Flt[2] = double(SRC_TURB_TABLE_SIZE)/BOX_SIZE;
 
-   AuxArray_Int[0] = SrcTerms.Turb_TableSize + 1;
-   AuxArray_Int[1] = SrcTerms.Turb_TableSize - 1;
+   AuxArray_Int[0] = SRC_TURB_TABLE_SIZE + 1;
+   AuxArray_Int[1] = SRC_TURB_TABLE_SIZE - 1;
    AuxArray_Int[2] = Turb->IdxLast;
    AuxArray_Int[3] = Turb->IdxNext;
 
@@ -216,7 +218,7 @@ static void Src_Turbulence( real fluid[], const real B[],
    const real dMomX = Dens*dt*AccX;
    const real dMomY = Dens*dt*AccY;
    const real dMomZ = Dens*dt*AccZ;
-   const real dE    = VelX*dMomX + VelY*dMomY + VelZ*dMomZ + ( SQR(dMomX) + SQR(dMomY) + SQR(dMomZ) )/( (real)2.0*Dens );
+   const real dE    = VelX*dMomX + VelY*dMomY + VelZ*dMomZ + ( SQR(dMomX) + SQR(dMomY) + SQR(dMomZ) )/( 2.0*Dens );
 
    fluid[MOMX] += dMomX;
    fluid[MOMY] += dMomY;
@@ -267,7 +269,6 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 
       const double coeff1 = exp( -Turb->dt/Turb->Tdecay );
       const double coeff2 = sqrt( 1 - SQR(coeff1) );
-      const double Zeta = SrcTerms.Turb_Zeta;
 
 //    swap last and next indices
       std::swap( Turb->IdxLast, Turb->IdxNext );
@@ -293,8 +294,8 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
          for (int d = 0; d < 3; ++d)
          {
 //          Helmholtz decomposition
-            Nr[d] = Zeta*Nr[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Nr/kk;
-            Ni[d] = Zeta*Ni[d] + (1 - 2*Zeta)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+            Nr[d] = SRC_TURB_ZETA*Nr[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+            Ni[d] = SRC_TURB_ZETA*Ni[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
 
 //          Update OU phases to time_new
             Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Nr[d];
@@ -373,7 +374,7 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 void Src_PassData2GPU_Turbulence( int IdxTable )
 {
 
-   const long Size_Data = sizeof(real)*3*CUBE( SrcTerms.Turb_TableSize + 1 );
+   const long Size_Data = sizeof(real)*3*CUBE( SRC_TURB_TABLE_SIZE + 1 );
 
 // use synchronous transfer
    CUDA_CHECK_ERROR(  cudaMemcpy( d_SrcTurb_AccTable[IdxTable], h_SrcTurb_AccTable[IdxTable], Size_Data, cudaMemcpyHostToDevice )  );
