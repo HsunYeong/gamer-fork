@@ -960,7 +960,7 @@
 #  define SRC_NAUX_EC            0
 #endif
 #ifdef TURBULENCE
-#  define SRC_NAUX_TURB          3     // SrcTerms.Turb_AuxArray_Flt/Int[]
+#  define SRC_NAUX_TURB          4     // SrcTerms.Turb_AuxArray_Flt/Int[]
 #else
 #  define SRC_NAUX_TURB          0
 #endif

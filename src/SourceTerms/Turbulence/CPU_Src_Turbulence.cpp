@@ -87,6 +87,8 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 
    AuxArray_Int[0] = SrcTerms.Turb_TableSize + 1;
    AuxArray_Int[1] = SrcTerms.Turb_TableSize - 1;
+   AuxArray_Int[2] = Turb->IdxLast;
+   AuxArray_Int[3] = Turb->IdxNext;
 
 } // FUNCTION : Src_SetAuxArray_Turbulence
 #endif // #ifndef __CUDACC__
@@ -141,6 +143,8 @@ static void Src_Turbulence( real fluid[], const real B[],
 
    const int    NPoint       = AuxArray_Int[0];
    const int    TableSize_m1 = AuxArray_Int[1];
+   const int    IdxLast      = AuxArray_Int[2];
+   const int    IdxNext      = AuxArray_Int[3];
    const long   didx_x       = 1;
    const long   didx_y       = NPoint;
    const long   didx_z       = SQR( NPoint );
@@ -200,9 +204,9 @@ static void Src_Turbulence( real fluid[], const real B[],
    }
 
 // get Acc with temporal interpolation
-   const real AccX  = tfrac0*Acc[0][0] + tfrac*Acc[1][0];
-   const real AccY  = tfrac0*Acc[0][1] + tfrac*Acc[1][1];
-   const real AccZ  = tfrac0*Acc[0][2] + tfrac*Acc[1][2];
+   const real AccX  = tfrac0*Acc[IdxLast][0] + tfrac*Acc[IdxNext][0];
+   const real AccY  = tfrac0*Acc[IdxLast][1] + tfrac*Acc[IdxNext][1];
+   const real AccZ  = tfrac0*Acc[IdxLast][2] + tfrac*Acc[IdxNext][2];
 
 // update fluid conserved variables
    const real Dens  = fluid[DENS];
