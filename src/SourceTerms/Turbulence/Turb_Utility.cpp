@@ -1,4 +1,5 @@
 #include "GAMER.h"
+#include <algorithm>
 
 #ifdef TURBULENCE
 
@@ -186,8 +187,7 @@ void Turb_Init_Field()
          herr_t H5_Status;
 
          H5_FileID = H5Fopen( FileName, H5F_ACC_RDONLY, H5P_DEFAULT );
-         if ( H5_FileID < 0 )
-            Aux_Error( ERROR_INFO, "failed to open the restart HDF5 file \"%s\" !!\n", FileName );
+         if ( H5_FileID < 0 )         Aux_Error( ERROR_INFO, "failed to open the restart HDF5 file \"%s\" !!\n", FileName );
 
          H5_GroupID_Turb = H5Gopen( H5_FileID, "Turbulence", H5P_DEFAULT );
          if ( H5_GroupID_Turb < 0 )   Aux_Error( ERROR_INFO, "failed to open the group \"%s\" !!\n"
@@ -282,13 +282,17 @@ void Turb_Init_Field()
       }
 
 //    set next update time
-      Turb->TimeLast = Time[0];
-      Turb->TimeNext = ( floor(Time[0]/Turb->dt) + 1.0 )*Turb->dt;
+      Turb->TimeLast = floor( Time[0]/Turb->dt )*Turb->dt;
+      Turb->TimeNext = Turb->TimeLast + Turb->dt;
 
 //    be careful about round-off errors
       if (   (  Turb->TimeNext <= Time[0]  )                                             ||
              (  Time[0] != 0.0 && fabs( (Time[0]-Turb->TimeNext)/Time[0] ) < 1.0e-8   )  ||
-             (  Time[0] == 0.0 && fabs(  Time[0]-Turb->TimeNext          ) < 1.0e-12  )      )  Turb->TimeNext += Turb->dt;
+             (  Time[0] == 0.0 && fabs(  Time[0]-Turb->TimeNext          ) < 1.0e-12  )      )
+      {
+         Turb->TimeLast  = Turb->TimeNext;
+         Turb->TimeNext += Turb->dt;
+      }
 
    } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
