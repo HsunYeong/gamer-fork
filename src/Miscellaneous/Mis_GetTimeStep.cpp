@@ -269,6 +269,28 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 #  endif
 
 
+// 1.12 CRITERION TWELVE : match the turbulence update time ##HYDRO ONLY##
+// =============================================================================================================
+#ifdef TURBULENCE
+   if ( SrcTerms.Turbulence )
+   {
+      dTime[NdTime] = Turb->TimeNext - Time[lv];
+
+      if ( dTime[NdTime] <= 0.0 )
+      {
+         Aux_Message( stderr, "********************************************************************************\n" );
+         Aux_Message( stderr, "ERROR : dTime (%20.14e) <= 0.0, something is wrong !!\n", dTime[NdTime] );
+         Aux_Message( stderr, "        (Turb->TimeNext %20.14e, Time %20.14e, lv %d)\n", Turb->TimeNext, Time[lv], lv );
+         Aux_Message( stderr, "        Rank <%d>, file <%s>, line <%d>, function <%s>\n",
+                      MPI_Rank, __FILE__, __LINE__, __FUNCTION__ );
+         Aux_Message( stderr, "********************************************************************************\n" );
+         MPI_Exit();
+      }
+
+      sprintf( dTime_Name[NdTime++], "%s", "Turbulence" );
+   }
+#  endif
+
 
 // 2. get the minimum time-step from all criteria
 // =============================================================================================================
@@ -329,12 +351,6 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
    if ( AUTO_REDUCE_DT )   dTime_min *= AutoReduceDtCoeff;
 
 
-// 2.7 turbulence
-#  ifdef TURBULENCE
-   if ( SrcTerms.Turbulence && lv == 0 && dTime_min > Turb->dt )
-      Aux_Error( ERROR_INFO, "dTime_min at lv 0 (%20.14e) > Turb->dt (%20.14e), "
-                             "please adjust TURB_UPDATE_STEP in Input__Parameter !!\n", dTime_min, Turb->dt );
-#  endif
 
 // 3. record the dt info
 // =============================================================================================================

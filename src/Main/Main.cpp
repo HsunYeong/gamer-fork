@@ -809,6 +809,11 @@ int main( int argc, char *argv[] )
       if ( ELBDM_RESCALE_MASS_ERROR  &&  Step % ELBDM_RESCALE_MASS_STEPS == 0 )
       TIMING_FUNC(   ELBDM_RescaleMassError(),        Timer_Main[4],   TIMER_ON   );
 #     endif // #if ( MODEL == ELBDM )
+
+#     ifdef TURBULENCE
+      if ( SrcTerms.Turbulence )
+      TIMING_FUNC(   Turb_CheckUpdate(),        Timer_Src_Advance[0],  TIMER_ON   );
+#     endif
 //    ---------------------------------------------------------------------------------------------------
 
 

@@ -840,6 +840,7 @@ void CPU_SrcSolver( const real h_Flu_Array_In [][FLU_NIN_S ][ CUBE(SRC_NXT)     
 #ifdef TURBULENCE
 void Turb_Init_Modes();
 void Turb_Init_Field();
+void Turb_CheckUpdate();
 void Turb_FillinTable( int IdxTable );
 #endif
 

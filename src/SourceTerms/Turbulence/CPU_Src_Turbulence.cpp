@@ -1,6 +1,6 @@
 #include "CUFLU.h"
 
-#if ( MODEL == HYDRO )
+#ifdef TURBULENCE
 
 
 extern real *h_SrcTurb_AccTable[2];
@@ -73,7 +73,7 @@ void Src_PassData2GPU_Turbulence( int IdxTable );
 //                   AuxArray_Int[3] = IdxNext
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
-//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB defined in Macro.h (default = 5)
+//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB=4 defined in Macro.h
 //                3. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
 //
 // Parameter   :  AuxArray_Flt/Int : Floating-point/Integer arrays to be filled up
@@ -170,7 +170,7 @@ static void Src_Turbulence( real fluid[], const real B[],
    dz        -= (real)idx_z;
 
 // apply periodicity
-// smae as idx %= TableSize, but must ensure TableSize is power of 2
+// same as idx %= TableSize, but must ensure TableSize is power of 2
    idx_x &= TableSize_m1;
    idx_y &= TableSize_m1;
    idx_z &= TableSize_m1;
@@ -258,102 +258,7 @@ static void Src_Turbulence( real fluid[], const real B[],
 void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, const double TimeOld, const double dt,
                                          double AuxArray_Flt[], int AuxArray_Int[] )
 {
-// only update at lv 0
-   if ( lv != 0 ) return;
-
-   int hasUpdate = 0;
-
-   while ( TimeNew > Turb->TimeNext )
-   {
-      if ( MPI_Rank == 0 )    Aux_Message( stdout, "TimeNew ( %13.7e ) > Turbulence TimeNext ( %13.7e ): Update turbulence pattern ...", TimeNew, Turb->TimeNext );
-
-      const double coeff1 = exp( -Turb->dt/Turb->Tdecay );
-      const double coeff2 = sqrt( 1 - SQR(coeff1) );
-
-//    swap last and next indices
-      std::swap( Turb->IdxLast, Turb->IdxNext );
-
-//    construct OU phase vector
-      for (int n = 0; n < Turb->NMode; ++n)
-      {
-         double kk       = 0;
-         double k_dot_Nr = 0;
-         double k_dot_Ni = 0;
-         double Nr[3], Ni[3];
-
-         for (int d = 0; d < 3; ++d)
-         {
-//          get random number Nr and Ni
-            Turb->GetRNG( Nr[d], Ni[d] );
-
-            kk       += SQR( Turb->Kmode[d][n] );
-            k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
-            k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
-         }
-
-         for (int d = 0; d < 3; ++d)
-         {
-//          Helmholtz decomposition
-            Nr[d] = SRC_TURB_ZETA*Nr[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
-            Ni[d] = SRC_TURB_ZETA*Ni[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
-
-//          Update OU phases to time_new
-            Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Nr[d];
-            Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Ni[d];
-         }
-
-      } // for (int n = 0; n < Turb->NMode; ++n)
-
-      if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
-
-//    update turbulence time
-      Turb->TimeLast  = Turb->TimeNext;
-      Turb->TimeNext += Turb->dt;
-
-      hasUpdate += 1;
-
-   } // while ( Time[0] > Turb->Time )
-
-// check
-   if ( TimeNew > Turb->TimeNext || TimeNew < Turb->TimeLast )
-      Aux_Error( ERROR_INFO, "TimeNew of lv 0 outside turbulence time range ( TimeNew %24.17e, Turb->TimeLast %24.17e, Turb->TimeNext %24.17e ) !!\n",
-                              TimeNew, Turb->TimeLast, Turb->TimeNext );
-
-// update turb acc table
-   if ( hasUpdate > 0 )
-   {
-//    if there is only one OU update
-      if ( hasUpdate == 1 )
-      {
-//       update new table
-         Turb_FillinTable( Turb->IdxNext );
-#        ifdef GPU
-         Src_PassData2GPU_Turbulence( Turb->IdxNext );
-#        endif
-      } // if ( hasUpdate == 1 )
-      else
-      {
-//       fill in both tables
-//       this should be prevented in general by choosing a large enough turbulence dt
-//       small turbulence dt will be blocked during Mis_GetTimeStep()
-         Turb_FillinTable( Turb->IdxLast );
-         Turb_FillinTable( Turb->IdxNext );
-#        ifdef GPU
-         Src_PassData2GPU_Turbulence( Turb->IdxLast );
-         Src_PassData2GPU_Turbulence( Turb->IdxNext );
-#        endif
-
-      } // else
-
-//    update AuxArray
-      Src_SetAuxArray_Turbulence( AuxArray_Flt, AuxArray_Int );
-#     ifdef GPU
-      Src_SetConstMemory_Turbulence( AuxArray_Flt, AuxArray_Int,
-                                     SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
-#     endif
-
-   } // if ( hasUpdate )
-
+   // nothing to do here
 } // FUNCTION : Src_WorkBeforeMajorFunc_Turbulence
 #endif
 
@@ -534,4 +439,4 @@ void Src_End_Turbulence()
 
 
 
-#endif // #if ( MODEL == HYDRO )
+#endif // #ifdef TURBULENCE

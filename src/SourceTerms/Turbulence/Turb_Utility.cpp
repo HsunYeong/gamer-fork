@@ -1,6 +1,6 @@
 #include "GAMER.h"
 
-#if ( MODEL == HYDRO )
+#ifdef TURBULENCE
 
 extern void Src_SetAuxArray_Turbulence( double [], int [] );
 extern void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const int AuxArray_Int[],
@@ -139,7 +139,9 @@ void Turb_Init_Modes()
          Aux_Message( stdout, "    mode = %3d, amplitude = %13.7e\n", n, Turb->Amplitude[n] );
       }
    }
-}
+} // FUNCTION : Turb_Init_Modes
+
+
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Turb_Init_Field
@@ -281,7 +283,12 @@ void Turb_Init_Field()
 
 //    set next update time
       Turb->TimeLast = Time[0];
-      Turb->TimeNext = Time[0] + Turb->dt;
+      Turb->TimeNext = ( floor(Time[0]/Turb->dt) + 1.0 )*Turb->dt;
+
+//    be careful about round-off errors
+      if (   (  Turb->TimeNext <= Time[0]  )                                             ||
+             (  Time[0] != 0.0 && fabs( (Time[0]-Turb->TimeNext)/Time[0] ) < 1.0e-8   )  ||
+             (  Time[0] == 0.0 && fabs(  Time[0]-Turb->TimeNext          ) < 1.0e-12  )      )  Turb->TimeNext += Turb->dt;
 
    } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
 
@@ -337,10 +344,92 @@ void Turb_Init_Field()
                                   SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
 #  endif
 
+// immediately check update in case DumpTime = Turb->TimeNext
+   Turb_CheckUpdate();
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );
 
-} // FUNCTION : Turb_Init
+} // FUNCTION : Turb_Init_Field
+
+
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  Turb_CheckUpdate
+// Description :  Check if Time[0] = Turb->TimeNext -> update Turb field.
+//
+// Note        :  1. Invoked by  Turb_Init_Field()
+//                2. Invoked during main loop after output data
+//
+// Parameter   :  None
+//
+// Return      :  Turb
+//-------------------------------------------------------------------------------------------------------
+void Turb_CheckUpdate()
+{
+   if (   ( Time[0] != 0.0 && fabs( (Time[0]-Turb->TimeNext)/Time[0] ) < 1.0e-8  )
+       || ( Time[0] == 0.0 && fabs(  Time[0]-Turb->TimeNext          ) < 1.0e-12 )   )
+   {
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, "Time ( %13.7e ) = Turbulence TimeNext ( %13.7e ): Update turbulence pattern ...", Time[0], Turb->TimeNext );
+
+      const double coeff1 = exp( -Turb->dt/Turb->Tdecay );
+      const double coeff2 = sqrt( 1 - SQR(coeff1) );
+
+//    swap last and next indices
+      std::swap( Turb->IdxLast, Turb->IdxNext );
+
+//    construct OU phase vector
+      for (int n = 0; n < Turb->NMode; ++n)
+      {
+         double kk       = 0;
+         double k_dot_Nr = 0;
+         double k_dot_Ni = 0;
+         double Nr[3], Ni[3];
+
+         for (int d = 0; d < 3; ++d)
+         {
+//          get random number Nr and Ni
+            Turb->GetRNG( Nr[d], Ni[d] );
+
+            kk       += SQR( Turb->Kmode[d][n] );
+            k_dot_Nr += Turb->Kmode[d][n]*Nr[d];
+            k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
+         }
+
+         for (int d = 0; d < 3; ++d)
+         {
+//          Helmholtz decomposition
+            Nr[d] = SRC_TURB_ZETA*Nr[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
+            Ni[d] = SRC_TURB_ZETA*Ni[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
+
+//          Update OU phases to time_new
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Nr[d];
+            Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Ni[d];
+         }
+
+      } // for (int n = 0; n < Turb->NMode; ++n)
+
+      if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
+
+//    update turbulence time
+      Turb->TimeLast = Turb->TimeNext;
+      Turb->TimeNext = round( Time[0]/Turb->dt + 1.0 )*Turb->dt;
+
+//    update new table
+      Turb_FillinTable( Turb->IdxNext );
+#     ifdef GPU
+      Src_PassData2GPU_Turbulence( Turb->IdxNext );
+#     endif
+
+//    update AuxArray
+      Src_SetAuxArray_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int );
+#     ifdef GPU
+      Src_SetConstMemory_Turbulence( Src_Turb_AuxArray_Flt, Src_Turb_AuxArray_Int,
+                                     SrcTerms.Turb_AuxArrayDevPtr_Flt, SrcTerms.Turb_AuxArrayDevPtr_Int );
+#     endif
+
+   } // if ( hasUpdate > 0 )
+
+} // FUNCTION : Turb_CheckUpdate
 
 
 
@@ -391,4 +480,4 @@ void Turb_FillinTable( int IdxTable )
 } // FUNCTION : Turb_FillinTable
 
 
-#endif // if ( MODEL == HYDRO )
+#endif // ifdef TURBULENCE
