@@ -151,7 +151,9 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       if ( h_Flu_Array_S_In     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_In     [t] )  );  h_Flu_Array_S_In     [t] = NULL; }
       if ( h_Flu_Array_S_Out    [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_Out    [t] )  );  h_Flu_Array_S_Out    [t] = NULL; }
       if ( h_Corner_Array_S     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Corner_Array_S     [t] )  );  h_Corner_Array_S     [t] = NULL; }
+#     ifdef TURBULENCE
       if ( h_SrcTurb_AccTable   [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_SrcTurb_AccTable   [t] )  );  h_SrcTurb_AccTable   [t] = NULL; }
+#     endif
 
 #     if ( MODEL == ELBDM )
       if ( h_IsCompletelyRefined[t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_IsCompletelyRefined[t] )  );  h_IsCompletelyRefined[t] = NULL; }

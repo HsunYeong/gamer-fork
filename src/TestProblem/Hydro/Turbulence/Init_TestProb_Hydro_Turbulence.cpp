@@ -33,10 +33,6 @@ void Validate()
    Aux_Error( ERROR_INFO, "MODEL != HYDRO !!\n" );
 #  endif
 
-#  if ( EOS != EOS_ISOTHERMAL )
-   Aux_Error( ERROR_INFO, "EOS != ISOTHERMAL !!\n" );
-#  endif
-
 #  ifndef TURBULENCE
    Aux_Error( ERROR_INFO, "TURBULENCE must be enabled !!\n" );
 #  endif
@@ -56,10 +52,12 @@ void Validate()
    if ( amr->BoxSize[0] != amr->BoxSize[1]  ||  amr->BoxSize[0] != amr->BoxSize[2] )
       Aux_Error( ERROR_INFO, "simulation domain must be cubic !!\n" );
 
-   if ( !SrcTerms.Turbulence )
-      Aux_Error( ERROR_INFO, "SRC_TURBULENCE must be enabled !!\n" );
-
 // warnings
+#  if ( FLU_SCHEME == MHM )
+   if ( DT__FLUID > ( 0.3 + __DBL_EPSILON__ ) || DT__FLUID_INIT > ( 0.3 + __DBL_EPSILON__ ) )
+      Aux_Message( stderr, "WARNING : FLU_SCHEME == MHM with DT__FLUID, DT__FLUID_INIT > 0.3 is unstable for default turbulence setup !!\n" );
+#  endif
+
    for (int s=0; s<6; s++)
       if ( OPT__BC_FLU[s] != BC_FLU_PERIODIC )
          Aux_Message( stderr, "WARNING : OPT__BC_FLU[%d] != BC_FLU_PERIODIC !?\n", s );

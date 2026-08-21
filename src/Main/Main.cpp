@@ -811,8 +811,9 @@ int main( int argc, char *argv[] )
 #     endif // #if ( MODEL == ELBDM )
 
 #     ifdef TURBULENCE
+//    record time in source term lv 0
       if ( SrcTerms.Turbulence )
-      TIMING_FUNC(   Turb_CheckUpdate(),        Timer_Src_Advance[0],  TIMER_ON   );
+      TIMING_FUNC(   Turb_CheckUpdate(),       Timer_Src_Advance[0],   TIMER_ON   );
 #     endif
 //    ---------------------------------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@ import sys
 
 #-------------------------------------------------------------------------------------------------------------------------
 # load the command-line parameters
-parser = argparse.ArgumentParser( description='Get density slices' )
+parser = argparse.ArgumentParser( description='Get slices' )
 
 parser.add_argument( '-s', action='store', required=True,  type=int, dest='idx_start',
                      help='first data index' )
@@ -32,8 +32,13 @@ for t in range( len(sys.argv) ):
 print( '' )
 print( '-------------------------------------------------------------------\n' )
 
-field     = 'Dens'
-colormap  = 'algae'
+field       = ['velocity',      'vorticity',   'magnetic_field' ]
+field_unit  = ['code_velocity', '1/code_time', 'code_magnetic'  ]
+colormap    = ['viridis',       'cividis',     'plasma'         ]
+zmin        = [ 1.0e-4,          1.0e-1,        1.0e-4          ]
+zmax        = [ 1.0,             1.0e+2,        1.0             ]
+
+
 dpi       = 150
 fontsize  = 24
 titlepad  = 16
@@ -42,30 +47,36 @@ yt.enable_parallelism()
 ts = yt.DatasetSeries( [ '../Data_%06d'%idx for idx in range(idx_start, idx_end+1, didx) ] )
 
 for ds in ts.piter():
-   dd = ds.all_data()
-   mean_field = np.mean(dd[field].d)
-   fmin, fmax = np.min(dd[field].d), np.max(dd[field].d)
+   nfield   = 3   if ('gas', 'magnetic_field_magnitude') in ds.derived_field_list else 2
+   figwidth = 3.2 if ('gas', 'magnetic_field_magnitude') in ds.derived_field_list else 2.2
 
+#  plot
    fig = plt.figure()
    fig.dpi = dpi
-   grid = AxesGrid( fig, (0.1, 0.05, 3.2, 2.7), nrows_ncols=(1, 3), axes_pad=(1.2,0.5), label_mode="all", share_all=True, cbar_location="right", cbar_mode="single", cbar_size="2%", cbar_pad="2%")
+   grid = AxesGrid( fig, (0.1, 0.05, figwidth, 2.7), nrows_ncols=(1, nfield), axes_pad=(3,0.5), label_mode="all",
+                          share_all=True, cbar_location="right", cbar_mode="each", cbar_size="2%", cbar_pad="2%")
 
-   slc = [None]*3
-   for i in range(3):
-      slc[i] = yt.SlicePlot( ds, i, fields = field, center = 'c')
-      slc[i].set_zlim( field, fmin, fmax, dynamic_range=None)
+   slc = [None]*nfield
+   for i in range(nfield):
+      fieldname = field[i]+"_magnitude"
+      slc[i] = yt.SlicePlot( ds, 2, fields = fieldname, center = 'c')
+      slc[i].set_background_color( fieldname )
       slc[i].set_axes_unit( 'code_length' )
-      slc[i].set_unit( field, 'code_density')
-      slc[i].set_cmap( field, colormap )
-      slc[i].annotate_timestamp( time_unit='Myr', corner='upper_right', text_args={'color':'k'} )
+      slc[i].set_unit( fieldname, field_unit[i])
+      slc[i].set_zlim( fieldname, zmax[i], zmin[i] )
+      slc[i].set_cmap( fieldname, colormap[i] )
       slc[i].set_font( {'size':fontsize} )
-      plot = slc[i].plots[field]
+      slc[i].annotate_grids( periodic=False )
+#     slc[i].annotate_streamlines(("gas", field[i]+"_x"), ("gas", fiel2[i]+"_y"), color='black')
+      slc[i].annotate_quiver(("gas", field[i]+"_x"), ("gas", field[i]+"_y"), color='black')
+
+      plot = slc[i].plots[fieldname]
       plot.figure = fig
       plot.axes = grid[i].axes
       plot.cax = grid.cbar_axes[i]
       slc[i]._setup_plots()
-      grid[i].set_title("Slice %s"%(chr(ord('x') + i)), fontsize=fontsize, pad=titlepad)
+      grid[i].set_title(fieldname, fontsize=fontsize, pad=titlepad)
 
-   fig.savefig("fig_%s_%s_Slice.png"%(ds, field), bbox_inches='tight',pad_inches=0.02)
+   fig.savefig("fig_%s_Slice.png"%(ds), bbox_inches='tight',pad_inches=0.02)
 
 

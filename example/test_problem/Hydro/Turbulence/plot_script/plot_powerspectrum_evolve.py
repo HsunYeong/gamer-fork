@@ -1,9 +1,6 @@
 import argparse
-import h5py
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp
-import os
 import sys
 from matplotlib.pyplot import cm
 from matplotlib.ticker import LogLocator, NullFormatter
@@ -71,7 +68,7 @@ for idx in range(idx_start, idx_end+1, didx):
 legend_labels = np.array( label_rows ).flatten('F')
 legend_handle = np.array(legend_handle).flatten('F')
 axs.legend(legend_handle, legend_labels, bbox_to_anchor=(1.35, 0), loc='lower right', borderaxespad=0,fontsize=16, ncol = 3, handletextpad = -2.5, handlelength=2.5, handleheight=1.5, columnspacing=0.6, labelspacing=0.4)
-axs.set_xlim(2*np.pi, 400)
+axs.set_xlim(2*np.pi, k[-1])
 axs.set_xscale('log')
 axs.set_yscale('log')
 axs.set_xlabel(r"$k$",    fontsize=FONT_SIZE)

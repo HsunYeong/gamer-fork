@@ -71,21 +71,6 @@ for ds in ts.piter():
    Pk_total_kin = np.bincount( l.ravel(), weights=(weights * Pk3d_kin).ravel(), minlength=N//2+1 )[:N//2+1]
    Pk_total_mag = np.bincount( l.ravel(), weights=(weights * Pk3d_mag).ravel(), minlength=N//2+1 )[:N//2+1]
 
-   '''
-#  this should be the same as np.bincount(), kept here for reference
-   for i in range( N ):
-      for j in range( N ):
-         for k in range( N//2+1 ):
-            l = int(round(np.sqrt(ix[i]**2 + iy[j]**2 + iz[k]**2)))
-            if (l < N//2+1):
-               if (k == 0 or (k == N//2 and N%2 == 0)):
-                  Pk_total_kin[l] += Pk3d_kin[i,j,k]
-                  Pk_total_mag[l] += Pk3d_mag[i,j,k]
-               else:
-                  Pk_total_kin[l] += 2*Pk3d_kin[i,j,k]
-                  Pk_total_mag[l] += 2*Pk3d_mag[i,j,k]
-   '''
-
 #  energy density power spectrum normalization
 #  Parseval's theorem: Sum(v^2)/N^3 = Sum(vk^2)/N^6
    Pk_total_kin /= N**6

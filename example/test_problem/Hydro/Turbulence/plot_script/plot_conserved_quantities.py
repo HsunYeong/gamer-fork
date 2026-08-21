@@ -1,15 +1,15 @@
 import argparse
-import h5py
+import subprocess
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import solve_ivp
-import os
 
 # Load data
+MHD = subprocess.check_output( ["awk", '$1 == "MHD" {print $2}', "../Record__Note"], text=True ).strip() == "ON"
+
 table = np.loadtxt("../Record__Conservation")
 time = table[:, 0]
 ekin = table[:,32]
-emag = table[:,41]
+emag = table[:,41] if MHD else np.zeros_like(time)
 momx = table[:,14]
 momy = table[:,17]
 momz = table[:,20]

@@ -17,7 +17,10 @@ Turbulence structure:
 
 2. Use Helmholtz decomposition to separate compressive and solenoial components
 
-3. Update random phases by Ornstein-Uhlenbeck process
+3. Update random phases by Ornstein-Uhlenbeck process:
+   x(t+dt) = f * x(t) + sigma * sqrt (1 - f^2) * z_n
+   where f = exp( -dt/tau ), tau is correlation time, z_n is Gaussian random number
+   correlation <x(t+dt), x(t)> = sigma^2 * f
 
 4. References: Federrath et al. (2010), A&A 512, A81 (https://doi.org/10.1051/0004-6361/200912437)
                TurbGen (https://github.com/chfeder/turbulence_generator)

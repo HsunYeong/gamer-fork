@@ -150,9 +150,9 @@ static void Src_Turbulence( real fluid[], const real B[],
    const long   didx_x       = 1;
    const long   didx_y       = NPoint;
    const long   didx_z       = SQR( NPoint );
-   const double _dh_table    = AuxArray_Flt[2];
    const double TimeLast     = AuxArray_Flt[0];
    const double Turb_dt      = AuxArray_Flt[1];
+   const double _dh_table    = AuxArray_Flt[2];
    const real   ONE          = (real)1.0;
    const real   tfrac        = (real)( ( TimeNew - TimeLast )/Turb_dt );
    const real   tfrac0       = ONE - tfrac;
