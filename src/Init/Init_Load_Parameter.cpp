@@ -247,8 +247,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "SRC_TURBULENCE",             &SrcTerms.Turbulence,             false,           Useless_bool,  Useless_bool   );
 #  ifdef EXACT_COOLING
    ReadPara->Add( "SRC_EC_TEF_N",               &SrcTerms.EC_TEF_N,               1501,            1,             NoMax_int      );
-   ReadPara->Add( "SRC_EC_SUBCYCLING",          &SrcTerms.EC_subcycling,          false,           Useless_bool,  Useless_bool   );
-   ReadPara->Add( "SRC_EC_DTCOEF",              &SrcTerms.EC_dtCoef,              0.5,             Eps_double,    NoMax_double   );
+   ReadPara->Add( "SRC_EC_DTCOEF",              &SrcTerms.EC_dtCoef,             -1.0,             NoMin_double,  NoMax_double   );
 #  endif
 #  ifdef TURBULENCE
    ReadPara->Add( "SRC_TURB_VEL",               &SRC_TURB_VEL,                    0.2,             Eps_double,    NoMax_double   );

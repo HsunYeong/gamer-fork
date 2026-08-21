@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-data = np.loadtxt('Output__Error', skiprows=1)
+data = np.loadtxt('Record__CoolingErr', skiprows=1)
 
 time = data[:, 0]
 dump_id = data[:, 1]

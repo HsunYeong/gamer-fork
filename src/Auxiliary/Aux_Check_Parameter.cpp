@@ -1870,22 +1870,24 @@ void Aux_Check_Parameter()
 #     error : ERROR : SRC_GHOST_SIZE must be zero for now !!
 #  endif
 
-#  if ( defined( EXACT_COOLING )  &&  MODEL != HYDRO )
-#     error : ERROR : EXACT_COOLING must enable MODEL=HYDRO !!
-#  endif
-
 #  if ( MODEL != HYDRO )
    if ( SrcTerms.Deleptonization )
       Aux_Error( ERROR_INFO, "SRC_DELEPTONIZATION is only supported in HYDRO !!\n" );
 #  endif
 
-   if ( SrcTerms.ExactCooling )
-      Aux_Error( ERROR_INFO, "SRC_EXACTCOOLING is not supported yet !!\n" );
+#  ifdef EXACT_COOLING
+#  if ( MODEL != HYDRO )
+#     error : ERROR : EXACT_COOLING must enable MODEL=HYDRO !!
+#  endif
 
-#  ifndef EXACT_COOLING
+#  ifdef COMOVING
+#     error : ERROR : EXACT_COOLING does not support COMOVING !!
+#  endif
+
+#  else // #ifdef EXACT_COOLING
    if ( SrcTerms.ExactCooling )
       Aux_Error( ERROR_INFO, "SRC_EXACTCOOLING is only supported when EXACT_COOLING is enabled !!\n" );
-#  endif
+#  endif // #ifdef EXACT_COOLING ... else ...
 
    if ( SrcTerms.Turbulence )
    {

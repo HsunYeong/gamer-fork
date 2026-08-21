@@ -41,12 +41,14 @@ void Src_End_ExactCooling();
 
 void Cool_fct( double Dens, double Temp, double* Emis, double* Lambdat, double Z, double cl_moli_mole, double mp );
 #endif // #ifndef __CUDACC__
+/*
 GPU_DEVICE static
 double TEF( double TEMP, int k, const double TEF_lambda[], const double TEF_alpha[], const double TEFc[],
             const double AuxArray_Flt[], const int AuxArray_Int[] );
 GPU_DEVICE static
 double TEFinv( double Y, int k, const double TEF_lambda[], const double TEF_alpha[], const double TEFc[],
                const double AuxArray_Flt[], const int AuxArray_Int[] );
+*/
 
 
 /********************************************************
@@ -92,7 +94,6 @@ void Src_SetAuxArray_ExactCooling( double AuxArray_Flt[], int AuxArray_Int[] )
 {
 
    const int    TEF_N      = SrcTerms.EC_TEF_N;      // number of points for lambda(T) sampling in LOG
-   const bool   subcycling = SrcTerms.EC_subcycling; // whether to use subcycling
    const int    TEF_int    = TEF_N-1;                // number of intervals
    const double TEF_TN     = 1.e14;                  // == Tref, must be high enough, but affects sampling resolution (Kelvin)
    const double TEF_Tmin   = MIN_TEMP;               // MIN temperature
@@ -119,7 +120,6 @@ void Src_SetAuxArray_ExactCooling( double AuxArray_Flt[], int AuxArray_Int[] )
    AuxArray_Flt[8] = (Const_kB/UNIT_E) * (MU_NORM/UNIT_M); // kB*mp
 
    AuxArray_Int[0] = TEF_N;
-   AuxArray_Int[1] = subcycling;
 
 } // FUNCTION : Src_SetAuxArray_ExactCooling
 #endif // #ifndef __CUDACC__
@@ -172,6 +172,7 @@ static void Src_ExactCooling( real fluid[], const real B[], const SrcTerms_t *Sr
 
 
 
+/*
 //-------------------------------------------------------------------------------------------------------
 // Function    :  TEF
 // Description :  the temporal evolution function (TEF)
@@ -207,6 +208,7 @@ double TEFinv( double Y, int k, const double TEF_lambda[], const double TEF_alph
 {
    return 0.0;
 } // FUNCTION : TEFinv
+*/
 
 
 
@@ -392,9 +394,9 @@ void Src_Init_ExactCooling()
 #  endif
 
    if ( OPT__INIT == INIT_BY_RESTART )
-      for (int i=0; i<NLEVEL; i++)   IsInit_tcool[i] = true;
+      for (int i=0; i<NLEVEL; i++)   SrcTerms.EC_TCoolInit[i] = true;
    else
-      for (int i=0; i<NLEVEL; i++)   IsInit_tcool[i] = false;
+      for (int i=0; i<NLEVEL; i++)   SrcTerms.EC_TCoolInit[i] = false;
 
 // allocate h_SrcEC_* arrays
    h_SrcEC_TEF_lambda = new double [SrcTerms.EC_TEF_N];

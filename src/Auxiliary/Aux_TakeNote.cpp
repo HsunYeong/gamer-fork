@@ -320,6 +320,11 @@ void Aux_TakeNote()
 #     else
       fprintf( Note, "EXACT_COOLING                   OFF\n" );
 #     endif
+#     ifdef TURBULENCE
+      fprintf( Note, "TURBULENCE                      ON\n" );
+#     else
+      fprintf( Note, "TURBULENCE                      OFF\n" );
+#     endif
 
       fprintf( Note, "***********************************************************************************\n" );
       fprintf( Note, "\n\n" );
@@ -1151,7 +1156,6 @@ void Aux_TakeNote()
 #     ifdef EXACT_COOLING
       if ( SrcTerms.ExactCooling ) {
       fprintf( Note, "SRC_EC_TEF_N                   % d\n",      SrcTerms.EC_TEF_N         );
-      fprintf( Note, "SRC_EC_SUBCYCLING              % d\n",      SrcTerms.EC_subcycling    );
       fprintf( Note, "SRC_EC_DTCOEF                  % 14.7e\n",  SrcTerms.EC_dtCoef        ); }
 #     endif
 #     ifdef TURBULENCE

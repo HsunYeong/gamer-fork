@@ -5,9 +5,10 @@
 // problem-specific global variables
 // =======================================================================================
 extern int      Merger_Coll_NumBHs;
-extern double   R_acc;                // the radius to compute the accretion rate
+extern double   R_acc;
 extern double (*CM_ClusterCen)[3];
 // =======================================================================================
+
 
 
 
@@ -30,21 +31,22 @@ extern double (*CM_ClusterCen)[3];
 bool Flag_ClusterMerger( const int i, const int j, const int k, const int lv, const int PID, const double *Threshold )
 {
 
-   const double dh     = amr->dh[lv];
-   const double Pos[3] = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,
-                           amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
-                           amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh  };
+   const double dh        = amr->dh[lv];
+   const double Pos[3]    = { amr->patch[0][lv][PID]->EdgeL[0] + (i+0.5)*dh,
+                              amr->patch[0][lv][PID]->EdgeL[1] + (j+0.5)*dh,
+                              amr->patch[0][lv][PID]->EdgeL[2] + (k+0.5)*dh  };
+   const double FlagNCell = Threshold[0]; // flag cells within "FlagRFac" times the accretion radius R_acc, and
+   const double FlagRFac  = Threshold[1]; // if R_acc is not resolved with "FlagNCell" cells
 
    bool Flag = false;
 
-// flag cells within the target radius, and if the radius is not resolved with a specific number (Threshold[0]) of cells
    for (int c=0; c<Merger_Coll_NumBHs; c++)
    {
-      if ( DIST_SQR_3D( Pos, CM_ClusterCen[c] ) <= SQR(25*R_acc)  &&  R_acc/dh <= Threshold[0] )
+      if (  DIST_SQR_3D( Pos, CM_ClusterCen[c] ) <= SQR( FlagRFac*R_acc )  &&  R_acc/dh <= FlagNCell  )
       {
          Flag = true;
          return Flag;
-      } // if ( R_SQR <= SQR(25*R_acc)  &&  R_acc/dh <= Threshold[0] )
+      } // if ( R_SQR <= SQR(FlagRFac*R_acc)  &&  R_acc/dh <= FlagNCell )
    } // for (int c=0; c<Merger_Coll_NumBHs; c++)
 
    return Flag;

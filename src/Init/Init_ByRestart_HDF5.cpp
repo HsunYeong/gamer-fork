@@ -2290,7 +2290,6 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Src_Turbulence",          &RS.Src_Turbulence,          SID, TID, NonFatal, &RT.Src_Turbulence,           1, NonFatal );
 #  ifdef EXACT_COOLING
    LoadField( "Src_EC_TEF_N",            &RS.Src_EC_TEF_N,            SID, TID, NonFatal, &RT.Src_EC_TEF_N,             1, NonFatal );
-   LoadField( "Src_EC_subcycling",       &RS.Src_EC_subcycling,       SID, TID, NonFatal, &RT.Src_EC_subcycling,        1, NonFatal );
    LoadField( "Src_EC_dtCoef",           &RS.Src_EC_dtCoef,           SID, TID, NonFatal, &RT.Src_EC_dtCoef,            1, NonFatal );
 #  endif
 #  ifdef TURBULENCE

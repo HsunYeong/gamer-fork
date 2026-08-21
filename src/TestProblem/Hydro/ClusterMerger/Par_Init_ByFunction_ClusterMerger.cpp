@@ -38,6 +38,7 @@ static void Read_Particles_ClusterMerger( std::string filename, long offset, lon
 
 
 
+
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Par_Init_ByFunction_ClusterMerger
 // Description :  Initialize all particle attributes for the merging cluster test
@@ -87,6 +88,7 @@ void Par_Init_ByFunction_ClusterMerger( const long NPar_ThisRank, const long NPa
 #  ifdef SUPPORT_HDF5
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
+
 
 // prepare to load data
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Preparing to load data ... " );
@@ -139,19 +141,19 @@ void Par_Init_ByFunction_ClusterMerger( const long NPar_ThisRank, const long NPa
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "done\n" );
 
 // load data to the particle repository
-   for ( int c=0; c<NCluster; c++ )
+   for (int c=0; c<NCluster; c++)
    {
 //    load data
       if ( MPI_Rank == 0 )    Aux_Message( stdout, "   Loading cluster %d ... \n", c+1 );
 
-      real_par_in *mass  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *xpos  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *ypos  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *zpos  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *xvel  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *yvel  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *zvel  = new real_par_in [NPar_ThisRank_EachCluster[c]];
-      real_par_in *ptype = new real_par_in [NPar_ThisRank_EachCluster[c]];
+      real_par_in *mass  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *xpos  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *ypos  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *zpos  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *xvel  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *yvel  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *zvel  = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
+      real_par_in *ptype = new real_par_in [ NPar_ThisRank_EachCluster[c] ];
 
       Read_Particles_ClusterMerger( Merger_File_Par[c], Offset[c], NPar_ThisRank_EachCluster[c],
                                     xpos, ypos, zpos, xvel, yvel, zvel, mass, ptype );
@@ -364,7 +366,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace,
                        H5P_DEFAULT, xpos );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle x-position!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle x-position!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -377,7 +379,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start1d, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, ypos );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle y-position!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle y-position!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -390,7 +392,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start1d, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, zpos );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle z-position!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle z-position!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -406,7 +408,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start1d, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, xvel );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle x-velocity!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle x-velocity!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -420,7 +422,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start1d, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, yvel );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle y-velocity!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle y-velocity!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -434,7 +436,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start1d, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, zvel );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle z-velocity!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle z-velocity!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -453,7 +455,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start0, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, mass );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle mass!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle mass!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );
@@ -472,7 +474,7 @@ void Read_Particles_ClusterMerger( std::string filename, long offset, long num,
    status   = H5Sselect_hyperslab( memspace, H5S_SELECT_SET, start0, stride1d, count1d, NULL );
    status   = H5Dread( dataset, H5T_NATIVE_DOUBLE, memspace, dataspace, H5P_DEFAULT, ptype );
 
-   if ( status < 0 )   Aux_Message( stderr, "Could not read particle type!!\n" );
+   if ( status < 0 )   Aux_Error( ERROR_INFO, "Could not read particle type!!\n" );
 
    H5Sclose( memspace );
    H5Sclose( dataspace );

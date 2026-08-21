@@ -177,6 +177,7 @@ struct Makefile_t
    int EoS;
    int BarotropicEoS;
    int ExactCooling;
+   int Turbulence;
 
 #  elif ( MODEL == ELBDM )
    int ELBDMScheme;
@@ -710,7 +711,6 @@ struct InputPara_t
    int    Src_Turbulence;
 #  ifdef EXACT_COOLING
    int    Src_EC_TEF_N;
-   int    Src_EC_subcycling;
    double Src_EC_dtCoef;
 #  endif
 #  ifdef TURBULENCE

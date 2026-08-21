@@ -42,6 +42,7 @@ extern int     *CM_Cluster_NPar_close;
 
 
 
+
 //-------------------------------------------------------------------------------------------------------
 // Function    :  Aux_Record_ClusterMerger
 // Description :  Record the cluster centers
@@ -65,7 +66,7 @@ void Aux_Record_ClusterMerger()
    {
       if ( MPI_Rank == 0 )
       {
-         if ( Aux_CheckFileExist( FileName ) )
+         if (  Aux_CheckFileExist( FileName )  )
             Aux_Message( stderr, "WARNING : file \"%s\" already exists !!\n", FileName );
 
          FILE *File_User = fopen( FileName, "a" );
@@ -96,15 +97,16 @@ void Aux_Record_ClusterMerger()
          fprintf( File_User, "# num_par_sum      : Total number of particles inside the accretion region\n" );
          fprintf( File_User, "# ColdGasMass      : Cold gas mass inside the accretion radius [Msun]\n" );
          fprintf( File_User, "#\n" );
+
          fprintf( File_User, "#%23s %24s", "[  1]", "[  2]");
          const int N_att = 40;
          int idx = 3;
          for (int c=0; c<Merger_Coll_NumBHs; c++)
-            for (int i=0; i<N_att; i++)
-            {
-               fprintf( File_User, " %19s[%3d]", "", idx );
-               idx += 1;
-            }
+         for (int i=0; i<N_att; i++)
+         {
+            fprintf( File_User, " %19s[%3d]", "", idx );
+            idx += 1;
+         }
          fprintf( File_User, "\n" );
          fprintf( File_User, "#%23s %24s",  "Time", "Step" );
          for (int c=0; c<Merger_Coll_NumBHs; c++)
@@ -132,6 +134,7 @@ void Aux_Record_ClusterMerger()
       FirstTime = false;
    } // if ( FirstTime )
 
+
 // sum over the variables and convert units
    int    SinkNCell_Sum[Merger_Coll_NumBHs];
    double Mass_Sum[Merger_Coll_NumBHs];
@@ -154,21 +157,22 @@ void Aux_Record_ClusterMerger()
       MPI_Reduce( &CM_Bondi_SinkEk[c],      &Ek_Sum[c],        1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
       MPI_Reduce( &CM_Bondi_SinkEt[c],      &Et_Sum[c],        1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
-      Mass_Sum[c]    *= UNIT_M / Const_Msun;
-      MomX_Sum[c]    *= UNIT_M * UNIT_V;
-      MomY_Sum[c]    *= UNIT_M * UNIT_V;
-      MomZ_Sum[c]    *= UNIT_M * UNIT_V;
+      Mass_Sum   [c] *= UNIT_M / Const_Msun;
+      MomX_Sum   [c] *= UNIT_M * UNIT_V;
+      MomY_Sum   [c] *= UNIT_M * UNIT_V;
+      MomZ_Sum   [c] *= UNIT_M * UNIT_V;
       MomXAbs_Sum[c] *= UNIT_M * UNIT_V;
       MomYAbs_Sum[c] *= UNIT_M * UNIT_V;
       MomZAbs_Sum[c] *= UNIT_M * UNIT_V;
-      E_Sum[c]       *= UNIT_E;
-      Ek_Sum[c]      *= UNIT_E;
-      Et_Sum[c]      *= UNIT_E;
-      E_inj_exp[c]   *= UNIT_E;
-      M_inj_exp[c]   *= UNIT_M / Const_Msun;
+      E_Sum      [c] *= UNIT_E;
+      Ek_Sum     [c] *= UNIT_E;
+      Et_Sum     [c] *= UNIT_E;
+      E_inj_exp  [c] *= UNIT_E;
+      M_inj_exp  [c] *= UNIT_M / Const_Msun;
    } // for (int c=0; c<Merger_Coll_NumBHs; c++)
 
    for (int c=0; c<Merger_Coll_NumBHs; c++)   E_power_inj[c] = E_Sum[c]/(dTime_Base*UNIT_T);
+
 
 // output the properties of the cluster centers
    if ( MPI_Rank == 0 )
@@ -181,37 +185,39 @@ void Aux_Record_ClusterMerger()
          for (int d=0; d<3; d++)   fprintf( File_User, " %24.16e", CM_BH_Vel[c][d]*UNIT_V/(Const_km/Const_s) );
          for (int d=0; d<3; d++)   fprintf( File_User, " %24.16e", CM_RAcc_GasVel[c][d]*UNIT_V/(Const_km/Const_s) );
          fprintf( File_User, " %24.16e %24.14e %24.16e", CM_RAcc_RelativeVel[c]*UNIT_V/(Const_km/Const_s), CM_RAcc_SoundSpeed[c]*UNIT_V/(Const_km/Const_s), CM_RAcc_GasDens[c]*UNIT_D );
-         fprintf( File_User, " %24.16e",              CM_BH_Mass[c]*UNIT_M/Const_Msun );
+         fprintf( File_User, " %24.16e",                 CM_BH_Mass[c]*UNIT_M/Const_Msun );
          fprintf( File_User, " %24.16e %24.14e %24.16e", CM_BH_Mdot_tot[c]*UNIT_M/UNIT_T, CM_BH_Mdot_hot[c]*UNIT_M/UNIT_T, CM_BH_Mdot_cold[c]*UNIT_M/UNIT_T );
-         fprintf( File_User, " %24d",                SinkNCell_Sum[c] );
+         fprintf( File_User, " %24d",                    SinkNCell_Sum[c] );
          fprintf( File_User, " %24.16e %24.16e %24.16e", MomX_Sum[c], MomY_Sum[c], MomZ_Sum[c] );
          fprintf( File_User, " %24.16e %24.16e %24.16e", MomXAbs_Sum[c], MomYAbs_Sum[c], MomZAbs_Sum[c] );
          fprintf( File_User, " %24.16e %24.16e %24.16e", E_inj_exp[c], E_Sum[c], (E_Sum[c]-E_inj_exp[c])/E_inj_exp[c] );
          fprintf( File_User, " %24.16e %24.16e %24.16e", Ek_Sum[c], Et_Sum[c], E_power_inj[c] );
          fprintf( File_User, " %24.16e %24.16e %24.16e", M_inj_exp[c], Mass_Sum[c], (Mass_Sum[c]-M_inj_exp[c])/M_inj_exp[c] );
-         fprintf( File_User, " %24.16e %24.16e %24.16e", CM_Jet_Mdot[c]*UNIT_M/UNIT_T, CM_Jet_Pdot[c]*UNIT_M*UNIT_V/UNIT_T, CM_Jet_Edot[c]*UNIT_E/UNIT_T );
+         fprintf( File_User, " %24.16e %24.16e %24.16e", CM_Jet_Mdot[c]*UNIT_M/UNIT_T, CM_Jet_Pdot[c]*UNIT_M*UNIT_V/UNIT_T,
+                                                         CM_Jet_Edot[c]*UNIT_E/UNIT_T );
          for (int d=0; d<3; d++)   fprintf( File_User, " %24.16e", CM_Jet_Vec[c][d] );
-         fprintf( File_User, " %24d %24.16e",          CM_Cluster_NPar_close[c], CM_RAcc_ColdGasMass[c]*UNIT_M/Const_Msun );
+         fprintf( File_User, " %24d %24.16e",            CM_Cluster_NPar_close[c], CM_RAcc_ColdGasMass[c]*UNIT_M/Const_Msun );
       }
       fprintf( File_User, "\n" );
       fclose( File_User );
    } // if ( MPI_Rank == 0 )
 
+
 // reset the cumulative variables to zero
    for (int c=0; c<Merger_Coll_NumBHs; c++)
    {
-      CM_Bondi_SinkMass[c]    = 0.0;
-      CM_Bondi_SinkMomX[c]    = 0.0;
-      CM_Bondi_SinkMomY[c]    = 0.0;
-      CM_Bondi_SinkMomZ[c]    = 0.0;
+      CM_Bondi_SinkMass   [c] = 0.0;
+      CM_Bondi_SinkMomX   [c] = 0.0;
+      CM_Bondi_SinkMomY   [c] = 0.0;
+      CM_Bondi_SinkMomZ   [c] = 0.0;
       CM_Bondi_SinkMomXAbs[c] = 0.0;
       CM_Bondi_SinkMomYAbs[c] = 0.0;
       CM_Bondi_SinkMomZAbs[c] = 0.0;
-      CM_Bondi_SinkE[c]       = 0.0;
-      CM_Bondi_SinkEk[c]      = 0.0;
-      CM_Bondi_SinkEt[c]      = 0.0;
-      E_inj_exp[c]            = 0.0;
-      M_inj_exp[c]            = 0.0;
+      CM_Bondi_SinkE      [c] = 0.0;
+      CM_Bondi_SinkEk     [c] = 0.0;
+      CM_Bondi_SinkEt     [c] = 0.0;
+      E_inj_exp           [c] = 0.0;
+      M_inj_exp           [c] = 0.0;
    }
 
 } // FUNCTION : Aux_Record_ClusterMerger

@@ -250,20 +250,12 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 #  endif
 
 
-// 1.11 CRITERION ELEVEN : ExactCooling source term ##HYDRO ONLY##
+// 1.11 CRITERION ELEVEN : exact-cooling source term
 // =============================================================================================================
 #  ifdef EXACT_COOLING
-   if ( SrcTerms.ExactCooling )
+   if ( SrcTerms.ExactCooling  &&  SrcTerms.EC_dtCoef >= 0.0 )
    {
-      double EC_dtCoef = SrcTerms.EC_dtCoef;
-      if ( SrcTerms.EC_subcycling )
-      {
-         EC_dtCoef = HUGE_NUMBER;
-#        ifdef GAMER_DEBUG
-         Aux_Message( stderr, "WARNING : Resetting EC_dtCoef to be HUGE_NUMBER when subcycling is enabled.\n" );
-#        endif
-      }
-      dTime[NdTime] = EC_dtCoef * dTime_dt * Mis_GetTimeStep_ExactCooling( lv, dTime_dt );
+      dTime[NdTime] = dTime_dt * Mis_GetTimeStep_ExactCooling( lv, dTime_dt );
       sprintf( dTime_Name[NdTime++], "%s", "ExactCooling" );
    }
 #  endif

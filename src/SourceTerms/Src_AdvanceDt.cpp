@@ -41,7 +41,7 @@ void Src_AdvanceDt( const int lv, const double TimeNew, const double TimeOld, co
                  OverlapMPI, Overlap_Sync );
 
 #  ifdef EXACT_COOLING
-   if ( SrcTerms.ExactCooling )   IsInit_tcool[lv] = true;
+   if ( SrcTerms.ExactCooling )   SrcTerms.EC_TCoolInit[lv] = true;
 #  endif
 
 } // FUNCTION : Src_AdvanceDt

@@ -41,6 +41,8 @@ typedef void (*SrcFunc_t)( real fluid[], const real B[],
 //                                            --> For GPU, Dlep_Profile_DataDevPtr[]/RadiusDevPtr[] store the
 //                                                addresses of global memory arrays, which should NOT be used by host
 //                Dlep_Profile_NBin         : Number of radial bins in Dlep_Profile_*
+//                EC_dtCoef                 : Safety factor of the cooling time-step
+//                EC_TCoolInit              : Flag for checking whether the fluid[TCOOL] field has been initialized
 //
 // Method      :  None --> It seems that CUDA does not support functions in a struct
 //-------------------------------------------------------------------------------------------------------
@@ -93,8 +95,8 @@ struct SrcTerms_t
    double   *EC_TEF_lambda_DevPtr;
    double   *EC_TEF_alpha_DevPtr;
    double   *EC_TEFc_DevPtr;
-   bool      EC_subcycling;
    double    EC_dtCoef;
+   bool      EC_TCoolInit[NLEVEL];
 #  endif
 
 // turbulence

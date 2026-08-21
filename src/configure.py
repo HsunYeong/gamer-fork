@@ -664,6 +664,7 @@ def load_arguments( sys_setting : SystemSetting ):
     parser.add_argument( "--exact_cooling", type=str2bool, metavar="BOOLEAN", gamer_name="EXACT_COOLING",
                          default=False,
                          depend={"model":"HYDRO"},
+                         constraint={ True:{"comoving":False} },
                          help="Enable exact cooling.\n"
                        )
 
