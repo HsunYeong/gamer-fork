@@ -59,7 +59,7 @@ for ds in ts.piter():
    slc = [None]*nfield
    for i in range(nfield):
       fieldname = field[i]+"_magnitude"
-      slc[i] = yt.SlicePlot( ds, 2, fields = fieldname, center = 'c')
+      slc[i] = yt.SlicePlot( ds, 0, fields = fieldname, center = 'c')
       slc[i].set_background_color( fieldname )
       slc[i].set_axes_unit( 'code_length' )
       slc[i].set_unit( fieldname, field_unit[i])

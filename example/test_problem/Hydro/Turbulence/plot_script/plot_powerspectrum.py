@@ -54,8 +54,8 @@ for ds in ts.piter():
    byk  = np.fft.rfftn( by )
    bzk  = np.fft.rfftn( bz )
 
-   Pk3d_kin = 0.5*( abs(wxk)**2 + abs(wyk)**2 + abs(wzk)**2 )
-   Pk3d_mag = 0.5*( abs(bxk)**2 + abs(byk)**2 + abs(bzk)**2 )
+   Pk3d_kin = 0.5*( np.abs(wxk)**2 + np.abs(wyk)**2 + np.abs(wzk)**2 )
+   Pk3d_mag = 0.5*( np.abs(bxk)**2 + np.abs(byk)**2 + np.abs(bzk)**2 )
 
    Pk_total_kin = np.zeros(N//2+1)
    Pk_total_mag = np.zeros(N//2+1)
