@@ -6,18 +6,14 @@ import numpy as np
 import gc
 
 # load the command-line parameters
-parser = argparse.ArgumentParser( description='Plot the gas slices and projections' )
+parser = argparse.ArgumentParser( description='Compute averaged quantities' )
 
-parser.add_argument( '-p', action='store', required=False, type=str, dest='prefix',
-                     help='path prefix [%(default)s]', default='../' )
 parser.add_argument( '-s', action='store', required=True,  type=int, dest='idx_start',
                      help='first data index' )
 parser.add_argument( '-e', action='store', required=True,  type=int, dest='idx_end',
                      help='last data index' )
 parser.add_argument( '-d', action='store', required=False, type=int, dest='didx',
                      help='delta data index [%(default)d]', default=1 )
-parser.add_argument( '-c', action='store', required=False, type=str, dest='code',
-                     help='simulation code [%(default)s]', default='GAMER' )
 
 args=parser.parse_args()
 
@@ -31,8 +27,6 @@ print( '-------------------------------------------------------------------\n' )
 idx_start    = args.idx_start
 idx_end      = args.idx_end
 didx         = args.didx
-prefix       = args.prefix
-code         = args.code
 
 dpi          = 150
 

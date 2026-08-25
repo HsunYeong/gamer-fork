@@ -12,7 +12,7 @@ dpi         = 150
 
 #-------------------------------------------------------------------------------------------------------------------------
 # load the command-line parameters
-parser = argparse.ArgumentParser( description='Plot the halo slices' )
+parser = argparse.ArgumentParser( description='Plot slices' )
 
 parser.add_argument( '-s', action='store', required=True,  type=int, dest='idx_start',
                      help='first data index' )
