@@ -387,8 +387,12 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          const real flu_Dual = Fluid_Out[DUAL][k][j][i];
          const real flu_Pres = Hydro_DensDual2Pres( flu_Dens, flu_Dual,
                                                     EoS_AuxArray_Flt[1], false, NULL_REAL );
+#        if   ( EOS == EOS_GAMMA )
          const real flu_Eint = EoS_DensPres2Eint_CPUPtr( flu_Dens, flu_Pres,
                                                          NULL, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#        elif ( EOS == EOS_COSMIC_RAY )
+         const real flu_Eint = EoS_GasPres2GasEint_CPUPtr( flu_Pres, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#        endif
 #        endif
 #        endif // #ifdef DUAL_ENERGY ... else ...
 
@@ -399,10 +403,17 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          Fluid_Out[ENGY     ][k][j][i] += SNII_DepositedEnergy                  * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          if ( UseMetal )
          Fluid_Out[Idx_Metal][k][j][i] += SNII_DepositedMetal                   * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+#        ifdef COSMIC_RAY
+         Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedEnergy * 0.1            * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+#        endif
 
 #        ifdef DUAL_ENERGY
 #        if   ( DUAL_ENERGY == DE_ENPY )
+#        ifdef COSMIC_RAY
+         const real Eint                = flu_Eint + SNII_DepositedEnergy * 0.9 * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+#        else
          const real Eint                = flu_Eint + SNII_DepositedEnergy       * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+#        endif
          const real Pres                = EoS_DensEint2Pres_CPUPtr( Fluid_Out[DENS][k][j][i], Eint, NULL,
                                                                     EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
          Fluid_Out[DUAL     ][k][j][i]  = Hydro_DensPres2Dual( Fluid_Out[DENS][k][j][i], Pres, EoS_AuxArray_Flt[1] );

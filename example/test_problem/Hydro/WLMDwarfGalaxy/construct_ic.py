@@ -101,6 +101,8 @@ OutputMetal                     = True            # whether to output the metal 
 MetalMassFrac                   = 0.002           # metal mass fraction
 OutputDust                      = True            # whether to output the dust density as a passive field
 DustMassFrac                    = 0.001           # dust mass fraction
+OutputCRay                      = True            # whether to output the cosmic ray energy as a passive field
+CRayEngyFrac                    = 0.0             # cosmic ray energy fraction
 N_sub                           = 1               # number of cells for sub-sampling
 factorMassNormalization         = 7.08799838 / 9.40795185 # factor for rescaling the density to ensure total mass consistent
 
@@ -675,6 +677,9 @@ for lv in range( 0, UM_IC_NLEVEL, 1 ):
         print( f'{OutputDust        = }' )
         if OutputDust:
             print( f'{DustMassFrac      = }' )
+        print( f'{OutputCRay        = }' )
+        if OutputCRay:
+            print( f'{CRayEngyFrac      = }' )
         print( '\n' )
 
 
@@ -710,7 +715,9 @@ for lv in range( 0, UM_IC_NLEVEL, 1 ):
         if OutputMetal:
             f.write( ( np.ascontiguousarray( np.swapaxes( Array_DENS, 0, 2 ) )*MetalMassFrac ).astype( dtype=dtype_UM_IC ).tobytes() )
         if OutputDust:
-            f.write( ( np.ascontiguousarray( np.swapaxes( Array_DENS, 0, 2 ) )*DustMassFrac ).astype( dtype=dtype_UM_IC ).tobytes() )
+            f.write( ( np.ascontiguousarray( np.swapaxes( Array_DENS, 0, 2 ) )*DustMassFrac  ).astype( dtype=dtype_UM_IC ).tobytes() )
+        if OutputCRay:
+            f.write( ( np.ascontiguousarray( np.swapaxes( Array_ENGY, 0, 2 ) )*CRayEngyFrac  ).astype( dtype=dtype_UM_IC ).tobytes() )
         f.close()
 
 #   free memory
