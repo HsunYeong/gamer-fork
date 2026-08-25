@@ -1875,6 +1875,20 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "SRC_DELEPTONIZATION is only supported in HYDRO !!\n" );
 #  endif
 
+#  ifdef EXACT_COOLING
+#  if ( MODEL != HYDRO )
+#     error : ERROR : EXACT_COOLING must enable MODEL=HYDRO !!
+#  endif
+
+#  ifdef COMOVING
+#     error : ERROR : EXACT_COOLING does not support COMOVING !!
+#  endif
+
+#  else // #ifdef EXACT_COOLING
+   if ( SrcTerms.ExactCooling )
+      Aux_Error( ERROR_INFO, "SRC_EXACTCOOLING is only supported when EXACT_COOLING is enabled !!\n" );
+#  endif // #ifdef EXACT_COOLING ... else ...
+
 // warning
 // ------------------------------
    if ( MPI_Rank == 0 ) {
