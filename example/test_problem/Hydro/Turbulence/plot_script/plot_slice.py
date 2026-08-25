@@ -50,7 +50,7 @@ for ds in ts.piter():
    slc.set_cmap( field, colormap )
    slc.set_font( {'size':16} )
    slc.set_axes_unit( 'code_length' )
-   slc.annotate_grids()
+   slc.annotate_grids( periodic=False )
    slc.annotate_timestamp( time_unit='code_time', corner='upper_right', text_args={'color':'k'} )
    slc.save( mpl_kwargs={"dpi":dpi} )
 

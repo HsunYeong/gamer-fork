@@ -102,7 +102,7 @@ for sto, ds in ts.piter(storage=my_storage):
    Jyk = 1j * (kz * Bxk - kx * Bzk)
    Jzk = 1j * (kx * Byk - ky * Bxk)
 
-#  averaged magnetic helicity = sum(A dot B)/N^3 = sum(Ak dot Bk)/N^6
+#  averaged magnetic helicity (fluctuated) = sum(A dot B)/N^3 = sum(Ak dot Bk)/N^6
    hmag = np.sum( weight * (np.conj(Axk)*Bxk + np.conj(Ayk)*Byk + np.conj(Azk)*Bzk) ).real / N**6
 
 #  averaged current helicity = sum(J dot B)/N^3 = sum(Jk dot Bk)/N^6

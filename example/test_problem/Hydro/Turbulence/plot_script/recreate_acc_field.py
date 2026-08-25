@@ -105,7 +105,7 @@ for ds in ts.piter():
 
    x = (np.arange(N) + 0.5) * dh
 
-#  phase[nmode, k, j, i]
+#  phase[nmode, k, j, i] = k dot x
    phase = ( kmode[0, :, None, None, None] * x[None, None, None, :]
            + kmode[1, :, None, None, None] * x[None, None, :, None]
            + kmode[2, :, None, None, None] * x[None, :, None, None] )
@@ -144,7 +144,7 @@ for ds in ts.piter():
    fig = plt.figure()
    fig.dpi = dpi
    grid = AxesGrid( fig, (0.1, 0.05, 1.8, 1.7), nrows_ncols=(1, 2), axes_pad=(1.5,0.5), label_mode="all",
-                          share_all=True, cbar_location="right", cbar_mode="single", cbar_size="2%", cbar_pad="2%")
+                          share_all=True, cbar_location="right", cbar_mode="single", cbar_size="2%", cbar_pad="2%" )
 
    slc = [None]*2
    for i in range(2):
