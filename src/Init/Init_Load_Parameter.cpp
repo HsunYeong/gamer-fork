@@ -260,7 +260,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "SRC_TURB_POW",               &SRC_TURB_POW,                   -1.666666667,     NoMin_double,  NoMax_double   );
    ReadPara->Add( "SRC_TURB_RSEED_INIT",        &SRC_TURB_RSEED_INIT,             123,             0,             NoMax_int      );
    ReadPara->Add( "SRC_TURB_UPDATE_STEP",       &SRC_TURB_UPDATE_STEP,            10,              1,             NoMax_int      );
-   ReadPara->Add( "SRC_TURB_TABLE_SIZE",        &SRC_TURB_TABLE_SIZE,             128,             0,             NoMax_int      );
+   ReadPara->Add( "SRC_TURB_TABLE_SIZE",        &SRC_TURB_TABLE_SIZE,             128,             1,             NoMax_int      );
    ReadPara->Add( "SRC_TURB_RESET",             &SRC_TURB_RESET,                  false,           Useless_bool,  Useless_bool   );
 #  endif
    ReadPara->Add( "SRC_USER",                   &SrcTerms.User,                   false,           Useless_bool,  Useless_bool   );

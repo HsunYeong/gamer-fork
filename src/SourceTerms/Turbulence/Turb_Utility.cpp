@@ -64,9 +64,9 @@ void Turb_Init_Modes()
       Aux_Error( ERROR_INFO, "Turbulence: kmax ( %13.7e ) < kmin ( %13.7e )!!\n", kmax, kmin );
 
    double kmid   = 0.5*(kmin + kmax);
-   int    Nmax   = 2*SRC_TURB_KMAX + 1;
+   int    Nmax   = 2*(int)SRC_TURB_KMAX + 1;
    int    nmodes = 0;
-   double kmodes[Nmax];
+   double *kmodes = new double [Nmax];
    for (int i = 0; i < Nmax; ++ i)
       kmodes[i] = 2*M_PI/BOX_SIZE * (i - (Nmax - 1)/2.0);
 
@@ -123,6 +123,8 @@ void Turb_Init_Modes()
       } // if ( kmag >= kmin && kmag <= kmax )
    } // for i, j, k
 
+   delete [] kmodes;
+
 // print turbulence information
    if ( MPI_Rank == 0 )
    {
@@ -143,6 +145,7 @@ void Turb_Init_Modes()
          Aux_Message( stdout, "    mode = %3d, amplitude = %13.7e\n", n, Turb->Amplitude[n] );
       }
    }
+
 } // FUNCTION : Turb_Init_Modes
 
 
@@ -194,7 +197,7 @@ void Turb_Init_Field()
 
          H5_GroupID_Turb = H5Gopen( H5_FileID, "Turbulence", H5P_DEFAULT );
          if ( H5_GroupID_Turb < 0 )   Aux_Error( ERROR_INFO, "failed to open the group \"%s\" !!\n"
-                                                             "enable TURB_RESET to turn on tubulence when restart !\n", "Turbulence" );
+                                                             "set SRC_TURB_RESET or OPT__RESTART_RESET to reset turbulence when restarting !!\n", "Turbulence" );
 
          int RS_NMode;
          H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "NMode", H5P_DEFAULT);
@@ -471,11 +474,11 @@ void Turb_FillinTable( int IdxTable )
          double cosz = Turb->Cos[2][ n*NPoint + k ];
          double amp  = Turb->Amplitude[n];
 
-         double real = ( cosx*cosy - sinx*siny ) * cosz - ( sinx*cosy + cosx*siny ) * sinz;
-         double imag = ( cosy*sinz + siny*cosz ) * cosx + ( cosy*cosz - siny*sinz ) * sinx;
+         const double real_part = ( cosx*cosy - sinx*siny ) * cosz - ( sinx*cosy + cosx*siny ) * sinz;
+         const double imag_part = ( cosy*sinz + siny*cosz ) * cosx + ( cosy*cosz - siny*sinz ) * sinx;
 
          for (int d=0; d<3; d++)
-            Acc[d] += amp*( Turb->OUphase[IdxTable][2*3*n+2*d]*real - Turb->OUphase[IdxTable][2*3*n+2*d+1]*imag );
+            Acc[d] += amp*( Turb->OUphase[IdxTable][2*3*n+2*d]*real_part - Turb->OUphase[IdxTable][2*3*n+2*d+1]*imag_part );
 
       } // for (int n = 0; n < Turb->NMode; n++)
 

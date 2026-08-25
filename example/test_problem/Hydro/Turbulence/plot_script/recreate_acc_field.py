@@ -96,7 +96,7 @@ for ds in ts.piter():
       amplitude = np.sqrt( np.abs( -4 * ((kmag - kmid) / (kmax - kmin))**2 + 1) )*kmid/kmag
    elif form == 2:
       power     = ds.parameters["Src_Turb_Pow"]
-      amplitude = np.sqrt( (k / kmin)**power )*kmin/kmag
+      amplitude = np.sqrt( (kmag / kmin)**power )*kmin/kmag
    else:
       print( "unknown SRC_TURB_SPEC_FORM\n" )
       sys.exit(1)

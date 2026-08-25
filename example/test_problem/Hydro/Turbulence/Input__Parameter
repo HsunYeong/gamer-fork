@@ -25,7 +25,7 @@ END_STEP                     -1           # end step (<0=auto -> must be set by 
 
 # test problems
 TESTPROB_ID                   26          # test problem ID [0]
-                                          #   26: HYDRO particle flag (+GRAVITY & PARTICLE)
+                                          #   26: HYDRO turbulence
 
 
 # code units (in cgs)
