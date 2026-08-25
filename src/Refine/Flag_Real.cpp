@@ -377,7 +377,7 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
             } // if ( OPT__FLAG_VORTICITY )
 
 
-//          3-3. evaluate pressure
+//          3-3. evaluate pressure (including cosmic-ray pressure as required by EoS_DensPres2CSqr_CPUPtr() for NeedCs)
             if ( NeedPres )
             {
                const bool CheckMinPres_Yes = true;
@@ -392,9 +392,13 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
 #                 if   ( DUAL_ENERGY == DE_ENPY )
                   Pres[k][j][i] = Hydro_DensDual2Pres( Fluid[DENS][k][j][i], Fluid[DUAL][k][j][i],
                                                        EoS_AuxArray_Flt[1], CheckMinPres_Yes, MIN_PRES );
+//                add cosmic-ray pressure
+#                 ifdef COSMIC_RAY
+                  Pres[k][j][i] += EoS_CREint2CRPres_CPUPtr( Fluid[CRAY][k][j][i], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#                 endif // COSMIC_RAY
 #                 elif ( DUAL_ENERGY == DE_EINT )
 #                 error : DE_EINT is NOT supported yet !!
-#                 endif
+#                 endif // DUAL_ENERGY == DE_ENPY/DE_EINT
 
 #                 else // #ifdef DUAL_ENERGY
 

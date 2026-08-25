@@ -74,8 +74,8 @@ void Init_ByFile_WLMDwarfGalaxy( real fluid_out[], const real fluid_in[], const 
 #  endif
 
 #  ifdef DUAL_ENERGY
-   fluid_out[DUAL] = Hydro_Con2Dual( fluid_in[DENS], fluid_in[MOMX], fluid_in[MOMY], fluid_in[MOMZ], fluid_in[ENGY], Emag,
-                                     EoS_DensEint2Pres_CPUPtr, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table,
+   fluid_out[DUAL] = Hydro_Con2Dual( fluid_in[DENS], fluid_in[MOMX], fluid_in[MOMY], fluid_in[MOMZ], fluid_in[ENGY], fluid_in+NCOMP_FLUID, Emag,
+                                     EoS_DensEint2Pres_CPUPtr, EoS_CREint2CRPres_CPUPtr, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table,
                                      PassiveFloorMask );
 #  endif
 
