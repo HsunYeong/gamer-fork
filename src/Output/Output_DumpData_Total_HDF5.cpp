@@ -2910,6 +2910,7 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.Opt__Init               = OPT__INIT;
    InputPara.RestartLoadNRank        = RESTART_LOAD_NRANK;
    InputPara.Opt__RestartReset       = OPT__RESTART_RESET;
+   InputPara.Opt__RestartChangeNComp = OPT__RESTART_CHANGE_NCOMP;
    InputPara.Opt__UM_IC_Level        = OPT__UM_IC_LEVEL;
    InputPara.Opt__UM_IC_NLevel       = OPT__UM_IC_NLEVEL;
    InputPara.Opt__UM_IC_NVar         = OPT__UM_IC_NVAR;
@@ -4032,6 +4033,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
    H5Tinsert( H5_TypeID, "Opt__Init",               HOFFSET(InputPara_t,Opt__Init               ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "RestartLoadNRank",        HOFFSET(InputPara_t,RestartLoadNRank        ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__RestartReset",       HOFFSET(InputPara_t,Opt__RestartReset       ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Opt__RestartChangeNComp", HOFFSET(InputPara_t,Opt__RestartChangeNComp ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__UM_IC_Level",        HOFFSET(InputPara_t,Opt__UM_IC_Level        ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__UM_IC_NLevel",       HOFFSET(InputPara_t,Opt__UM_IC_NLevel       ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__UM_IC_NVar",         HOFFSET(InputPara_t,Opt__UM_IC_NVar         ), H5T_NATIVE_INT              );
