@@ -159,8 +159,21 @@ void ELBDM_DerivedField( real ELBDMOut[], const real ELBDMIn[], int  FieldID,
    if ( FieldID < 0 || FieldID > 3 )
       Aux_Error( ERROR_INFO, "incorrect FieldID (%d) !!\n", FieldID );
 
-   if ( direction < 0 || direction > 5 )
-      Aux_Error( ERROR_INFO, "incorrect direction (%d) !!\n", direction );
+    if ( FieldID == 0  ||  FieldID == 1 )
+    {
+       if ( direction < 0 || direction > 2 )
+          Aux_Error( ERROR_INFO, "incorrect direction (%d) for FieldID %d !!\n", direction, FieldID );
+    }
+    else if ( FieldID == 2 )
+    {
+       if ( direction != 0 )
+          Aux_Error( ERROR_INFO, "incorrect direction (%d) for FieldID %d (must be 0) !!\n", direction, FieldID );
+    }
+    else // FieldID == 3
+    {
+       if ( direction < 0 || direction > 5 )
+          Aux_Error( ERROR_INFO, "incorrect direction (%d) for FieldID %d !!\n", direction, FieldID );
+    }
 
 // cast input/output arrays to 3D structures
    typedef real (*ELBDM_in)[PS1+2*NGhost ][PS1+2*NGhost ][PS1+2*NGhost ];

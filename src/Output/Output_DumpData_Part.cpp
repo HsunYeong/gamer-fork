@@ -689,7 +689,7 @@ void GetDerivedField( real (*FluIn)[NCOMP_TOTAL][ CUBE(DER_NXT)            ],
                     OutFieldIdx, NFieldOut, DER_NOUT_MAX );
       for (int v = 0; v<6; v++)
       {
-         const int vv = v;;
+         const int vv = v;
          ELBDM_DerivedField( Out[OutFieldIdx], FluIn[LocalID][0],
                              3, vv, DER_GHOST_SIZE, dh );
          OutFieldIdx += 1;

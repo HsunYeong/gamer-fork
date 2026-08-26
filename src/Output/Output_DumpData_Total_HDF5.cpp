@@ -1279,7 +1279,7 @@ void Output_DumpData_Total_HDF5( const char *FileName )
                      } // for (int LocalID=0; LocalID<8; LocalID++)
 
                   } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
-               } // if ( v >= ELBDM_VelDumpIdx0  &&  v < ELBDM_VelDumpIdx0+3 )
+               } // if ( v >= ELBDM_VelDumpIdx0  &&  v < ELBDM_VelDumpIdx0+6 )
 
                else if ( v == ELBDM_Q_PotDumpIdx )
                {
@@ -3076,6 +3076,11 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.Opt__Output_GrackleTCool    = OPT__OUTPUT_GRACKLE_TCOOL;
 #  endif
 #  endif // #if ( MODEL == HYDRO )
+#  if ( MODEL == ELBDM )
+   InputPara.Opt__Output_ELBDM_Vel       = OPT__OUTPUT_ELBDM_VEL;
+   InputPara.Opt__Output_ELBDM_Q_Pot     = OPT__OUTPUT_ELBDM_Q_POT;
+   InputPara.Opt__Output_ELBDM_Q_Stress  = OPT__OUTPUT_ELBDM_Q_STRESS;
+#  endif
    InputPara.Opt__Output_UserField       = OPT__OUTPUT_USER_FIELD;
    InputPara.Opt__Output_Mode            = OPT__OUTPUT_MODE;
    InputPara.Opt__Output_Restart         = OPT__OUTPUT_RESTART;
@@ -4167,6 +4172,11 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
    H5Tinsert( H5_TypeID, "Opt__Output_GrackleTCool",    HOFFSET(InputPara_t,Opt__Output_GrackleTCool   ), H5T_NATIVE_INT              );
 #  endif
 #  endif // #if ( MODEL == HYDRO )
+#  if ( MODEL == ELBDM )
+   H5Tinsert( H5_TypeID, "Opt__Output_ELBDM_Vel",       HOFFSET(InputPara_t,Opt__Output_ELBDM_Vel      ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Opt__Output_ELBDM_Q_Pot",     HOFFSET(InputPara_t,Opt__Output_ELBDM_Q_Pot    ), H5T_NATIVE_INT              );
+   H5Tinsert( H5_TypeID, "Opt__Output_ELBDM_Q_Stress",  HOFFSET(InputPara_t,Opt__Output_ELBDM_Q_Stress ), H5T_NATIVE_INT              );
+#  endif
    H5Tinsert( H5_TypeID, "Opt__Output_UserField",       HOFFSET(InputPara_t,Opt__Output_UserField      ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__Output_Mode",            HOFFSET(InputPara_t,Opt__Output_Mode           ), H5T_NATIVE_INT              );
    H5Tinsert( H5_TypeID, "Opt__Output_Restart",         HOFFSET(InputPara_t,Opt__Output_Restart        ), H5T_NATIVE_INT              );
