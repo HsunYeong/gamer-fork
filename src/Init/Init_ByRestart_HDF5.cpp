@@ -2362,6 +2362,9 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "FB_ResolvedSNeII_EjectMass",  &RS.FB_ResolvedSNeII_EjectMass,  SID, TID, NonFatal, &RT.FB_ResolvedSNeII_EjectMass,  1, NonFatal );
    LoadField( "FB_ResolvedSNeII_EjectMetal", &RS.FB_ResolvedSNeII_EjectMetal, SID, TID, NonFatal, &RT.FB_ResolvedSNeII_EjectMetal, 1, NonFatal );
    LoadField( "FB_ResolvedSNeII_MinMGas",    &RS.FB_ResolvedSNeII_MinMGas,    SID, TID, NonFatal, &RT.FB_ResolvedSNeII_MinMGas,    1, NonFatal );
+#  ifdef COSMIC_RAY
+   LoadField( "FB_ResolvedSNeII_CRayRatio",  &RS.FB_ResolvedSNeII_CRayRatio,  SID, TID, NonFatal, &RT.FB_ResolvedSNeII_CRayRatio,  1, NonFatal );
+#  endif
    LoadField( "FB_ResolvedSNeII_Record",     &RS.FB_ResolvedSNeII_Record,     SID, TID, NonFatal, &RT.FB_ResolvedSNeII_Record,     1, NonFatal );
 #  endif
 

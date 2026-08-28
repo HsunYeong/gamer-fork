@@ -36,29 +36,31 @@ prefix       = args.prefix
 code         = args.code
 
 colormap     = {
-                 'density'                 :'viridis',
-                 'dust'                    :'viridis',
-                 'dust2gas'                :'viridis',
-                 'T'                       :'magma',
-                 'kinetic_energy_density'  :'plasma',
-                 'magnetic_energy_density' :'plasma',
-                 'plasma_beta'             :'plasma',
-                 'particle_density_on_grid':'algae',
-                 'velocity_magnitude'      :'RdPu',
-                 'particle'                :'algae',
-                 'resolution_size'         :'cividis_r',
+                 'density'                   :'viridis',
+                 'dust'                      :'viridis',
+                 'dust2gas'                  :'viridis',
+                 'T'                         :'magma',
+                 'kinetic_energy_density'    :'plasma',
+                 'magnetic_energy_density'   :'plasma',
+                 'cosmic_ray_energy_density' :'plasma',
+                 'plasma_beta'               :'plasma',
+                 'particle_density_on_grid'  :'algae',
+                 'velocity_magnitude'        :'RdPu',
+                 'particle'                  :'algae',
+                 'resolution_size'           :'cividis_r',
                }
 field_unit   = {
-                 'density'                 :'Msun/pc**3',
-                 'dust'                    :'Msun/pc**3',
-                 'dust2gas'                :'dimensionless',
-                 'T'                       :'K',
-                 'kinetic_energy_density'  :'Msun/pc**3*km**2/s**2',
-                 'magnetic_energy_density' :'G**2',
-                 'plasma_beta'             :'dimensionless',
-                 'particle_density_on_grid':'Msun/pc**3',
-                 'velocity_magnitude'      :'km/s',
-                 'resolution_size'         :'pc',
+                 'density'                   :'Msun/pc**3',
+                 'dust'                      :'Msun/pc**3',
+                 'dust2gas'                  :'dimensionless',
+                 'T'                         :'K',
+                 'kinetic_energy_density'    :'Msun/pc**3*km**2/s**2',
+                 'magnetic_energy_density'   :'G**2',
+                 'cosmic_ray_energy_density' :'Msun/pc**3*km**2/s**2',
+                 'plasma_beta'               :'dimensionless',
+                 'particle_density_on_grid'  :'Msun/pc**3',
+                 'velocity_magnitude'        :'km/s',
+                 'resolution_size'           :'pc',
                }
 zlim         = {
                  'density_s'                  :(1.0e-7, 1.0e+0),
@@ -73,6 +75,8 @@ zlim         = {
                  'kinetic_energy_density_p'   :(1.0e+2, 1.0e+6),
                  'magnetic_energy_density_s'  :(1.0e-28,1.0e-18),
                  'magnetic_energy_density_p'  :(1.0e-24,1.0e-14),
+                 'cosmic_ray_energy_density_s':(1.0e-4, 1.0e+1),
+                 'cosmic_ray_energy_density_p':(1.0e+1, 1.0e+5),
                  'plasma_beta_s'              :(1.0e+6, 1.0e+16),
                  'plasma_beta_p'              :(1.0e+6, 1.0e+16),
                  'particle_density_on_grid_s' :(1.0e-5, 1.0e+0),
@@ -119,10 +123,11 @@ for ds in ts.piter():
 #   fields_list.append( 'kinetic_energy_density'   )
 #   fields_list.append( 'velocity_magnitude'       )
 #   fields_list.append( 'resolution_size'          )
-#   fields_list.append( 'dust2gas'                 )
 #   fields_list.append( 'particle_density_on_grid' ) if code == 'GAMER' else None
-#   fields_list.append('magnetic_energy_density'   )
-#   fields_list.append('plasma_beta'               )
+#   if  ('gas', 'dust'                     ) in ds.derived_field_list: fields_list.append('dust2gas'                  )
+#   if  ('gas', 'magnetic_energy_density'  ) in ds.derived_field_list: fields_list.append('magnetic_energy_density'   )
+#   if  ('gas', 'plasma_beta'              ) in ds.derived_field_list: fields_list.append('plasma_beta'               )
+#   if  ('gas', 'cosmic_ray_energy_density') in ds.derived_field_list: fields_list.append('cosmic_ray_energy_density' )
 
    pfields_list = []
 #   pfields_list.append( ('all',      'particle_mass') )

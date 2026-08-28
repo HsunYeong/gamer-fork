@@ -266,6 +266,7 @@ FB_RESOLVED_SNEII_EJECT_ENGY  1.0e51      # ejected internal energy of each SNeI
 FB_RESOLVED_SNEII_EJECT_MASS  0.0         # ejected total mass of each SNeII explosion (in Msun) (for FB_RESOLVED_SNEII only) [0.0]
 FB_RESOLVED_SNEII_EJECT_METAL 0.0         # ejected metal mass of each SNeII explosion (in Msun) (for FB_RESOLVED_SNEII only) [0.0]
 FB_RESOLVED_SNEII_MIN_M_GAS   0.0         # minimum mass of gas in the environment of SNeII to apply feedback (in Msun) (for FB_RESOLVED_SNEII only) [0.0]
+FB_RESOLVED_SNEII_CRAY_RATIO  0.1         # ratio of cosmic ray energy to total internal energy of each SNeII explosion (for FB_RESOLVED_SNEII and COSMIC_RAY only) [0.1]
 FB_RESOLVED_SNEII_RECORD      0           # record the SNeII explosion info (for FB_RESOLVED_SNEII only) [0]
 
 

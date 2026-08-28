@@ -398,6 +398,9 @@ extern double FB_RESOLVED_SNEII_EJECT_ENGY;
 extern double FB_RESOLVED_SNEII_EJECT_MASS;
 extern double FB_RESOLVED_SNEII_EJECT_METAL;
 extern double FB_RESOLVED_SNEII_MIN_M_GAS;
+#ifdef COSMIC_RAY
+extern double FB_RESOLVED_SNEII_CRAY_RATIO;
+#endif
 extern bool   FB_RESOLVED_SNEII_RECORD;
 #endif
 

@@ -124,6 +124,14 @@ Note that the input value should always be in units of Msun.
     * **Restriction:**
 Only for [[FB_RESOLVED_SNEII | Runtime Parameters:-Feedback#FB_RESOLVED_SNEII ]].
 
+<a name="FB_RESOLVED_SNEII_CRAY_RATIO"></a>
+* #### `FB_RESOLVED_SNEII_MIN_M_GAS` &ensp; (1.0&#8805;input&#8805;0.0) &ensp; [0.1]
+    * **Description:**
+ratio of cosmic ray energy to total internal energy of each SNeII explosion.
+    * **Restriction:**
+Only for [[FB_RESOLVED_SNEII | Runtime Parameters:-Feedback#FB_RESOLVED_SNEII ]]
+and [[--cosmic_ray | [Installation]-Option-List#--cosmic_ray]].
+
 <a name="FB_RESOLVED_SNEII_RECORD"></a>
 * #### `FB_RESOLVED_SNEII_RECORD` &ensp; (0=off, 1=on) &ensp; [0]
     * **Description:**

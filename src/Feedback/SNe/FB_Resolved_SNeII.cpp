@@ -6,7 +6,11 @@
 static const int      maxfbDiameter  =   FB_GHOST_SIZE + 1;  // maximum diameter to apply feedback, constraint by ghost zone size
 static       real  ***fbDepositWeighting[FB_GHOST_SIZE + 1]; // array of weighting for each feedback diameter
 
+#ifdef COSMIC_RAY
+static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
+#else
 static const int      nVarRecSNeII   = 23;                   // number of variables to be record for each SNII
+#endif
 static const int      maxNumRecSNeII = 100;                  // maximum  number of recorded SNeII in each OpenMP thread
 static       int     *numRecSNeII    = NULL;                 // number of recorded SNeII in each OpenMP thread
 static       double **recordSNeII    = NULL;                 // array of stored variables to record the SNeII info
@@ -237,7 +241,13 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
 //    3. calculate the feedback
 
 //    3.1 energy feedback
-      real SNII_DepositedEnergy = FB_RESOLVED_SNEII_EJECT_ENGY;
+      real SNII_DepositedEnergy     = FB_RESOLVED_SNEII_EJECT_ENGY;
+#     ifdef COSMIC_RAY
+      real SNII_DepositedCREnergy   = FB_RESOLVED_SNEII_EJECT_ENGY*FB_RESOLVED_SNEII_CRAY_RATIO;
+#     ifdef DUAL_ENERGY
+      real SNII_DepositedIntEnergy  = FB_RESOLVED_SNEII_EJECT_ENGY*( 1.0 - FB_RESOLVED_SNEII_CRAY_RATIO );
+#     endif
+#     endif
 
 //    3.2 mass feedback
       real SNII_DepositedMass   = MIN( par_mass, FB_RESOLVED_SNEII_EJECT_MASS );                   // particle mass cannot be less than zero
@@ -338,6 +348,9 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = TimeNew;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_SNIITime;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedEnergy;
+#        ifdef COSMIC_RAY
+         recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedCREnergy;
+#        endif
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedMass;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedMetal;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = fbDiameter*dh;
@@ -404,18 +417,20 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          if ( UseMetal )
          Fluid_Out[Idx_Metal][k][j][i] += SNII_DepositedMetal                   * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        ifdef COSMIC_RAY
-         Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedEnergy * 0.1            * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+         Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        endif
 
 #        ifdef DUAL_ENERGY
 #        if   ( DUAL_ENERGY == DE_ENPY )
-#        ifdef COSMIC_RAY
-         const real Eint                = flu_Eint + SNII_DepositedEnergy * 0.9 * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
-#        else
+#        if   ( EOS == EOS_GAMMA )
          const real Eint                = flu_Eint + SNII_DepositedEnergy       * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
-#        endif
          const real Pres                = EoS_DensEint2Pres_CPUPtr( Fluid_Out[DENS][k][j][i], Eint, NULL,
                                                                     EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#        elif ( EOS == EOS_COSMIC_RAY )
+         const real Eint                = flu_Eint + SNII_DepositedIntEnergy    * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+         const real Pres                = EoS_GasEint2GasPres_CPUPtr( Eint, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#        endif
+
          Fluid_Out[DUAL     ][k][j][i]  = Hydro_DensPres2Dual( Fluid_Out[DENS][k][j][i], Pres, EoS_AuxArray_Flt[1] );
 #        endif
 #        endif // #ifdef DUAL_ENERGY
@@ -568,8 +583,13 @@ void Record_FB_Resolved_SNeII( const int lv )
          {
             fprintf( File, "#%5s%6s%6s%16s%16s",
                      "Rank", "TID", "lv", "TimeOld", "TimeNew" );
+#           ifdef COSMIC_RAY
+            fprintf( File, "%16s%16s%16s%16s%16s%16s%16s",
+                     "SNII_Time", "SNII_Energy", "SNII_CREnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
+#           else
             fprintf( File, "%16s%16s%16s%16s%16s%16s",
                      "SNII_Time", "SNII_Energy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
+#           endif
             fprintf( File, "%16s%16s%16s%16s%16s",
                      "Par_ID", "Par_Mass", "Par_PosX", "Par_PosY", "Par_PosZ" );
             fprintf( File, "%16s%16s%16s%16s",

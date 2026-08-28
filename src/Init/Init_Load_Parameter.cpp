@@ -312,6 +312,9 @@ void Init_Load_Parameter()
    ReadPara->Add( "FB_RESOLVED_SNEII_EJECT_MASS",  &FB_RESOLVED_SNEII_EJECT_MASS,  0.0,            0.0,           NoMax_double   );
    ReadPara->Add( "FB_RESOLVED_SNEII_EJECT_METAL", &FB_RESOLVED_SNEII_EJECT_METAL, 0.0,            0.0,           NoMax_double   );
    ReadPara->Add( "FB_RESOLVED_SNEII_MIN_M_GAS",   &FB_RESOLVED_SNEII_MIN_M_GAS,   0.0,            0.0,           NoMax_double   );
+#  ifdef COSMIC_RAY
+   ReadPara->Add( "FB_RESOLVED_SNEII_CRAY_RATIO",  &FB_RESOLVED_SNEII_CRAY_RATIO,  0.1,            0.0,           1.0            );
+#  endif
    ReadPara->Add( "FB_RESOLVED_SNEII_RECORD",      &FB_RESOLVED_SNEII_RECORD,      false,          Useless_bool,  Useless_bool   );
 #  endif
 

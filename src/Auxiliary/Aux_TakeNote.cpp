@@ -1255,6 +1255,9 @@ void Aux_TakeNote()
       fprintf( Note, "                              =% 14.7e Msun\n",  FB_RESOLVED_SNEII_EJECT_METAL*UNIT_M/Const_Msun );
       fprintf( Note, "FB_RESOLVED_SNEII_MIN_M_GAS    % 14.7e\n",       FB_RESOLVED_SNEII_MIN_M_GAS                     );
       fprintf( Note, "                              =% 14.7e Msun\n",  FB_RESOLVED_SNEII_MIN_M_GAS*UNIT_M/Const_Msun   );
+#     ifdef COSMIC_RAY
+      fprintf( Note, "FB_RESOLVED_SNEII_CRAY_RATIO   % 14.7e\n",       FB_RESOLVED_SNEII_CRAY_RATIO                    );
+#     endif
       fprintf( Note, "FB_RESOLVED_SNEII_RECORD       % d\n",           FB_RESOLVED_SNEII_RECORD                        );
       }
       fprintf( Note, "***********************************************************************************\n" );
