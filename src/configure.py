@@ -708,6 +708,15 @@ def load_arguments( sys_setting : SystemSetting ):
                          help="Enable cosmic-ray diffusion. Must enable <--mhd> and <--cosmic_ray>.\n"
                        )
 
+    parser.add_argument( "--cr_streaming", type=str2bool, metavar="BOOLEAN", gamer_name="CR_STREAMING",
+                         default=False,
+                         constraint={ True:{"mhd":True, "eos":["GAMMA", "COSMIC_RAY"]} },
+                         help="Enable cosmic-ray streaming (two-moment method; Jiang & Oh 2018).\n"
+                              "Must enable <--mhd>. Can be built standalone with <--eos=GAMMA> (gas is a\n"
+                              "pure gamma-law fluid and all CR back-reaction is handled by the two-moment\n"
+                              "source terms), or together with <--cosmic_ray>/<--eos=COSMIC_RAY>.\n"
+                       )
+
     # B. miscellaneous options
     parser.add_argument( "--nlevel", type=int, metavar="INTEGER", gamer_name="NLEVEL",
                          default=10,

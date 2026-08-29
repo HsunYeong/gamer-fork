@@ -419,8 +419,11 @@ extern InterpolationHandler Int_InterpolationHandler;
 
 // (2-13) cosmic ray
 // =======================================================================================================
-#ifdef COSMIC_RAY
+// GAMMA_CR (CR adiabatic index) is shared by the classic (COSMIC_RAY) and two-moment (CR_STREAMING) modules
+#if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
 extern double GAMMA_CR;
+#endif
+#ifdef COSMIC_RAY
 extern bool   OPT__FLAG_CRAY, OPT__FLAG_LOHNER_CRAY;
 extern double FlagTable_CRay[NLEVEL-1];
 #endif
@@ -436,6 +439,19 @@ extern double DT__CR_DIFFUSION;
 extern double CR_DIFF_MIN_B;
 #endif
 
+#ifdef CR_STREAMING
+extern bool   CR_SOURCE;
+extern bool   CR_STREAM;
+extern bool   CR_EC_SOURCE;
+extern double CR_VMAX;
+extern double CR_SIGMA;
+extern double CR_SIGMA_PERP;
+extern double CR_MAX_OPACITY;
+extern double CR_TAU_ASYM_LIM;
+extern double CR_TAUFACT;
+extern bool   CR_VEL_FLX_FLAG;
+extern double CR_CFL;
+#endif
 
 // 3. CPU (host) arrays for transferring data between CPU and GPU
 // ============================================================================================================

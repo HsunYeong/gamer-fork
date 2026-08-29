@@ -261,6 +261,18 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 #  endif
 
 
+// 1.12 CRITERION TWELVE : cosmic ray streaming reduced speed of light
+// =============================================================================================================
+// the gas-aware criterion CR_CFL*dh/max(|v|+c_fast, CR_VMAX), which matches Athena's dt semantics,
+// is folded into CRITERION ONE (see CPU_dtSolver_HydroCFL.cpp); the flat criterion below is redundant
+// with it (always >= it) and is kept only as a fallback because OPT__FREEZE_FLUID resets CRITERION ONE
+// to HUGE_NUMBER, which would otherwise leave CR streaming without any dt limit
+#  ifdef CR_STREAMING
+   dTime[NdTime] = dTime_dt * MicroPhy.CR_cfl * amr->dh[lv] / MicroPhy.CR_vmax;
+   sprintf( dTime_Name[NdTime++], "%s", "CR_Stream" );
+#  endif
+
+
 
 // 2. get the minimum time-step from all criteria
 // =============================================================================================================

@@ -203,6 +203,17 @@ void CPU_dtSolver_HydroCFL  ( real g_dt_Array[], const real g_Flu_Array[][FLU_NI
 
 #     ifdef SRHD
       g_dt_Array[p] = dhSafety / ( MaxCFL / SQRT( (real)1.0 + MaxCFL*MaxCFL ) );
+#     elif ( defined CR_STREAMING )
+//    match Athena's dt semantics: a single CFL number applied to the per-cell signal speed
+//    max( |v|+c_fast, CR_VMAX ) (see hydro/new_blockdt.cpp in Athena++)
+//    --> since CR_VMAX is spatially constant, max() commutes with the patch-wide reduction of MaxCFL,
+//        so the Athena criterion can reuse the reduced MaxCFL without a second per-cell loop
+//    --> the flat criterion CR_CFL*dh/CR_VMAX in Mis_GetTimeStep() is redundant with this term
+//        (always >= it) and is kept only as a fallback for OPT__FREEZE_FLUID, which disables
+//        the fluid criterion computed here
+//    --> exact Athena parity (dt = cfl_number*dh/max(|v|+c_fast, vmax) for all gas speeds)
+//        requires CR_CFL <= DT__FLUID, with CR_CFL playing the role of Athena's cfl_number
+      g_dt_Array[p] = FMIN( dhSafety/MaxCFL, MicroPhy.CR_cfl*dh / FMAX(MicroPhy.CR_vmax, MaxCFL) );
 #     else
       g_dt_Array[p] = dhSafety/MaxCFL;
 #     endif

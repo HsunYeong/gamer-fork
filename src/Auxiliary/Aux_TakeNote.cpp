@@ -185,6 +185,12 @@ void Aux_TakeNote()
 #     else // #ifdef COSMIC_RAY
       fprintf( Note, "COSMIC_RAY                      OFF\n" );
 #     endif // #ifdef COSMIC_RAY ... else ...
+//    CR_STREAMING is a standalone module and may be enabled without COSMIC_RAY
+#     ifdef CR_STREAMING
+      fprintf( Note, "CR_STREAMING                    ON\n" );
+#     else
+      fprintf( Note, "CR_STREAMING                    OFF\n" );
+#     endif
 
 #     if   ( EOS == EOS_GAMMA )
       fprintf( Note, "EOS                             EOS_GAMMA\n" );

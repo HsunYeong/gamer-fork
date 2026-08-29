@@ -206,11 +206,18 @@
 #  define NCOMP_PASSIVE_BUILTIN1    0
 # endif
 
-// exact cooling source term
-# ifdef EXACT_COOLING
-#  define NCOMP_PASSIVE_BUILTIN2    1
+// cosmic ray streaming
+# ifdef CR_STREAMING
+#  define NCOMP_PASSIVE_BUILTIN2    8
 # else
 #  define NCOMP_PASSIVE_BUILTIN2    0
+# endif
+
+// exact cooling source term
+# ifdef EXACT_COOLING
+#  define NCOMP_PASSIVE_BUILTIN3    1
+# else
+#  define NCOMP_PASSIVE_BUILTIN3    0
 # endif
 
 // total number of built-in scalars
@@ -324,11 +331,33 @@
 #  define PASSIVE_NEXT_IDX2   ( PASSIVE_NEXT_IDX1 )
 # endif
 
-# ifdef EXACT_COOLING
-#  define TCOOL               ( PASSIVE_NEXT_IDX2 )
-#  define PASSIVE_NEXT_IDX3   ( TCOOL - 1         )
+# ifdef CR_STREAMING
+// two-moment cosmic-ray fields (Jiang & Oh 2018):
+//    CR_E      : CR energy density Ec
+//    CR_F1/2/3 : REDUCED CR energy flux Fc/CR_VMAX (same convention as Athena++'s u_cr(1:3));
+//                multiply by CR_VMAX to get the physical flux
+//    ADV_SIGMA : streaming opacity sigma_adv (parallel to B)
+//    ADV_VX/Y/Z: streaming velocity v_adv
+//    --> ADV_* are evolving work arrays updated by CR_UpdateStreaming()/CR_UpdateOpacity(),
+//        not physical passive scalars
+#  define CR_E                ( PASSIVE_NEXT_IDX2 )
+#  define CR_F1               ( CR_E - 1          )
+#  define CR_F2               ( CR_F1 - 1         )
+#  define CR_F3               ( CR_F2 - 1         )
+#  define ADV_SIGMA           ( CR_F3 - 1         )
+#  define ADV_VX              ( ADV_SIGMA - 1     )
+#  define ADV_VY              ( ADV_VX - 1        )
+#  define ADV_VZ              ( ADV_VY - 1        )
+#  define PASSIVE_NEXT_IDX10  ( ADV_VZ - 1        )
 # else
-#  define PASSIVE_NEXT_IDX3   ( PASSIVE_NEXT_IDX2 )
+#  define PASSIVE_NEXT_IDX10  ( PASSIVE_NEXT_IDX2 )
+# endif
+
+# ifdef EXACT_COOLING
+#  define TCOOL               ( PASSIVE_NEXT_IDX10)
+#  define PASSIVE_NEXT_IDX11  ( TCOOL - 1         )
+# else
+#  define PASSIVE_NEXT_IDX11  ( PASSIVE_NEXT_IDX10)
 # endif
 
 #endif // #if ( NCOMP_PASSIVE > 0 )
@@ -367,11 +396,25 @@
 #  define FLUX_NEXT_IDX2   ( FLUX_NEXT_IDX1  )
 # endif
 
-# ifdef EXACT_COOLING
-#  define FLUX_TCOOL       ( FLUX_NEXT_IDX2  )
-#  define FLUX_NEXT_IDX3   ( FLUX_TCOOL - 1  )
+# ifdef CR_STREAMING
+#  define FLUX_CR_E        ( FLUX_NEXT_IDX2  )
+#  define FLUX_CR_F1       ( FLUX_CR_E - 1   )
+#  define FLUX_CR_F2       ( FLUX_CR_F1 - 1  )
+#  define FLUX_CR_F3       ( FLUX_CR_F2 - 1  )
+#  define FLUX_ADV_SIGMA   ( FLUX_CR_F3 - 1  )
+#  define FLUX_ADV_VX      ( FLUX_ADV_SIGMA - 1 )
+#  define FLUX_ADV_VY      ( FLUX_ADV_VX - 1    )
+#  define FLUX_ADV_VZ      ( FLUX_ADV_VY - 1    )
+#  define FLUX_NEXT_IDX10  ( FLUX_ADV_VZ - 1    )
 # else
-#  define FLUX_NEXT_IDX3   ( FLUX_NEXT_IDX2  )
+#  define FLUX_NEXT_IDX10  ( FLUX_NEXT_IDX2     )
+# endif
+
+# ifdef EXACT_COOLING
+#  define FLUX_TCOOL       ( FLUX_NEXT_IDX10 )
+#  define FLUX_NEXT_IDX11  ( FLUX_TCOOL - 1  )
+# else
+#  define FLUX_NEXT_IDX11  ( FLUX_NEXT_IDX10 )
 # endif
 
 #endif // #if ( NCOMP_PASSIVE > 0 )
@@ -394,6 +437,17 @@
 
 # ifdef COSMIC_RAY
 #  define _CRAY               ( 1L << CRAY )
+# endif
+
+# ifdef CR_STREAMING
+#  define _CR_E               ( 1L << CR_E )
+#  define _CR_F1              ( 1L << CR_F1 )
+#  define _CR_F2              ( 1L << CR_F2 )
+#  define _CR_F3              ( 1L << CR_F3 )
+#  define _ADV_SIGMA          ( 1L << ADV_SIGMA )
+#  define _ADV_VX             ( 1L << ADV_VX )
+#  define _ADV_VY             ( 1L << ADV_VY )
+#  define _ADV_VZ             ( 1L << ADV_VZ )
 # endif
 
 # ifdef EXACT_COOLING
@@ -428,6 +482,14 @@
 # ifdef COSMIC_RAY
 #  define _FLUX_CRAY          ( 1L << FLUX_CRAY )
 # endif
+
+# ifdef CR_STREAMING
+#  define _FLUX_CR_E          ( 1L << FLUX_CR_E )
+#  define _FLUX_CR_F1         ( 1L << FLUX_CR_F1 )
+#  define _FLUX_CR_F2         ( 1L << FLUX_CR_F2 )
+#  define _FLUX_CR_F3         ( 1L << FLUX_CR_F3 )
+# endif
+
 
 # ifdef EXACT_COOLING
 #  define _FLUX_TCOOL         ( 1L << FLUX_TCOOL )
@@ -689,7 +751,16 @@
 #  elif ( FLU_SCHEME == MHM )
 #     define FLU_GHOST_SIZE         ( 1 + LR_GHOST_SIZE )
 #  elif ( FLU_SCHEME == MHM_RP )
+#    ifdef CR_STREAMING
+//    one extra ghost layer so that the outermost ADV_* ghost ring -- which CR_UpdateOpacity()
+//    cannot recompute (no +/-1 neighbors) and therefore keeps stale ghost-filled values --
+//    lies outside the stencil of every PS2 output cell
+//    --> makes the per-patch opacity recomputation equivalent to a global one
+//        (patch-size-independent results, matching Athena++'s per-meshblock recomputation)
+#     define FLU_GHOST_SIZE         ( 3 + LR_GHOST_SIZE )
+#    else
 #     define FLU_GHOST_SIZE         ( 2 + LR_GHOST_SIZE )
+#    endif
 #  elif ( FLU_SCHEME == CTU )
 #    ifdef MHD
 #     define FLU_GHOST_SIZE         ( 2 + LR_GHOST_SIZE )
