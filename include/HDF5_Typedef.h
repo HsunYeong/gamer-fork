@@ -374,6 +374,7 @@ struct SymConst_t
 #  endif
 #  ifdef TURBULENCE
    int    Src_NAuxTurb;
+   int    Src_TurbMaxNMode;
 #  endif
    int    Src_NAuxUser;
 

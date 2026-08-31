@@ -2500,6 +2500,7 @@ void FillIn_SymConst( SymConst_t &SymConst )
 #  endif
 #  ifdef TURBULENCE
    SymConst.Src_NAuxTurb         = SRC_NAUX_TURB;
+   SymConst.Src_TurbMaxNMode     = SRC_TURB_MAX_NMODE;
 #  endif
    SymConst.Src_NAuxUser         = SRC_NAUX_USER;
 
@@ -3552,6 +3553,7 @@ void GetCompound_SymConst( hid_t &H5_TypeID )
 #  endif
 #  ifdef TURBULENCE
    H5Tinsert( H5_TypeID, "Src_NAuxTurb",         HOFFSET(SymConst_t,Src_NAuxTurb        ), H5T_NATIVE_INT    );
+   H5Tinsert( H5_TypeID, "Src_TurbMaxNMode",     HOFFSET(SymConst_t,Src_TurbMaxNMode    ), H5T_NATIVE_INT    );
 #  endif
    H5Tinsert( H5_TypeID, "Src_NAuxUser",         HOFFSET(SymConst_t,Src_NAuxUser        ), H5T_NATIVE_INT    );
 

@@ -92,7 +92,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.
 
 <a name="SRC_TURB_POW"></a>
-* #### `SRC_TURB_POW` &ensp; (none) &ensp; [-5/3]
+* #### `SRC_TURB_POW` &ensp; (real value) &ensp; [-5/3]
     * **Description:**
 Power law for energy power spectrum.
     * **Restriction:**
@@ -100,7 +100,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1, [SRC_TURB_SPEC_FORM](#SRC_TURB_SPEC_FORM)=2.
 
 <a name="SRC_TURB_RSEED_INIT"></a>
-* #### `SRC_TURB_RSEED_INIT` &ensp; (>0) &ensp; [123]
+* #### `SRC_TURB_RSEED_INIT` &ensp; (&#8805;0) &ensp; [123]
     * **Description:**
 Initial random seed for turbulence, useless when restart without reset.
     * **Restriction:**
@@ -116,7 +116,7 @@ Only applicable when [[--model | [Installation]-Option-List#--model]]=HYDRO and
 [SRC_TURBULENCE](#SRC_TURBULENCE)=1.
 
 <a name="SRC_TURB_TABLE_SIZE"></a>
-* #### `SRC_TURB_TABLE_SIZE` &ensp; (&#8805;1) &ensp; [128]
+* #### `SRC_TURB_TABLE_SIZE` &ensp; (&#8805;1, must be a power of 2) &ensp; [128]
     * **Description:**
 Resolution of turbulence table, must be a power of 2.
     * **Restriction:**

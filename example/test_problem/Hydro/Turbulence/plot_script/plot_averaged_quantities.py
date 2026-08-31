@@ -40,7 +40,7 @@ my_storage = {}
 # main loop
 for sto, ds in ts.piter(storage=my_storage):
 
-   N  = ds.parameters["NX0"][0]
+   N  = np.int64( ds.parameters["NX0"][0] )
    dd = ds.covering_grid( level=0, left_edge=[0, 0, 0], dims=ds.domain_dimensions )
    dens = dd["Dens"].d
 

@@ -799,6 +799,9 @@ void Aux_TakeNote()
       fprintf( Note, "#define SRC_DLEP_PROF_NBINMAX  % d\n",      SRC_DLEP_PROF_NBINMAX );
       fprintf( Note, "#define SRC_NAUX_TURB          % d\n",      SRC_NAUX_TURB         );
 #     endif
+#     ifdef TURBULENCE
+      fprintf( Note, "#define SRC_TURB_MAX_NMODE     % d\n",      SRC_TURB_MAX_NMODE    );
+#     endif
       fprintf( Note, "#define SRC_NAUX_USER          % d\n",      SRC_NAUX_USER         );
 #     ifdef GPU
       fprintf( Note, "#define FLU_BLOCK_SIZE_X       % d\n",      FLU_BLOCK_SIZE_X      );

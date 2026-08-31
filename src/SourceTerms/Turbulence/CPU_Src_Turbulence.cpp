@@ -269,7 +269,7 @@ void Src_WorkBeforeMajorFunc_Turbulence( const int lv, const double TimeNew, con
 // Function    :  Src_PassData2GPU_Turbulence
 // Description :  Transfer data to GPU
 //
-// Note        :  1. Invoked by Src_WorkBeforeMajorFunc_Turbulence()
+// Note        :  1. Invoked by Turb_Init_Field() and Turb_CheckUpdate()
 //                2. Use synchronous transfer
 //
 // Parameter   :  None

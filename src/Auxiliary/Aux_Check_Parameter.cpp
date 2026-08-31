@@ -1898,6 +1898,10 @@ void Aux_Check_Parameter()
       if ( SRC_TURB_KMAX <= SRC_TURB_KMIN )
          Aux_Error( ERROR_INFO, "SRC_TURB_KMAX must be greater than SRC_TURB_KMIN !!\n" );
 
+      for (int f=0; f<6; f++)
+         if ( OPT__BC_FLU[f] != BC_FLU_PERIODIC && MPI_Rank == 0 )
+            Aux_Message( stderr , "REMINDER : turbulence field will be periodic even for non-periodic BCs !!" );
+
 #     else
       Aux_Error( ERROR_INFO, "SRC_TURBULENCE is only supported when TURBULENCE is enabled !!\n" );
 #     endif

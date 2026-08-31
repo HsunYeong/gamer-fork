@@ -8,8 +8,6 @@ extern void Src_SetConstMemory_Turbulence( const double AuxArray_Flt[], const in
                                            double *&DevPtr_Flt, int *&DevPtr_Int );
 extern void Src_PassData2GPU_Turbulence( int IdxTable );
 
-#define MAX_NMODE 100000
-
 /********************************************************************************************************
 Turbulence structure:
 
@@ -67,20 +65,20 @@ void Turb_Init_Modes()
    int    Nmax   = 2*(int)SRC_TURB_KMAX + 1;
    int    nmodes = 0;
    double *kmodes = new double [Nmax];
-   for (int i = 0; i < Nmax; ++ i)
+   for (int i = 0; i < Nmax; i++)
       kmodes[i] = 2*M_PI/BOX_SIZE * (i - (Nmax - 1)/2.0);
 
-   for (int k = 0; k < Nmax; ++k) {
-   for (int j = 0; j < Nmax; ++j) {
-   for (int i = 0; i < Nmax; ++i) {
+   for (int k = 0; k < Nmax; k++) {
+   for (int j = 0; j < Nmax; j++) {
+   for (int i = 0; i < Nmax; i++) {
 
       double kmag = sqrt( SQR(kmodes[i]) + SQR(kmodes[j]) + SQR(kmodes[k]) );
       if ( kmag >= kmin && kmag <= kmax ) nmodes++;
 
    }}}
 
-   if ( nmodes > MAX_NMODE )  Aux_Error( ERROR_INFO, "number of turbulence modes ( %d ) exceeds maximum mode (%d) !!\n"
-                                                     "try lowering KMAX !!\n" , nmodes, MAX_NMODE );
+   if ( nmodes > SRC_TURB_MAX_NMODE )  Aux_Error( ERROR_INFO, "number of turbulence modes ( %d ) exceeds maximum mode (%d) !!\n"
+                                                              "try lowering SRC_TURB_KMAX !!\n" , nmodes, SRC_TURB_MAX_NMODE );
 
    if ( MPI_Rank == 0 ) Aux_Message( stdout, "   initialize %d turbulence modes\n", nmodes );
 
@@ -88,16 +86,16 @@ void Turb_Init_Modes()
 
    if ( Turb->Amplitude == NULL)  Turb->Amplitude = new double [nmodes];
 
-   for (int i = 0; i < 3; ++i)
+   for (int i = 0; i < 3; i++)
    {
       if ( Turb->Kmode[i] == NULL ) Turb->Kmode[i] = new double [nmodes];
    }
 
 // get amplitude of each mode
    int n = 0;
-   for (int k = 0; k < Nmax; ++k)
-   for (int j = 0; j < Nmax; ++j)
-   for (int i = 0; i < Nmax; ++i)
+   for (int k = 0; k < Nmax; k++)
+   for (int j = 0; j < Nmax; j++)
+   for (int i = 0; i < Nmax; i++)
    {
       double amp = 0;
       double kmag = sqrt( SQR(kmodes[i]) + SQR(kmodes[j]) + SQR(kmodes[k]) );
@@ -130,7 +128,7 @@ void Turb_Init_Modes()
    {
        Aux_Message( stdout, "Turbulence parameters:\n" );
        Aux_Message( stdout, "   velocity dispersion    = %13.7e\n", SRC_TURB_VEL         );
-       Aux_Message( stdout, "   amplitute factor       = %13.7e\n", SRC_TURB_AMPL_FACTOR );
+       Aux_Message( stdout, "   amplitude factor       = %13.7e\n", SRC_TURB_AMPL_FACTOR );
        Aux_Message( stdout, "   energy injection rate  = %13.7e\n", EnergyInputRate      );
        Aux_Message( stdout, "   kmin                   = %13.7e\n", kmin                 );
        Aux_Message( stdout, "   kmax                   = %13.7e\n", kmax                 );
@@ -140,7 +138,8 @@ void Turb_Init_Modes()
        Aux_Message( stdout, "   solenoidal weight norm = %13.7e\n", ZetaNorm             );
        Aux_Message( stdout, "\n");
 
-      for (int n = 0; n < Turb->NMode; ++n)
+      if ( OPT__VERBOSE )
+      for (int n = 0; n < Turb->NMode; n++)
       {
          Aux_Message( stdout, "    mode = %3d, amplitude = %13.7e\n", n, Turb->Amplitude[n] );
       }
@@ -207,7 +206,7 @@ void Turb_Init_Field()
 //       check
          if ( Turb->NMode != RS_NMode )
              Aux_Error( ERROR_INFO, "number of modes (%d) != number of modes from RESTART (%d) !!\n"
-                                    "enable TURB_RESET to change the spectrum !\n" , Turb->NMode, RS_NMode );
+                                    "enable SRC_TURB_RESET to change the spectrum !\n" , Turb->NMode, RS_NMode );
 
          H5_SetID_Turb = H5Dopen ( H5_GroupID_Turb, "TimeLast", H5P_DEFAULT);
          H5_Status     = H5Dread ( H5_SetID_Turb, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &Turb->TimeLast );
@@ -243,20 +242,20 @@ void Turb_Init_Field()
       MPI_Bcast( Turb->OUphase[Turb->IdxLast], Turb->NMode*6, MPI_DOUBLE, 0, MPI_COMM_WORLD );
       MPI_Bcast( Turb->OUphase[Turb->IdxNext], Turb->NMode*6, MPI_DOUBLE, 0, MPI_COMM_WORLD );
 
-   } // if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
+   } // if ( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !SRC_TURB_RESET )
    else
    {
 //    loop through two sets
       for (int t = 0; t < 2 ; t++)
       {
 //       construct OU phase vector
-         for (int n = 0; n < Turb->NMode; ++n)
+         for (int n = 0; n < Turb->NMode; n++)
          {
             double kk       = 0;
             double k_dot_Nr = 0;
             double k_dot_Ni = 0;
             double Nr[3], Ni[3];
-            for (int d = 0; d < 3; ++d)
+            for (int d = 0; d < 3; d++)
             {
 //             get random number Nr and Ni
                Turb->GetRNG( Nr[d], Ni[d] );
@@ -267,20 +266,20 @@ void Turb_Init_Field()
             }
 
 //          Helmholtz decomposition
-            for (int d = 0; d < 3; ++d)
+            for (int d = 0; d < 3; d++)
             {
                Turb->OUphase[t][2*3*n+2*d  ] = SRC_TURB_ZETA*Nr[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
                Turb->OUphase[t][2*3*n+2*d+1] = SRC_TURB_ZETA*Ni[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Ni/kk;
             }
-         } // for (int n = 0; n < Turb->NMode; ++n)
+         } // for (int n = 0; n < Turb->NMode; n++)
       } // for t
 
 //    perform Ornstein-Uhlenbeck process to update OUphase[Next]
       double coeff1 = exp( -Turb->dt/Turb->Tdecay );
       double coeff2 = sqrt( 1 - SQR(coeff1) );
-      for (int n = 0; n < Turb->NMode; ++n)
+      for (int n = 0; n < Turb->NMode; n++)
       {
-         for (int d = 0; d < 3; ++d)
+         for (int d = 0; d < 3; d++)
          {
             Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d  ] + coeff2 * Turb->OUphase[Turb->IdxNext][2*3*n+2*d  ];
             Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1];
@@ -300,13 +299,13 @@ void Turb_Init_Field()
          Turb->TimeNext += Turb->dt;
       }
 
-   } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !TURB_RESET )
+   } // !( OPT__INIT == INIT_BY_RESTART && !OPT__RESTART_RESET && !SRC_TURB_RESET )
 
 // initialize acc table, store values on box corner
    const long NPoint = SRC_TURB_TABLE_SIZE + 1;
    const double dh   = BOX_SIZE / SRC_TURB_TABLE_SIZE;
 
-   for (int d = 0; d < 3; ++d)
+   for (int d = 0; d < 3; d++)
    {
       Turb->Sin[d] = new double [ NPoint*Turb->NMode ];
       Turb->Cos[d] = new double [ NPoint*Turb->NMode ];
@@ -388,14 +387,14 @@ void Turb_CheckUpdate()
       std::swap( Turb->IdxLast, Turb->IdxNext );
 
 //    construct OU phase vector
-      for (int n = 0; n < Turb->NMode; ++n)
+      for (int n = 0; n < Turb->NMode; n++)
       {
          double kk       = 0;
          double k_dot_Nr = 0;
          double k_dot_Ni = 0;
          double Nr[3], Ni[3];
 
-         for (int d = 0; d < 3; ++d)
+         for (int d = 0; d < 3; d++)
          {
 //          get random number Nr and Ni
             Turb->GetRNG( Nr[d], Ni[d] );
@@ -405,7 +404,7 @@ void Turb_CheckUpdate()
             k_dot_Ni += Turb->Kmode[d][n]*Ni[d];
          }
 
-         for (int d = 0; d < 3; ++d)
+         for (int d = 0; d < 3; d++)
          {
 //          Helmholtz decomposition
             Nr[d] = SRC_TURB_ZETA*Nr[d] + (1 - 2*SRC_TURB_ZETA)*Turb->Kmode[d][n]*k_dot_Nr/kk;
@@ -416,7 +415,7 @@ void Turb_CheckUpdate()
             Turb->OUphase[Turb->IdxNext][2*3*n+2*d+1] = coeff1 * Turb->OUphase[Turb->IdxLast][2*3*n+2*d+1] + coeff2 * Ni[d];
          }
 
-      } // for (int n = 0; n < Turb->NMode; ++n)
+      } // for (int n = 0; n < Turb->NMode; n++)
 
       if ( MPI_Rank == 0 )    Aux_Message( stdout, " done\n" );
 

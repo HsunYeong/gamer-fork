@@ -1924,6 +1924,7 @@ void Check_SymConst( const char *FileName, const int FormatVersion )
 #  endif
 #  ifdef TURBULENCE
    LoadField( "Src_NAuxTurb",         &RS.Src_NAuxTurb,         SID, TID, NonFatal, &RT.Src_NAuxTurb,          1, NonFatal );
+   LoadField( "Src_TurbMaxNMode",     &RS.Src_TurbMaxNMode,     SID, TID, NonFatal, &RT.Src_TurbMaxNMode,      1, NonFatal );
 #  endif
    LoadField( "Src_NAuxUser",         &RS.Src_NAuxUser,         SID, TID, NonFatal, &RT.Src_NAuxUser,          1, NonFatal );
 
@@ -2293,18 +2294,19 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Src_EC_dtCoef",           &RS.Src_EC_dtCoef,           SID, TID, NonFatal, &RT.Src_EC_dtCoef,            1, NonFatal );
 #  endif
 #  ifdef TURBULENCE
-   LoadField( "Src_Turb_Vel",            &RS.Src_Turb_Vel,            SID, TID, NonFatal, &RT.Src_Turb_Vel,             1, NonFatal );
-   LoadField( "Src_Turb_AmplFactor",     &RS.Src_Turb_AmplFactor,     SID, TID, NonFatal, &RT.Src_Turb_AmplFactor,      1, NonFatal );
-   LoadField( "Src_Turb_Kdriv",          &RS.Src_Turb_Kdriv,          SID, TID, NonFatal, &RT.Src_Turb_Kdriv,           1, NonFatal );
-   LoadField( "Src_Turb_Kmin",           &RS.Src_Turb_Kmin,           SID, TID, NonFatal, &RT.Src_Turb_Kmin,            1, NonFatal );
-   LoadField( "Src_Turb_Kmax",           &RS.Src_Turb_Kmax,           SID, TID, NonFatal, &RT.Src_Turb_Kmax,            1, NonFatal );
-   LoadField( "Src_Turb_Zeta",           &RS.Src_Turb_Zeta,           SID, TID, NonFatal, &RT.Src_Turb_Zeta,            1, NonFatal );
-   LoadField( "Src_Turb_SpecForm",       &RS.Src_Turb_SpecForm,       SID, TID, NonFatal, &RT.Src_Turb_SpecForm,        1, NonFatal );
-   LoadField( "Src_Turb_Pow",            &RS.Src_Turb_Pow,            SID, TID, NonFatal, &RT.Src_Turb_Pow,             1, NonFatal );
-   LoadField( "Src_Turb_RSeedInit",      &RS.Src_Turb_RSeedInit,      SID, TID, NonFatal, &RT.Src_Turb_RSeedInit,       1, NonFatal );
-   LoadField( "Src_Turb_UpdateStep",     &RS.Src_Turb_UpdateStep,     SID, TID, NonFatal, &RT.Src_Turb_UpdateStep,      1, NonFatal );
-   LoadField( "Src_Turb_TableSize",      &RS.Src_Turb_TableSize,      SID, TID, NonFatal, &RT.Src_Turb_TableSize,       1, NonFatal );
-   LoadField( "Src_Turb_Reset",          &RS.Src_Turb_Reset,          SID, TID, NonFatal, &RT.Src_Turb_Reset,           1, NonFatal );
+   const bool TurbFatal = ( !OPT__RESTART_RESET && !SRC_TURB_RESET )? Fatal : NonFatal;
+   LoadField( "Src_Turb_Vel",            &RS.Src_Turb_Vel,            SID, TID, TurbFatal, &RT.Src_Turb_Vel,            1, TurbFatal );
+   LoadField( "Src_Turb_AmplFactor",     &RS.Src_Turb_AmplFactor,     SID, TID, TurbFatal, &RT.Src_Turb_AmplFactor,     1, TurbFatal );
+   LoadField( "Src_Turb_Kdriv",          &RS.Src_Turb_Kdriv,          SID, TID, TurbFatal, &RT.Src_Turb_Kdriv,          1, TurbFatal );
+   LoadField( "Src_Turb_Kmin",           &RS.Src_Turb_Kmin,           SID, TID, TurbFatal, &RT.Src_Turb_Kmin,           1, TurbFatal );
+   LoadField( "Src_Turb_Kmax",           &RS.Src_Turb_Kmax,           SID, TID, TurbFatal, &RT.Src_Turb_Kmax,           1, TurbFatal );
+   LoadField( "Src_Turb_Zeta",           &RS.Src_Turb_Zeta,           SID, TID,  NonFatal, &RT.Src_Turb_Zeta,           1,  NonFatal );
+   LoadField( "Src_Turb_SpecForm",       &RS.Src_Turb_SpecForm,       SID, TID,  NonFatal, &RT.Src_Turb_SpecForm,       1,  NonFatal );
+   LoadField( "Src_Turb_Pow",            &RS.Src_Turb_Pow,            SID, TID,  NonFatal, &RT.Src_Turb_Pow,            1,  NonFatal );
+   LoadField( "Src_Turb_RSeedInit",      &RS.Src_Turb_RSeedInit,      SID, TID,  NonFatal, &RT.Src_Turb_RSeedInit,      1,  NonFatal );
+   LoadField( "Src_Turb_UpdateStep",     &RS.Src_Turb_UpdateStep,     SID, TID, TurbFatal, &RT.Src_Turb_UpdateStep,     1, TurbFatal );
+   LoadField( "Src_Turb_TableSize",      &RS.Src_Turb_TableSize,      SID, TID,  NonFatal, &RT.Src_Turb_TableSize,      1,  NonFatal );
+   LoadField( "Src_Turb_Reset",          &RS.Src_Turb_Reset,          SID, TID,  NonFatal, &RT.Src_Turb_Reset,          1,  NonFatal );
 #  endif
 
 // Grackle

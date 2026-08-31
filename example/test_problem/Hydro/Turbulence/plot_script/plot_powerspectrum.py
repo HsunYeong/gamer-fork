@@ -35,9 +35,9 @@ ts = yt.DatasetSeries( [ '../Data_%06d'%idx for idx in range(idx_start, idx_end+
 for ds in ts.piter():
    idx     = ds.parameters["DumpID"]
    time    = ds.parameters["Time"][0]
-   N       = ds.parameters["NX0"][0]
    BoxSize = ds.parameters["BoxSize"][0]
    dh      = ds.parameters["CellSize"][0]
+   N       = np.int64( ds.parameters["NX0"][0] )
    dd      = ds.covering_grid(level=0, left_edge=[0, 0, 0], dims=ds.domain_dimensions)
    dens    = dd["Dens"].d
    wx      = dd["MomX"].d/(dens)**0.5
