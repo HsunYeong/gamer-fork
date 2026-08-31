@@ -33,6 +33,7 @@ Turbulence acceleration source term.
     * **Restriction:**
 Only applicable when enabling the compilation option
 [[--model | [Installation]-Option-List#--model]]=HYDRO.
+Does not work with [[--comoving | [Installation]-Option-List#--comoving]] enabled.
 
 <a name="SRC_TURB_VEL"></a>
 * #### `SRC_TURB_VEL` &ensp; (>0.0) &ensp; [0.2]

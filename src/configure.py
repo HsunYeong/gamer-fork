@@ -671,6 +671,7 @@ def load_arguments( sys_setting : SystemSetting ):
     parser.add_argument( "--turbulence", type=str2bool, metavar="BOOLEAN", gamer_name="TURBULENCE",
                          default=False,
                          depend={"model":"HYDRO"},
+                         constraint={ True:{"comoving":False} },
                          help="Enable turbulence.\n"
                        )
 

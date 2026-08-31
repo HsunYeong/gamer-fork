@@ -76,7 +76,7 @@ void Src_PassData2GPU_Turbulence( int IdxTable );
 //                   AuxArray_Int[3] = IdxNext
 //
 // Note        :  1. Invoked by Src_Init_Turbulence()
-//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB=4 defined in Macro.h
+//                2. AuxArray_Flt/Int[] have the size of SRC_NAUX_TURB=5 defined in Macro.h
 //                3. Add "#ifndef __CUDACC__" since this routine is only useful on CPU
 //
 // Parameter   :  AuxArray_Flt/Int : Floating-point/Integer arrays to be filled up
