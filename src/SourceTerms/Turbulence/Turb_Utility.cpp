@@ -64,15 +64,15 @@ void Turb_Init_Modes()
    double kmid   = 0.5*(kmin + kmax);
    int    Nmax   = 2*(int)SRC_TURB_KMAX + 1;
    int    nmodes = 0;
-   double *kmodes = new double [Nmax];
-   for (int i = 0; i < Nmax; i++)
-      kmodes[i] = 2*M_PI/BOX_SIZE * (i - (Nmax - 1)/2.0);
 
    for (int k = 0; k < Nmax; k++) {
    for (int j = 0; j < Nmax; j++) {
    for (int i = 0; i < Nmax; i++) {
+      double kx = 2*M_PI/amr->BoxSize[0] * (i - (Nmax - 1)/2.0);
+      double ky = 2*M_PI/amr->BoxSize[1] * (j - (Nmax - 1)/2.0);
+      double kz = 2*M_PI/amr->BoxSize[2] * (k - (Nmax - 1)/2.0);
 
-      double kmag = sqrt( SQR(kmodes[i]) + SQR(kmodes[j]) + SQR(kmodes[k]) );
+      double kmag = sqrt( SQR(kx) + SQR(ky) + SQR(kz) );
       if ( kmag >= kmin && kmag <= kmax ) nmodes++;
 
    }}}
@@ -98,7 +98,11 @@ void Turb_Init_Modes()
    for (int i = 0; i < Nmax; i++)
    {
       double amp = 0;
-      double kmag = sqrt( SQR(kmodes[i]) + SQR(kmodes[j]) + SQR(kmodes[k]) );
+      double kx  = 2*M_PI/amr->BoxSize[0] * (i - (Nmax - 1)/2.0);
+      double ky  = 2*M_PI/amr->BoxSize[1] * (j - (Nmax - 1)/2.0);
+      double kz  = 2*M_PI/amr->BoxSize[2] * (k - (Nmax - 1)/2.0);
+
+      double kmag = sqrt( SQR(kx) + SQR(ky) + SQR(kz) );
       if ( kmag >= kmin && kmag <= kmax ) {
 //       constant
          if ( SRC_TURB_SPEC_FORM == 0)
@@ -112,16 +116,14 @@ void Turb_Init_Modes()
          else
             Aux_Error( ERROR_INFO, "Unknown TURB_SPEC_FORM = %d!!\n", SRC_TURB_SPEC_FORM );
 
-         Turb->Kmode[0][n] = kmodes[i];
-         Turb->Kmode[1][n] = kmodes[j];
-         Turb->Kmode[2][n] = kmodes[k];
+         Turb->Kmode[0][n] = kx;
+         Turb->Kmode[1][n] = ky;
+         Turb->Kmode[2][n] = kz;
 
          Turb->Amplitude[n] = amp*2*ZetaNorm;
          n++;
       } // if ( kmag >= kmin && kmag <= kmax )
    } // for i, j, k
-
-   delete [] kmodes;
 
 // print turbulence information
    if ( MPI_Rank == 0 )
@@ -303,7 +305,9 @@ void Turb_Init_Field()
 
 // initialize acc table, store values on box corner
    const long NPoint = SRC_TURB_TABLE_SIZE + 1;
-   const double dh   = BOX_SIZE / SRC_TURB_TABLE_SIZE;
+   const double dx   = amr->BoxSize[0] / SRC_TURB_TABLE_SIZE;
+   const double dy   = amr->BoxSize[1] / SRC_TURB_TABLE_SIZE;
+   const double dz   = amr->BoxSize[2] / SRC_TURB_TABLE_SIZE;
 
    for (int d = 0; d < 3; d++)
    {
@@ -317,18 +321,18 @@ void Turb_Init_Field()
    {
       for (int i = 0; i < SRC_TURB_TABLE_SIZE; i++)
       {
-         Turb->Sin[0][ n*NPoint + i ] = sin( Turb->Kmode[0][n]*i*dh );
-         Turb->Cos[0][ n*NPoint + i ] = cos( Turb->Kmode[0][n]*i*dh );
+         Turb->Sin[0][ n*NPoint + i ] = sin( Turb->Kmode[0][n]*i*dx );
+         Turb->Cos[0][ n*NPoint + i ] = cos( Turb->Kmode[0][n]*i*dx );
       }
       for (int j = 0; j < SRC_TURB_TABLE_SIZE; j++)
       {
-         Turb->Sin[1][ n*NPoint + j ] = sin( Turb->Kmode[1][n]*j*dh );
-         Turb->Cos[1][ n*NPoint + j ] = cos( Turb->Kmode[1][n]*j*dh );
+         Turb->Sin[1][ n*NPoint + j ] = sin( Turb->Kmode[1][n]*j*dy );
+         Turb->Cos[1][ n*NPoint + j ] = cos( Turb->Kmode[1][n]*j*dy );
       }
       for (int k = 0; k < SRC_TURB_TABLE_SIZE; k++)
       {
-         Turb->Sin[2][ n*NPoint + k ] = sin( Turb->Kmode[2][n]*k*dh );
-         Turb->Cos[2][ n*NPoint + k ] = cos( Turb->Kmode[2][n]*k*dh );
+         Turb->Sin[2][ n*NPoint + k ] = sin( Turb->Kmode[2][n]*k*dz );
+         Turb->Cos[2][ n*NPoint + k ] = cos( Turb->Kmode[2][n]*k*dz );
       }
 //    apply periodicity
       for (int d = 0; d < 3; d++)

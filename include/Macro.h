@@ -960,7 +960,7 @@
 #  define SRC_NAUX_EC            0
 #endif
 #ifdef TURBULENCE
-#  define SRC_NAUX_TURB          4     // SrcTerms.Turb_AuxArray_Flt/Int[]
+#  define SRC_NAUX_TURB          5     // SrcTerms.Turb_AuxArray_Flt/Int[]
 #  define SRC_TURB_MAX_NMODE     100000
 #else
 #  define SRC_NAUX_TURB          0

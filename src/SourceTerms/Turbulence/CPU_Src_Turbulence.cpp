@@ -66,7 +66,10 @@ void Src_PassData2GPU_Turbulence( int IdxTable );
 //
 //                   AuxArray_Flt[0] = Turb->TimeLast
 //                   AuxArray_Flt[1] = Turb->dt
-//                   AuxArray_Flt[2] = 1/table_dh
+//                   AuxArray_Flt[2] = 1/table_dx
+//                   AuxArray_Flt[3] = 1/table_dy
+//                   AuxArray_Flt[4] = 1/table_dz
+//
 //                   AuxArray_Int[0] = TableSize + 1 (NPoints)
 //                   AuxArray_Int[1] = TableSize - 1
 //                   AuxArray_Int[2] = IdxLast
@@ -85,7 +88,9 @@ void Src_SetAuxArray_Turbulence( double AuxArray_Flt[], int AuxArray_Int[] )
 {
    AuxArray_Flt[0] = Turb->TimeLast;
    AuxArray_Flt[1] = Turb->dt;
-   AuxArray_Flt[2] = double(SRC_TURB_TABLE_SIZE)/BOX_SIZE;
+   AuxArray_Flt[2] = double(SRC_TURB_TABLE_SIZE)/amr->BoxSize[0];
+   AuxArray_Flt[3] = double(SRC_TURB_TABLE_SIZE)/amr->BoxSize[1];
+   AuxArray_Flt[4] = double(SRC_TURB_TABLE_SIZE)/amr->BoxSize[2];
 
    AuxArray_Int[0] = SRC_TURB_TABLE_SIZE + 1;
    AuxArray_Int[1] = SRC_TURB_TABLE_SIZE - 1;
@@ -152,14 +157,16 @@ static void Src_Turbulence( real fluid[], const real B[],
    const long   didx_z       = SQR( NPoint );
    const double TimeLast     = AuxArray_Flt[0];
    const double Turb_dt      = AuxArray_Flt[1];
-   const double _dh_table    = AuxArray_Flt[2];
+   const double _dx_table    = AuxArray_Flt[2];
+   const double _dy_table    = AuxArray_Flt[3];
+   const double _dz_table    = AuxArray_Flt[4];
    const real   ONE          = (real)1.0;
    const real   tfrac        = (real)( ( TimeNew - TimeLast )/Turb_dt );
    const real   tfrac0       = ONE - tfrac;
 
-   real dx    = (real)(x * _dh_table);
-   real dy    = (real)(y * _dh_table);
-   real dz    = (real)(z * _dh_table);
+   real dx    = (real)(x * _dx_table);
+   real dy    = (real)(y * _dy_table);
+   real dz    = (real)(z * _dz_table);
 
 // use FLOOR if dx is somehow negative (e.g. ghost zones)
    int  idx_x = (int)FLOOR( dx );
