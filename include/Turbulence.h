@@ -75,14 +75,14 @@ struct Turbulence_t
 
       Amplitude  = NULL;
 
-      for (int i = 0; i < 3; i ++)
+      for (int i=0; i<3; i++)
       {
          Kmode[i] = NULL;
          Sin  [i] = NULL;
          Cos  [i] = NULL;
       }
 
-      for (int i = 0; i < 2; i ++)
+      for (int i=0; i<2; i++)
          OUphase[i] = NULL;
 
    } // METHOD : Turbulence_t
@@ -99,14 +99,14 @@ struct Turbulence_t
    {
       if ( Amplitude != NULL ) delete [] Amplitude;
 
-      for (int i = 0; i < 3; i ++)
+      for (int i=0; i<3; i++)
       {
          if ( Kmode[i] != NULL ) delete [] Kmode[i];
          if ( Sin  [i] != NULL ) delete [] Sin  [i];
          if ( Cos  [i] != NULL ) delete [] Cos  [i];
       }
 
-      for (int i = 0; i < 2; i ++)
+      for (int i=0; i<2; i++)
          if ( OUphase[i] != NULL ) delete [] OUphase[i];
 
    } // METHOD : ~Turbulence_t

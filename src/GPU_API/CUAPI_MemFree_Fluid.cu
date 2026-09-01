@@ -104,9 +104,11 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
    if ( d_EC_Ele              != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_EC_Ele              )  );  d_EC_Ele              = NULL; }
 #  endif
 #  endif // FLU_SCHEME
+
 #  ifdef TURBULENCE
-   if ( d_SrcTurb_AccTable[0] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[0] )  );  d_SrcTurb_AccTable[0] = NULL; }
-   if ( d_SrcTurb_AccTable[1] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[1] )  );  d_SrcTurb_AccTable[1] = NULL; }
+   for (int t=0; t<2; t++) {
+   if ( d_SrcTurb_AccTable[t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFree( d_SrcTurb_AccTable[t] )  );  d_SrcTurb_AccTable[t] = NULL; }
+   }
 #  endif
 
 #  if ( MODEL == ELBDM )
@@ -151,9 +153,6 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       if ( h_Flu_Array_S_In     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_In     [t] )  );  h_Flu_Array_S_In     [t] = NULL; }
       if ( h_Flu_Array_S_Out    [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Flu_Array_S_Out    [t] )  );  h_Flu_Array_S_Out    [t] = NULL; }
       if ( h_Corner_Array_S     [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_Corner_Array_S     [t] )  );  h_Corner_Array_S     [t] = NULL; }
-#     ifdef TURBULENCE
-      if ( h_SrcTurb_AccTable   [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_SrcTurb_AccTable   [t] )  );  h_SrcTurb_AccTable   [t] = NULL; }
-#     endif
 
 #     if ( MODEL == ELBDM )
       if ( h_IsCompletelyRefined[t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_IsCompletelyRefined[t] )  );  h_IsCompletelyRefined[t] = NULL; }
@@ -163,6 +162,12 @@ void CUAPI_MemFree_Fluid( const int GPU_NStream )
       if ( h_HasWaveCounterpart [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_HasWaveCounterpart [t] )  ); h_HasWaveCounterpart  [t] = NULL; }
 #     endif
    } // for (int t=0; t<2; t++)
+
+#  ifdef TURBULENCE
+   for (int t=0; t<2; t++) {
+      if ( h_SrcTurb_AccTable   [t] != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost( h_SrcTurb_AccTable   [t] )  );  h_SrcTurb_AccTable   [t] = NULL; }
+   }
+#  endif
 
 #  if ( GRAMFE_SCHEME == GRAMFE_MATMUL )
    if ( h_GramFE_TimeEvo != NULL ) {  CUDA_CHECK_ERROR(  cudaFreeHost ( h_GramFE_TimeEvo )  );  h_GramFE_TimeEvo = NULL; }

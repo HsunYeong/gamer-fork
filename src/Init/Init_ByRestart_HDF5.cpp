@@ -2300,9 +2300,9 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "Src_Turb_Kdriv",          &RS.Src_Turb_Kdriv,          SID, TID, TurbFatal, &RT.Src_Turb_Kdriv,          1, TurbFatal );
    LoadField( "Src_Turb_Kmin",           &RS.Src_Turb_Kmin,           SID, TID, TurbFatal, &RT.Src_Turb_Kmin,           1, TurbFatal );
    LoadField( "Src_Turb_Kmax",           &RS.Src_Turb_Kmax,           SID, TID, TurbFatal, &RT.Src_Turb_Kmax,           1, TurbFatal );
-   LoadField( "Src_Turb_Zeta",           &RS.Src_Turb_Zeta,           SID, TID,  NonFatal, &RT.Src_Turb_Zeta,           1,  NonFatal );
-   LoadField( "Src_Turb_SpecForm",       &RS.Src_Turb_SpecForm,       SID, TID,  NonFatal, &RT.Src_Turb_SpecForm,       1,  NonFatal );
-   LoadField( "Src_Turb_Pow",            &RS.Src_Turb_Pow,            SID, TID,  NonFatal, &RT.Src_Turb_Pow,            1,  NonFatal );
+   LoadField( "Src_Turb_Zeta",           &RS.Src_Turb_Zeta,           SID, TID, TurbFatal, &RT.Src_Turb_Zeta,           1, TurbFatal );
+   LoadField( "Src_Turb_SpecForm",       &RS.Src_Turb_SpecForm,       SID, TID, TurbFatal, &RT.Src_Turb_SpecForm,       1, TurbFatal );
+   LoadField( "Src_Turb_Pow",            &RS.Src_Turb_Pow,            SID, TID, TurbFatal, &RT.Src_Turb_Pow,            1, TurbFatal );
    LoadField( "Src_Turb_RSeedInit",      &RS.Src_Turb_RSeedInit,      SID, TID,  NonFatal, &RT.Src_Turb_RSeedInit,      1,  NonFatal );
    LoadField( "Src_Turb_UpdateStep",     &RS.Src_Turb_UpdateStep,     SID, TID, TurbFatal, &RT.Src_Turb_UpdateStep,     1, TurbFatal );
    LoadField( "Src_Turb_TableSize",      &RS.Src_Turb_TableSize,      SID, TID,  NonFatal, &RT.Src_Turb_TableSize,      1,  NonFatal );

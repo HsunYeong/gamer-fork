@@ -44,9 +44,6 @@ void End_MemFree_Fluid()
       delete [] h_Flu_Array_S_In     [t];  h_Flu_Array_S_In     [t] = NULL;
       delete [] h_Flu_Array_S_Out    [t];  h_Flu_Array_S_Out    [t] = NULL;
       delete [] h_Corner_Array_S     [t];  h_Corner_Array_S     [t] = NULL;
-#     ifdef TURBULENCE
-      delete [] h_SrcTurb_AccTable   [t];  h_SrcTurb_AccTable   [t] = NULL;
-#     endif
 #     ifdef MHD
       delete [] h_Mag_Array_F_In     [t];  h_Mag_Array_F_In     [t] = NULL;
       delete [] h_Mag_Array_F_Out    [t];  h_Mag_Array_F_Out    [t] = NULL;
@@ -61,6 +58,12 @@ void End_MemFree_Fluid()
       delete [] h_HasWaveCounterpart [t];  h_HasWaveCounterpart [t] = NULL;
 #     endif
    } // for (int t=0; t<2; t++)
+
+#  ifdef TURBULENCE
+   for (int t=0; t<2; t++) {
+      delete [] h_SrcTurb_AccTable[t];  h_SrcTurb_AccTable[t] = NULL;
+   }
+#  endif
 
 #  if ( FLU_SCHEME == MHM  ||  FLU_SCHEME == MHM_RP  ||  FLU_SCHEME == CTU )
    delete [] h_FC_Var;          h_FC_Var         = NULL;
