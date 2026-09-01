@@ -242,7 +242,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
 
 //    3.1 energy feedback
       real SNII_DepositedEnergy     = FB_RESOLVED_SNEII_EJECT_ENGY;
-#     ifdef COSMIC_RAY
+#     if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
       real SNII_DepositedCREnergy   = FB_RESOLVED_SNEII_EJECT_ENGY*FB_RESOLVED_SNEII_CRAY_RATIO;
 #     ifdef DUAL_ENERGY
       real SNII_DepositedIntEnergy  = FB_RESOLVED_SNEII_EJECT_ENGY*( 1.0 - FB_RESOLVED_SNEII_CRAY_RATIO );
@@ -348,7 +348,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = TimeNew;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_SNIITime;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedEnergy;
-#        ifdef COSMIC_RAY
+#        if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedCREnergy;
 #        endif
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedMass;
@@ -418,6 +418,9 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          Fluid_Out[Idx_Metal][k][j][i] += SNII_DepositedMetal                   * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        ifdef COSMIC_RAY
          Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+#        endif
+#        ifdef CR_STREAMING
+         Fluid_Out[CR_E     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        endif
 
 #        ifdef DUAL_ENERGY

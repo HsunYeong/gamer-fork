@@ -13,9 +13,9 @@
 //               2. The rotation is defined by two angles: theta (B to z-axis) and phi (Bxy to x-axis)
 //
 // Parameter   : sint : sin(theta) = |Bxy|/|B|
-//               cost : cos(theta) = Bz/|B|
-//               sinp : sin(phi) = By/|Bxy|
-//               cosp : cos(phi) = Bx/|Bxy|
+//               cost : cos(theta) =    Bz/|B|
+//               sinp : sin(phi  ) =    By/|Bxy|
+//               cosp : cos(phi  ) =    Bx/|Bxy|
 //               v1, v2, v3 : input/output vector components
 //
 // Reference   : Athena++ src/utils/rotate_vectors.cpp
@@ -33,7 +33,7 @@ static void RotateVec( const real sint, const real cost,
 //
 // R_2 (around y by theta):
 // [sin_t  0 cos_t]
-// [0      1    0]
+// [0      1     0]
 // [-cos_t 0 sin_t]
 
 // First apply R1, then apply R2
@@ -73,7 +73,7 @@ static void InvRotateVec( const real sint, const real cost,
 // R_2^-1 (around y by -theta):
 // [sin_t  0 -cos_t]
 // [0      1    0  ]
-// [cos_t  0 sin_t ]
+// [cos_t  0  sin_t]
 
 // First apply R2^-1, then apply R1^-1
    real newv1 = sint * v1 - cost * v3;
@@ -472,7 +472,7 @@ void CR_UpdateOpacity( real *g_Output,
 // Reference   : Athena++ src/cr/integrators/cr_transport.cpp lines 77-170
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
-static real CR_ComputeVdiff( const real sigma_adv, 
+static real CR_ComputeVdiff( const real sigma_adv,
                              const real Bx, const real By, const real Bz,
                              const real Ec, const real rho,
                              const real vmax, const real dh, const int fdir,
@@ -757,7 +757,7 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
          const real Bx_L = g_CC_B[0][idx_L];
          const real By_L = g_CC_B[1][idx_L];
          const real Bz_L = g_CC_B[2][idx_L];
-         
+
          const real Bx_R = g_CC_B[0][idx_R];
          const real By_R = g_CC_B[1][idx_R];
          const real Bz_R = g_CC_B[2][idx_R];
@@ -928,7 +928,7 @@ void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUB
          const real Bx_L = g_PriVar_Half[MAG_OFFSET+0][idx_pvar_L];
          const real By_L = g_PriVar_Half[MAG_OFFSET+1][idx_pvar_L];
          const real Bz_L = g_PriVar_Half[MAG_OFFSET+2][idx_pvar_L];
-         
+
          const real Bx_R = g_PriVar_Half[MAG_OFFSET+0][idx_pvar_R];
          const real By_R = g_PriVar_Half[MAG_OFFSET+1][idx_pvar_R];
          const real Bz_R = g_PriVar_Half[MAG_OFFSET+2][idx_pvar_R];
