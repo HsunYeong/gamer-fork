@@ -43,7 +43,6 @@ plt.rcParams['mathtext.rm']       = 'STIXGeneral:regular'
 plt.rcParams['mathtext.it']       = 'STIXGeneral:italic'
 plt.rcParams['mathtext.bf']       = 'STIXGeneral:italic:bold'
 dpi         = 150
-hasDust     = True
 
 idx_min     = 30 if code == 'GAMER' else 150
 idx_sta     = max( idx_start, idx_min ) if idx_end > idx_min else idx_start
@@ -72,7 +71,7 @@ TICK_SIZE=20
 for idx in range(idx_sta, idx_end+1, didx_avg):
    ds = yt.load( '../Data_%06d'%idx )
 
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
    center = ds.domain_center
 

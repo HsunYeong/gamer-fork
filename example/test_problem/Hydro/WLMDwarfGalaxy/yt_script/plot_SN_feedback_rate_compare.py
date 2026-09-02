@@ -113,7 +113,7 @@ for flu in [title1, title2]:
       #plt.plot( time,               SNr*StarsPerSN, '--', label=r'SNe, $\times$ %.2f'%(StarsPerSN) )
       #plt.plot( time.d-SNDelayTime, SNr*StarsPerSN, '--', label=r'SNe, $\times$ %.2f, shifted %.1f Myr'%(StarsPerSN, SNDelayTime) )
    plt.yscale('log')
-   plt.xlim( 0.0, 800 )
+   plt.xlim( 0.0, 1000 )
    if SFR:
       plt.ylim( 1.0e-4, 2.0e-2 )
       plt.ylabel( '$\mathrm{SFR\ [M_\odot yr^{-1}]}$', fontsize='large' )

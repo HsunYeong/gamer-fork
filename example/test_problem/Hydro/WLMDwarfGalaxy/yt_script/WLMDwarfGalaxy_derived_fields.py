@@ -60,7 +60,7 @@ def set_particle_types(code):
       yt.add_particle_filter( 'young_star', function=young_star, filtered_type='new_star', requires=['StellarFormationTime'] )
 
 
-def set_derived_fields(ds, hasDust = False):
+def set_derived_fields(ds):
 
    sampling_type = 'cell' if ds.dataset_type == 'gamer' else 'particle'
    gamma = 5.0/3.0
@@ -92,7 +92,7 @@ def set_derived_fields(ds, hasDust = False):
       return data[('gas', 'mass')] * data[('gas', 'specific_total_energy')]
    ds.add_field( ('gas', 'energy'), function=_energy, sampling_type=sampling_type, units='Msun*km**2/s**2' )
 
-   if hasDust:
+   if ('gamer', 'Dust') in ds.derived_field_list:
       def _dust( field, data ):
          return data[('gamer', 'Dust')] * data.ds.quan(1, 'code_density')
       ds.add_field( ('gas', 'dust'), function=_dust, sampling_type=sampling_type, units='g/cm**3' )
@@ -186,9 +186,7 @@ def set_derived_fields(ds, hasDust = False):
          return data[('gas', 'dual_internal_energy_density')] / data[('gas', 'magnetic_energy_density')]
       ds.add_field( ('gas', 'plasma_beta_dual'), function=_plasma_beta_dual, sampling_type=sampling_type, units='dimensionless' )
 
-
-
-   if hasDust:
+   if ('gamer', 'Dust') in ds.derived_field_list:
       def _cell_dust_mass_radial_outflow_flux( field, data ):
          return data[('gas', 'mass')] * data[('gas', 'outflow_radial_velocity')] * data[('gas', 'dust2gas')]
       ds.add_field( ('gas', 'cell_dust_mass_radial_outflow_flux'), function=_cell_dust_mass_radial_outflow_flux, sampling_type=sampling_type, units='Msun*km/s' )
@@ -196,6 +194,11 @@ def set_derived_fields(ds, hasDust = False):
       def _cell_dust_mass_z_outflow_flux( field, data ):
          return data[('gas', 'mass')] * data[('gas', 'outflow_z_velocity')] * data[('gas', 'dust2gas')]
       ds.add_field( ('gas', 'cell_dust_mass_z_outflow_flux'), function=_cell_dust_mass_z_outflow_flux, sampling_type=sampling_type, units='Msun*km/s' )
+
+   if ('gamer', 'GrackleTCool') in ds.derived_field_list
+      def _grackle_Tcool( field, data ):
+         return data[('gamer', 'GrackleTCool')] * data.ds.quan(1, 'code_time')
+      ds.add_field( ('gas', 'Tcool'), function=_grackle_Tcool, sampling_type=sampling_type, units='Myr' )
 
 
    # auxiliary fields
