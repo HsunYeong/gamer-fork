@@ -44,8 +44,6 @@ x_lim_max   = 2.0e-18
 y_lim_min   = 1.0e0
 y_lim_max   = 1.0e12
 
-hasDust = True
-
 yt.enable_parallelism()
 
 ts = WLMDwarfGalaxy_load_datasets.load_WLMDwarfGalaxy_datasets(code, prefix, idx_start, idx_end, didx)
@@ -53,7 +51,7 @@ ts = WLMDwarfGalaxy_load_datasets.load_WLMDwarfGalaxy_datasets(code, prefix, idx
 for ds in ts.piter():
 
    idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
 #  only include the data within a sphere with a radius of width_kpc
    sp = ds.sphere( ds.domain_center, (0.5*width_kpc, 'kpc') )

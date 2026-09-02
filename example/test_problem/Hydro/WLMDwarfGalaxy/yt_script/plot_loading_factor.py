@@ -69,7 +69,7 @@ hasDust = True
 for ds in ts.piter():
 
    idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
    for phase in list_phases:
 

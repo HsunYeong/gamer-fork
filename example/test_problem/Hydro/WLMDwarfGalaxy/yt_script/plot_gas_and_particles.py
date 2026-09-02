@@ -100,7 +100,6 @@ zoomed_width = {
 dpi          = 150
 
 # options
-hasDust   = True
 plotPar   = False
 printGrid = False
 
@@ -114,7 +113,7 @@ WLMDwarfGalaxy_derived_fields.set_particle_types(code)
 # main loop
 for ds in ts.piter():
 
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
 #  decide output fields
    fields_list  = []

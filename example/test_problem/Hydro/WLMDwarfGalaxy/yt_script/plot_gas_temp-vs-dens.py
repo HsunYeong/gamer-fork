@@ -53,7 +53,7 @@ ts = WLMDwarfGalaxy_load_datasets.load_WLMDwarfGalaxy_datasets(code, prefix, idx
 for ds in ts.piter():
 
    idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds, hasDust)
+   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
 #  only include the data within a sphere with a radius of width_kpc
    sp = ds.sphere( ds.domain_center, (0.5*width_kpc, 'kpc') )
