@@ -1122,7 +1122,7 @@ void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
    real sigma_y = sigma_diff_perp;
    real sigma_z = sigma_diff_perp;
    if ( CR_stream ) {
-      sigma_x = (real)1.0 / ( (real)1.0/sigma_diff + (real)1.0/sigma_adv_para );
+      sigma_x = (real)1.0 / ( (real)1.0/sigma_diff      + (real)1.0/sigma_adv_para );
       sigma_y = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
       sigma_z = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
    }
@@ -1158,7 +1158,7 @@ void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
    const real coef_44 = (real)1.0 + dt_source * vmax * sigma_z;
 
 // Solve by substitution (since flux equations are decoupled from each other)
-   const real e_coef = coef_11 - coef_12 * coef_21 / coef_22 
+   const real e_coef = coef_11 - coef_12 * coef_21 / coef_22
                                - coef_13 * coef_31 / coef_33
                                - coef_14 * coef_41 / coef_44;
 
@@ -1280,10 +1280,10 @@ void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
-                                      real g_Output[][ CUBE(PS2) ],
-                                const real g_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_VAR) ],   //unuse
-                                const real dt, const real dh, const EoS_t *EoS, const MicroPhy_t *MicroPhy )   //unuse: EoS
+                                        real g_Output[][ CUBE(PS2) ],
+                                  const real g_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                                  const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_VAR) ],   //unuse
+                                  const real dt, const real dh, const EoS_t *EoS, const MicroPhy_t *MicroPhy )   //unuse: EoS
 {
    const int  didx_flux[3] = { 1, N_FL_FLUX, SQR(N_FL_FLUX) };
 
@@ -1427,13 +1427,13 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
 //    Fr_new = (rhs - coef_*1 * Ec_new) / coef_**
 //    Substitute into Ec equation and solve for Ec_new
 
-      const real e_coef = coef_11 - coef_12 * coef_21 / coef_22 
+      const real e_coef = coef_11 - coef_12 * coef_21 / coef_22
                                   - coef_13 * coef_31 / coef_33
                                   - coef_14 * coef_41 / coef_44;
 
       real new_ec = rhs1 - coef_12 * rhs2 / coef_22
-                        - coef_13 * rhs3 / coef_33
-                        - coef_14 * rhs4 / coef_44;
+                         - coef_13 * rhs3 / coef_33
+                         - coef_14 * rhs4 / coef_44;
       new_ec /= e_coef;
 
 //    CR_Ec_source=0 drops the CR energy source term so that the conservative system
