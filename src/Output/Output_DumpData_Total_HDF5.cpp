@@ -2893,7 +2893,7 @@ void FillIn_InputPara( InputPara_t &InputPara, const int NFieldStored, char Fiel
    InputPara.FB_ResolvedSNeII_EjectMass  = FB_RESOLVED_SNEII_EJECT_MASS;
    InputPara.FB_ResolvedSNeII_EjectMetal = FB_RESOLVED_SNEII_EJECT_METAL;
    InputPara.FB_ResolvedSNeII_MinMGas    = FB_RESOLVED_SNEII_MIN_M_GAS;
-#  ifdef COSMIC_RAY
+#  if ( defined COSMIC_RAY || defined CR_STREAMING )
    InputPara.FB_ResolvedSNeII_CRayRatio  = FB_RESOLVED_SNEII_CRAY_RATIO;
 #  endif
    InputPara.FB_ResolvedSNeII_Record     = FB_RESOLVED_SNEII_RECORD;
@@ -4019,7 +4019,7 @@ void GetCompound_InputPara( hid_t &H5_TypeID, const int NFieldStored )
    H5Tinsert( H5_TypeID, "FB_ResolvedSNeII_EjectMass",  HOFFSET(InputPara_t,FB_ResolvedSNeII_EjectMass  ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "FB_ResolvedSNeII_EjectMetal", HOFFSET(InputPara_t,FB_ResolvedSNeII_EjectMetal ), H5T_NATIVE_DOUBLE  );
    H5Tinsert( H5_TypeID, "FB_ResolvedSNeII_MinMGas",    HOFFSET(InputPara_t,FB_ResolvedSNeII_MinMGas    ), H5T_NATIVE_DOUBLE  );
-#  ifdef COSMIC_RAY
+#  if ( defined COSMIC_RAY || defined CR_STREAMING )
    H5Tinsert( H5_TypeID, "FB_ResolvedSNeII_CRayRatio",  HOFFSET(InputPara_t,FB_ResolvedSNeII_CRayRatio  ), H5T_NATIVE_DOUBLE  );
 #  endif
    H5Tinsert( H5_TypeID, "FB_ResolvedSNeII_Record",     HOFFSET(InputPara_t,FB_ResolvedSNeII_Record     ), H5T_NATIVE_INT     );

@@ -226,8 +226,14 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
             const real *Passive = NULL;
 #           endif
 
+#           if ( defined CR_STREAMING && !defined COSMIC_RAY )
+            Cs2[k][j][i] = EoS_DensPresCR2CSqr_CPUPtr( fluid[DENS][k][j][i], Pres[k][j][i], fluid[CR_E][k][j][i],
+                                                       EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#           else
             Cs2[k][j][i] = EoS_DensPres2CSqr_CPUPtr( fluid[DENS][k][j][i], Pres[k][j][i], Passive,
                                                      EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#           endif
+
          } // k,j,i
       } // if ( NeedCs2 )
 

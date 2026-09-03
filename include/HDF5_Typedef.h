@@ -765,7 +765,7 @@ struct InputPara_t
    double FB_ResolvedSNeII_EjectMass;
    double FB_ResolvedSNeII_EjectMetal;
    double FB_ResolvedSNeII_MinMGas;
-#  ifdef COSMIC_RAY
+#  if ( defined COSMIC_RAY || defined CR_STREAMING )
    double FB_ResolvedSNeII_CRayRatio;
 #  endif
    int    FB_ResolvedSNeII_Record;

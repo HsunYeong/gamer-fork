@@ -2033,10 +2033,6 @@ void Aux_Check_Parameter()
 #     error : ERROR : CR_STREAMING must use EOS_GAMMA (standalone) or EOS_COSMIC_RAY !!
 #  endif
 
-#  ifdef DUAL_ENERGY
-#     error : ERROR : DUAL_ENERGY is not supported for CR_STREAMING !!
-#  endif
-
 // CR_STREAMING widens FLU_GHOST_SIZE by one so that the outermost ADV_* ghost ring
 // (not recomputable by CR_UpdateOpacity()) cannot influence any PS2 output cell
 #  if ( FLU_GHOST_SIZE != 3 + LR_GHOST_SIZE )

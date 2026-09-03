@@ -242,11 +242,11 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
 
 //    3.1 energy feedback
       real SNII_DepositedEnergy     = FB_RESOLVED_SNEII_EJECT_ENGY;
+      real SNII_DepositedIntEnergy  = FB_RESOLVED_SNEII_EJECT_ENGY;
+
 #     if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
       real SNII_DepositedCREnergy   = FB_RESOLVED_SNEII_EJECT_ENGY*FB_RESOLVED_SNEII_CRAY_RATIO;
-#     ifdef DUAL_ENERGY
-      real SNII_DepositedIntEnergy  = FB_RESOLVED_SNEII_EJECT_ENGY*( 1.0 - FB_RESOLVED_SNEII_CRAY_RATIO );
-#     endif
+           SNII_DepositedIntEnergy *= ( 1.0 - FB_RESOLVED_SNEII_CRAY_RATIO );
 #     endif
 
 //    3.2 mass feedback
@@ -413,11 +413,14 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          Fluid_Out[MOMX     ][k][j][i] += SNII_DepositedMass * (real)par_vel[0] * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          Fluid_Out[MOMY     ][k][j][i] += SNII_DepositedMass * (real)par_vel[1] * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          Fluid_Out[MOMZ     ][k][j][i] += SNII_DepositedMass * (real)par_vel[2] * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
-         Fluid_Out[ENGY     ][k][j][i] += SNII_DepositedEnergy                  * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+         Fluid_Out[ENGY     ][k][j][i] += SNII_DepositedIntEnergy               * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+
          if ( UseMetal )
          Fluid_Out[Idx_Metal][k][j][i] += SNII_DepositedMetal                   * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+
 #        ifdef COSMIC_RAY
          Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+         Fluid_Out[ENGY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        endif
 #        ifdef CR_STREAMING
          Fluid_Out[CR_E     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
@@ -425,12 +428,12 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
 
 #        ifdef DUAL_ENERGY
 #        if   ( DUAL_ENERGY == DE_ENPY )
+         const real Eint                = flu_Eint + SNII_DepositedIntEnergy    * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
+
 #        if   ( EOS == EOS_GAMMA )
-         const real Eint                = flu_Eint + SNII_DepositedEnergy       * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          const real Pres                = EoS_DensEint2Pres_CPUPtr( Fluid_Out[DENS][k][j][i], Eint, NULL,
                                                                     EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 #        elif ( EOS == EOS_COSMIC_RAY )
-         const real Eint                = flu_Eint + SNII_DepositedIntEnergy    * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          const real Pres                = EoS_GasEint2GasPres_CPUPtr( Eint, EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 #        endif
 

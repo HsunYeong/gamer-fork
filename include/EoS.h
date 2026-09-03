@@ -49,6 +49,10 @@ struct EoS_t
    EoS_GP2GE_t   GasPres2GasEint_FuncPtr;
    EoS_GE2GP_t   GasEint2GasPres_FuncPtr;
 #  endif
+#  if ( defined CR_STREAMING && !defined COSMIC_RAY )
+   EoS_CRE2CRP_t CREint2CRPres_FuncPtr;
+   EoS_DPC2C_t   DensPresCR2CSqr_FuncPtr;
+#  endif
 
 // table pointers
    real **Table;

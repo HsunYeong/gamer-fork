@@ -650,6 +650,11 @@ typedef real (*EoS_GE2GP_t)    ( const real Eint_Gas,
                                  const double AuxArray_Flt[], const int AuxArray_Int[],
                                  const real *const Table[EOS_NTABLE_MAX] );
 #endif
+#if ( defined CR_STREAMING && !defined COSMIC_RAY )
+typedef real (*EoS_DPC2C_t)    ( const real Dens, const real Pres, const real E_CR,
+                                 const double AuxArray_Flt[], const int AuxArray_Int[],
+                                 const real *const Table[EOS_NTABLE_MAX] );
+#endif
 typedef void (*ExtAcc_t)       ( real Acc[], const double x, const double y, const double z, const double Time,
                                  const double UserArray[] );
 typedef real (*ExtPot_t)       ( const double x, const double y, const double z, const double Time,

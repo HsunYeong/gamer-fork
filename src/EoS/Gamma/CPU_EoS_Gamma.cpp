@@ -61,6 +61,10 @@ void EoS_SetAuxArray_Gamma( double AuxArray_Flt[], int AuxArray_Int[] )
    AuxArray_Flt[4] = ( OPT__UNIT ) ? MOLECULAR_WEIGHT * MU_NORM / Const_kB * (UNIT_E/UNIT_M)
                                    : MOLECULAR_WEIGHT;
    AuxArray_Flt[5] = 1.0 / AuxArray_Flt[4];
+#  ifdef CR_STREAMING
+   AuxArray_Flt[6] = GAMMA_CR;
+   AuxArray_Flt[7] = GAMMA_CR - 1.0;
+#  endif
 
 } // FUNCTION : EoS_SetAuxArray_Gamma
 #endif // #ifndef __CUDACC__
@@ -76,6 +80,8 @@ void EoS_SetAuxArray_Gamma( double AuxArray_Flt[], int AuxArray_Int[] )
 //     (5) EoS_DensTemp2Pres_* [OPTIONAL]
 //     (6) EoS_DensEint2Entr_* [OPTIONAL]
 //     (7) EoS_General_*       [OPTIONAL]
+//     (8) EoS_CREint2CRPres_*
+//     (9) EoS_DensPresCR2CSqr_*
 // =============================================
 
 //-------------------------------------------------------------------------------------------------------
@@ -354,6 +360,100 @@ static void EoS_General_Gamma( const int Mode, real Out[], const real In_Flt[], 
 
 
 
+#ifdef CR_STREAMING
+//-------------------------------------------------------------------------------------------------------
+// Function    :  EoS_CREint2CRPres_Gamma
+// Description :  Convert cosmic-ray energy density to cosmic-ray pressure
+//
+// Note        :  1. Internal energy density here is per unit volume instead of per unit mass
+//                2. See EoS_SetAuxArray_Gamma() for the values stored in AuxArray_Flt/Int[]
+//
+// Parameter   :  E_CR       : Cosmic-ray energy density
+//                AuxArray_* : Auxiliary arrays (see the Note above)
+//
+// Return      :  Cosmic ray pressure
+//-------------------------------------------------------------------------------------------------------
+GPU_DEVICE_NOINLINE
+static real EoS_CREint2CRPres_Gamma( const real E_CR,
+                                     const double AuxArray_Flt[], const int AuxArray_Int[],
+                                     const real *const Table[EOS_NTABLE_MAX] )
+{
+
+// check
+#  ifdef GAMER_DEBUG
+   if ( AuxArray_Flt == NULL )   printf( "ERROR : AuxArray_Flt == NULL in %s !!\n", __FUNCTION__ );
+
+   if ( E_CR < (real)0.0 )
+      printf( "ERROR : invalid input cosmic-ray energy density (%13.7e) in %s() !!\n", E_CR, __FUNCTION__ );
+#  endif // GAMER_DEBUG
+
+
+   const real GammaCR_m1 = (real)AuxArray_Flt[7];
+   real Pres_CR;
+
+   Pres_CR = GammaCR_m1*E_CR;
+
+
+// check
+#  ifdef GAMER_DEBUG
+   if ( Pres_CR < (real)0.0 )
+   {
+      printf( "ERROR : invalid output cosmic-ray pressure (%13.7e) in %s() !!\n", Pres_CR, __FUNCTION__ );
+      printf( "        CR_E=%13.7e\n", E_CR );
+   }
+#  endif // GAMER_DEBUG
+
+
+   return Pres_CR;
+
+} // FUNCTION : EoS_CREint2CRPres_Gamma
+
+
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  EoS_DensPresCR2CSqr_Gamma
+// Description :  Convert gas mass density and total pressure to effective sound speed squared
+//
+// Note        :  1. See EoS_DensEint2Pres_GammaCR()
+//
+// Parameter   :  Dens       : Gas mass density
+//                Pres       : Gas pressure
+//                E_CR       : cosmic-ray energy density
+//                AuxArray_* : Auxiliary arrays (see the Note above)
+//                Table      : EoS tables
+//
+// Return      :  Effective sound speed squared
+//-------------------------------------------------------------------------------------------------------
+GPU_DEVICE_NOINLINE
+static real EoS_DensPresCR2CSqr_Gamma( const real Dens, const real Pres, const real E_CR,
+                                       const double AuxArray_Flt[], const int AuxArray_Int[],
+                                       const real *const Table[EOS_NTABLE_MAX] )
+{
+
+// check
+#  ifdef GAMER_DEBUG
+   if ( Passive      == NULL )   printf( "ERROR : Passive == NULL in %s !!\n", __FUNCTION__ );
+   if ( AuxArray_Flt == NULL )   printf( "ERROR : AuxArray_Flt == NULL in %s !!\n", __FUNCTION__ );
+
+   Hydro_IsUnphysical_Single( Dens, "input density",  TINY_NUMBER, HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
+   Hydro_IsUnphysical_Single( Pres, "input pressure", (real)0.0,   HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
+#  endif // GAMER_DEBUG
+
+
+   const real Gamma     = (real)AuxArray_Flt[0];
+   const real GammaCR   = (real)AuxArray_Flt[6];
+   const real Pres_CR   = EoS_CREint2CRPres_Gamma( E_CR, AuxArray_Flt, AuxArray_Int, Table );
+   real Cs2;
+
+   Cs2 = (  GammaCR*Pres_CR + Gamma*Pres  ) / Dens;
+
+   return Cs2;
+
+} // FUNCTION : EoS_DensPresCR2CSqr_Gamma
+#endif // #ifdef CR_STREAMING
+
+
+
 // =============================================
 // III. Set EoS initialization functions
 // =============================================
@@ -371,6 +471,10 @@ FUNC_SPACE EoS_DE2T_t EoS_DensEint2Temp_Ptr = EoS_DensEint2Temp_Gamma;
 FUNC_SPACE EoS_DT2P_t EoS_DensTemp2Pres_Ptr = EoS_DensTemp2Pres_Gamma;
 FUNC_SPACE EoS_DE2S_t EoS_DensEint2Entr_Ptr = EoS_DensEint2Entr_Gamma;
 FUNC_SPACE EoS_GENE_t EoS_General_Ptr       = EoS_General_Gamma;
+#ifdef CR_STREAMING
+FUNC_SPACE EoS_CRE2CRP_t   EoS_CREint2CRPres_Ptr   = EoS_CREint2CRPres_Gamma;
+FUNC_SPACE EoS_DPC2C_t     EoS_DensPresCR2CSqr_Ptr = EoS_DensPresCR2CSqr_Gamma;
+#endif
 
 //-----------------------------------------------------------------------------------------
 // Function    :  EoS_SetCPU/GPUFunc_Gamma
@@ -392,6 +496,8 @@ FUNC_SPACE EoS_GENE_t EoS_General_Ptr       = EoS_General_Gamma;
 //                EoS_DensTemp2Pres_CPU/GPUPtr : ...
 //                EoS_DensEint2Entr_CPU/GPUPtr : ...
 //                EoS_General_CPU/GPUPtr       : ...
+//                EoS_CREint2CRPres_CPU/GPUPtr : ...
+//                EoS_DensPresCR2CSqr_CPU/GPUPtr : ...
 //
 // Return      :  EoS_DensEint2Pres_CPU/GPUPtr, EoS_DensPres2Eint_CPU/GPUPtr,
 //                EoS_DensPres2CSqr_CPU/GPUPtr, EoS_DensEint2Temp_CPU/GPUPtr,
@@ -406,6 +512,10 @@ void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_GPUPtr,
                            EoS_DE2T_t &EoS_DensEint2Temp_GPUPtr,
                            EoS_DT2P_t &EoS_DensTemp2Pres_GPUPtr,
                            EoS_DE2S_t &EoS_DensEint2Entr_GPUPtr,
+#ifdef CR_STREAMING
+                           EoS_CRE2CRP_t &EoS_CREint2CRPres_GPUPtr,
+                           EoS_DPC2C_t   &EoS_DensPresCR2CSqr_GPUPtr,
+#endif
                            EoS_GENE_t &EoS_General_GPUPtr )
 {
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensEint2Pres_GPUPtr, EoS_DensEint2Pres_Ptr, sizeof(EoS_DE2P_t) )  );
@@ -415,6 +525,11 @@ void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_GPUPtr,
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensTemp2Pres_GPUPtr, EoS_DensTemp2Pres_Ptr, sizeof(EoS_DT2P_t) )  );
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensEint2Entr_GPUPtr, EoS_DensEint2Entr_Ptr, sizeof(EoS_DE2S_t) )  );
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_General_GPUPtr,       EoS_General_Ptr,       sizeof(EoS_GENE_t) )  );
+#  ifdef CR_STREAMING
+   CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_CREint2CRPres_GPUPtr,   EoS_CREint2CRPres_Ptr,   sizeof(EoS_CRE2CRP_t) )  );
+   CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensPresCR2CSqr_GPUPtr, EoS_DensPresCR2CSqr_Ptr, sizeof(EoS_DPC2C_t  ) )  );
+#  endif
+
 }
 
 #else // #ifdef __CUDACC__
@@ -425,6 +540,10 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
                            EoS_DE2T_t &EoS_DensEint2Temp_CPUPtr,
                            EoS_DT2P_t &EoS_DensTemp2Pres_CPUPtr,
                            EoS_DE2S_t &EoS_DensEint2Entr_CPUPtr,
+#ifdef CR_STREAMING
+                           EoS_CRE2CRP_t &EoS_CREint2CRPres_CPUPtr,
+                           EoS_DPC2C_t   &EoS_DensPresCR2CSqr_CPUPtr,
+#endif
                            EoS_GENE_t &EoS_General_CPUPtr )
 {
    EoS_DensEint2Pres_CPUPtr = EoS_DensEint2Pres_Ptr;
@@ -434,6 +553,11 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
    EoS_DensTemp2Pres_CPUPtr = EoS_DensTemp2Pres_Ptr;
    EoS_DensEint2Entr_CPUPtr = EoS_DensEint2Entr_Ptr;
    EoS_General_CPUPtr       = EoS_General_Ptr;
+#  ifdef CR_STREAMING
+   EoS_CREint2CRPres_CPUPtr   = EoS_CREint2CRPres_Ptr;
+   EoS_DensPresCR2CSqr_CPUPtr = EoS_DensPresCR2CSqr_Ptr;
+#  endif
+
 }
 
 #endif // #ifdef __CUDACC__ ... else ...
@@ -444,9 +568,17 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
 
 // local function prototypes
 void EoS_SetAuxArray_Gamma( double [], int [] );
-void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &, EoS_GENE_t & );
+void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &,
+#ifdef CR_STREAMING
+                           EoS_CRE2CRP_t &, EoS_DPC2C_t &,
+#endif
+                           EoS_GENE_t & );
 #ifdef GPU
-void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &, EoS_GENE_t & );
+void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &,
+#ifdef CR_STREAMING
+                           EoS_CRE2CRP_t &, EoS_DPC2C_t &,
+#endif
+                           EoS_GENE_t & );
 #endif
 
 //-----------------------------------------------------------------------------------------
@@ -471,11 +603,17 @@ void EoS_Init_Gamma()
    EoS_SetCPUFunc_Gamma( EoS_DensEint2Pres_CPUPtr, EoS_DensPres2Eint_CPUPtr,
                          EoS_DensPres2CSqr_CPUPtr, EoS_DensEint2Temp_CPUPtr,
                          EoS_DensTemp2Pres_CPUPtr, EoS_DensEint2Entr_CPUPtr,
+#ifdef CR_STREAMING
+                         EoS_CREint2CRPres_CPUPtr, EoS_DensPresCR2CSqr_CPUPtr,
+#endif
                          EoS_General_CPUPtr );
 #  ifdef GPU
    EoS_SetGPUFunc_Gamma( EoS_DensEint2Pres_GPUPtr, EoS_DensPres2Eint_GPUPtr,
                          EoS_DensPres2CSqr_GPUPtr, EoS_DensEint2Temp_GPUPtr,
                          EoS_DensTemp2Pres_GPUPtr, EoS_DensEint2Entr_GPUPtr,
+#ifdef CR_STREAMING
+                         EoS_CREint2CRPres_GPUPtr, EoS_DensPresCR2CSqr_GPUPtr,
+#endif
                          EoS_General_GPUPtr );
 #  endif
 
