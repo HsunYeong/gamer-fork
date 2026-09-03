@@ -195,10 +195,15 @@ def set_derived_fields(ds):
          return data[('gas', 'mass')] * data[('gas', 'outflow_z_velocity')] * data[('gas', 'dust2gas')]
       ds.add_field( ('gas', 'cell_dust_mass_z_outflow_flux'), function=_cell_dust_mass_z_outflow_flux, sampling_type=sampling_type, units='Msun*km/s' )
 
-   if ('gamer', 'GrackleTCool') in ds.derived_field_list
+   if ('gamer', 'GrackleTCool') in ds.derived_field_list:
       def _grackle_Tcool( field, data ):
          return data[('gamer', 'GrackleTCool')] * data.ds.quan(1, 'code_time')
       ds.add_field( ('gas', 'Tcool'), function=_grackle_Tcool, sampling_type=sampling_type, units='Myr' )
+
+   if ('gamer', 'CR_E') in ds.derived_field_list:
+      def _cr_e( field, data ):
+         return data[('gamer', 'CR_E')] * data.ds.quan(1, 'code_density')*data.ds.quan(1, 'code_velocity')**2
+      ds.add_field( ('gas', 'cosmic_ray_energy_density'), function=_cr_e, sampling_type=sampling_type, units='erg/cm**3' )
 
 
    # auxiliary fields
