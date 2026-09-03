@@ -432,11 +432,11 @@ static real EoS_DensPresCR2CSqr_Gamma( const real Dens, const real Pres, const r
 
 // check
 #  ifdef GAMER_DEBUG
-   if ( Passive      == NULL )   printf( "ERROR : Passive == NULL in %s !!\n", __FUNCTION__ );
    if ( AuxArray_Flt == NULL )   printf( "ERROR : AuxArray_Flt == NULL in %s !!\n", __FUNCTION__ );
 
-   Hydro_IsUnphysical_Single( Dens, "input density",  TINY_NUMBER, HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
-   Hydro_IsUnphysical_Single( Pres, "input pressure", (real)0.0,   HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
+   Hydro_IsUnphysical_Single( Dens, "input density",   TINY_NUMBER, HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
+   Hydro_IsUnphysical_Single( Pres, "input pressure",  (real)0.0,   HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
+   Hydro_IsUnphysical_Single( E_CR, "input CR energy", (real)0.0,   HUGE_NUMBER, ERROR_INFO, UNPHY_VERBOSE );
 #  endif // GAMER_DEBUG
 
 

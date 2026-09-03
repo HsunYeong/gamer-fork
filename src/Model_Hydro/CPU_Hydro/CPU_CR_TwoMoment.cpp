@@ -184,7 +184,7 @@ static void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
 // compute streaming opacity (parallel to B)
 // sigma_adv = |B dot grad Pc| / (|B| * v_A * (4/3) * (1/vmax) * Ec)
    if ( va > TINY_NUMBER && Ec > TINY_NUMBER ) {
-      sigma_adv = FABS(b_grad_pc) / ( btot * va * ((real)4.0/(real)3.0) * invlim * Ec );
+      sigma_adv = FABS(b_grad_pc) / FMAX( btot * va * ((real)4.0/(real)3.0) * invlim * Ec, TINY_NUMBER );
    } else {
       sigma_adv = MicroPhy->CR_max_opacity;
    }
@@ -431,7 +431,7 @@ void CR_UpdateOpacity( real *g_Output,
 //    sigma_adv = |B dot grad Pc| / (|B| * v_A * (4/3) * (1/vmax) * Ec)
       real sigma_adv;
       if ( va > TINY_NUMBER && Ec > TINY_NUMBER ) {
-         sigma_adv = FABS(b_grad_pc) / ( btot * va * ((real)4.0/(real)3.0) * invlim * Ec );
+         sigma_adv = FABS(b_grad_pc) / FMAX( btot * va * ((real)4.0/(real)3.0) * invlim * Ec, TINY_NUMBER );
       } else {
          sigma_adv = MicroPhy->CR_max_opacity;
       }

@@ -1396,6 +1396,10 @@ void LoadOnePatch( const hid_t H5_FileID, const int lv, const int GID, const boo
          for (int j=0; j<PS1; j++) {
          for (int i=0; i<PS1; i++) {
             amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i] = (real)0.0;
+#           ifdef CR_STREAMING
+            if ( v == CR_E )
+               amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i] = (real)1.0e-30;
+#           endif
          }}}
       }
       else

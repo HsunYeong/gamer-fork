@@ -6,7 +6,7 @@
 static const int      maxfbDiameter  =   FB_GHOST_SIZE + 1;  // maximum diameter to apply feedback, constraint by ghost zone size
 static       real  ***fbDepositWeighting[FB_GHOST_SIZE + 1]; // array of weighting for each feedback diameter
 
-#ifdef COSMIC_RAY
+#if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
 static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
 #else
 static const int      nVarRecSNeII   = 23;                   // number of variables to be record for each SNII
@@ -589,7 +589,7 @@ void Record_FB_Resolved_SNeII( const int lv )
          {
             fprintf( File, "#%5s%6s%6s%16s%16s",
                      "Rank", "TID", "lv", "TimeOld", "TimeNew" );
-#           ifdef COSMIC_RAY
+#           if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
             fprintf( File, "%16s%16s%16s%16s%16s%16s%16s",
                      "SNII_Time", "SNII_Energy", "SNII_CREnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
 #           else
