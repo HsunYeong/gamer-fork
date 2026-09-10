@@ -46,7 +46,7 @@ field = ('gas', 'vorticity_magnitude')
 for ds in ts.piter():
    slc = yt.SlicePlot( ds, 0, fields = field, center = 'c' )
    slc.set_background_color( field )
-   slc.set_zlim( field, 1.0e+2, 1.0e-1, dynamic_range=None)
+   slc.set_zlim( field, 1.0e-1, 1.0e+2, dynamic_range=None)
    slc.set_cmap( field, colormap )
    slc.set_font( {'size':16} )
    slc.set_axes_unit( 'code_length' )

@@ -77,6 +77,8 @@ void Turb_Init_Modes()
 
    }}}
 
+   if ( nmodes == 0 )  Aux_Error( ERROR_INFO, "number of turbulence modes = 0 !!\n" );
+
    if ( nmodes > SRC_TURB_MAX_NMODE )  Aux_Error( ERROR_INFO, "number of turbulence modes ( %d ) exceeds maximum mode (%d) !!\n"
                                                               "try lowering SRC_TURB_KMAX !!\n" , nmodes, SRC_TURB_MAX_NMODE );
 

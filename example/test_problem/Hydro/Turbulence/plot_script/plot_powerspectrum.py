@@ -37,6 +37,7 @@ for ds in ts.piter():
    time    = ds.parameters["Time"][0]
    BoxSize = ds.parameters["BoxSize"][0]
    dh      = ds.parameters["CellSize"][0]
+   kmax    = ds.parameters["Src_Turb_Kmax"]
    N       = np.int64( ds.parameters["NX0"][0] )
    dd      = ds.covering_grid(level=0, left_edge=[0, 0, 0], dims=ds.domain_dimensions)
    dens    = dd["Dens"].d
@@ -99,7 +100,7 @@ for ds in ts.piter():
    plt.ylabel(r'$E(k)$')
    plt.yscale('log')
    plt.xscale('log')
-   plt.axvline(3*2*np.pi, color = '0.8', ls = '--')
+   plt.axvline(kmax*2*np.pi/BoxSize, color = '0.8', ls = '--')
    plt.legend(loc='upper right')
    plt.savefig('fig_powerspectrum_%06d.png'%idx, dpi = 150, bbox_inches="tight")
    plt.close()

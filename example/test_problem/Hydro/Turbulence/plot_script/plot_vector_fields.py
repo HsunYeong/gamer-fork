@@ -63,7 +63,7 @@ for ds in ts.piter():
       slc[i].set_background_color( fieldname )
       slc[i].set_axes_unit( 'code_length' )
       slc[i].set_unit( fieldname, field_unit[i])
-      slc[i].set_zlim( fieldname, zmax[i], zmin[i] )
+      slc[i].set_zlim( fieldname, zmin[i], zmax[i] )
       slc[i].set_cmap( fieldname, colormap[i] )
       slc[i].set_font( {'size':fontsize} )
       slc[i].annotate_grids( periodic=False )

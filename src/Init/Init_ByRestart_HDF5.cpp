@@ -1689,6 +1689,7 @@ void Check_Makefile( const char *FileName, const int FormatVersion )
    LoadField( "EoS",                    &RS.EoS,                    SID, TID, NonFatal, &RT.EoS,                    1, NonFatal );
    LoadField( "BarotropicEoS",          &RS.BarotropicEoS,          SID, TID, NonFatal, &RT.BarotropicEoS,          1, NonFatal );
    LoadField( "ExactCooling",           &RS.ExactCooling,           SID, TID, NonFatal, &RT.ExactCooling,           1, NonFatal );
+   LoadField( "Turbulence",             &RS.Turbulence,             SID, TID, NonFatal, &RT.Turbulence,             1, NonFatal );
 
 #  elif ( MODEL == ELBDM )
    LoadField( "ELBDMScheme",            &RS.ELBDMScheme,            SID, TID, NonFatal, &RT.ELBDMScheme,            1, NonFatal );

@@ -69,13 +69,15 @@ for ds in ts.piter():
    tau = L / kdri / vel
    var = ( ( ampl*0.15*vel )**3 / L / tau )**0.5
 
-   kmode = 2*np.pi/L * np.arange( -kmax, kmax + 1)
+   kmode1d = 2*np.pi/L * np.arange( -int(kmax), int(kmax) + 1)
 
    kmin *= 2*np.pi/L
    kmax *= 2*np.pi/L
    kmid  = 0.5*(kmin + kmax)
 
-   kx, ky, kz = np.meshgrid(kmode, kmode, kmode, indexing="ij")
+   kx = np.broadcast_to( kmode1d[None, None, :], (len(kmode1d), len(kmode1d), len(kmode1d)) )
+   ky = np.broadcast_to( kmode1d[None, :, None], (len(kmode1d), len(kmode1d), len(kmode1d)) )
+   kz = np.broadcast_to( kmode1d[:, None, None], (len(kmode1d), len(kmode1d), len(kmode1d)) )
 
    kmag = np.sqrt(kx**2 + ky**2 + kz**2)
 
@@ -152,7 +154,7 @@ for ds in ts.piter():
       slc[i] = yt.SlicePlot( ds_acc[i], 0, fields = fieldname, center = 'c')
       slc[i].set_background_color( fieldname )
       slc[i].set_axes_unit( 'code_length' )
-      slc[i].set_zlim( fieldname, 5e-1, 5e-4 )
+      slc[i].set_zlim( fieldname, 5e-4, 5e-1 )
       slc[i].set_cmap( fieldname, 'viridis' )
       slc[i].set_font( {'size':fontsize} )
       slc[i].annotate_timestamp( time_unit='code_time', corner='upper_right', text_args={'color':'k'} )

@@ -45,9 +45,9 @@ for sto, ds in ts.piter(storage=my_storage):
    dens = dd["Dens"].d
 
 #  remove center of mass motion
-   vx = ( dd["MomX"] - np.mean( dd['MomX'] ) ).d/dens
-   vy = ( dd["MomY"] - np.mean( dd['MomY'] ) ).d/dens
-   vz = ( dd["MomZ"] - np.mean( dd['MomZ'] ) ).d/dens
+   vx = dd["MomX"].d / dens - np.mean( dd['MomX'] ).d / np.mean( dens )
+   vy = dd["MomY"].d / dens - np.mean( dd['MomY'] ).d / np.mean( dens )
+   vz = dd["MomZ"].d / dens - np.mean( dd['MomZ'] ).d / np.mean( dens )
 
 #  magnetic field
    Bx = dd['magnetic_field_x'].d
