@@ -434,7 +434,7 @@ bool Unphysical( const real Fluid[], const int CheckMode, const real Emag )
 #  endif
 
 #  ifndef BAROTROPIC_EOS
-   if ( CheckMode == CheckMinEtot  &&  ( Fluid[ENGY] < (real)MIN_EINT || Fluid[ENGY] != Fluid[ENGY] )  )
+   if ( Fluid[ENGY] < (real)MIN_EINT || Fluid[ENGY] != Fluid[ENGY] )
       return true;
 
    if ( CheckMode == CheckMinEint )

@@ -1386,7 +1386,7 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
       real sigma_y = sigma_diff_perp;
       real sigma_z = sigma_diff_perp;
       if ( CR_stream ) {
-         sigma_x = (real)1.0 / ( (real)1.0/sigma_diff + (real)1.0/sigma_adv_para );
+         sigma_x = (real)1.0 / ( (real)1.0/sigma_diff      + (real)1.0/sigma_adv_para );
          sigma_y = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
          sigma_z = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
       }

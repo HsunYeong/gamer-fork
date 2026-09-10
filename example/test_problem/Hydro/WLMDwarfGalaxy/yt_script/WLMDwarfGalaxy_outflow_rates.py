@@ -243,15 +243,11 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
               }
 
    def plot_outflow_rate_phase(ax_or, phase):
+
       filename_outflow_rate_table = './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))
-      if hasDust:
-         DataID, Time_cu, Time_Myr, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, \
-         StarFormationRate, MassLoadingFactor, EnergyLoadingFactor, Dust2GasRatio, DustEnrichFactor \
-         = np.loadtxt( filename_outflow_rate_table, skiprows=1, unpack=True )
-      else:
-         DataID, Time_cu, Time_Myr, MassOutflowRate, EnergyOutflowRate, \
-         StarFormationRate, MassLoadingFactor, EnergyLoadingFactor \
-         = np.loadtxt( filename_outflow_rate_table, skiprows=1, unpack=True )
+      DataID, Time_cu, Time_Myr, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, \
+      StarFormationRate, MassLoadingFactor, EnergyLoadingFactor, Dust2GasRatio, DustEnrichFactor \
+      = np.loadtxt( filename_outflow_rate_table, skiprows=1, unpack=True )
 
       DataID              = np.atleast_1d( DataID              )
       Time_cu             = np.atleast_1d( Time_cu             )
@@ -260,10 +256,9 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       EnergyOutflowRate   = np.atleast_1d( EnergyOutflowRate   )
       MassLoadingFactor   = np.atleast_1d( MassLoadingFactor   )
       EnergyLoadingFactor = np.atleast_1d( EnergyLoadingFactor )
-      if hasDust:
-         DustOutflowRate  = np.atleast_1d( DustOutflowRate    )
-         Dust2GasRatio    = np.atleast_1d( Dust2GasRatio      )
-         DustEnrichFactor = np.atleast_1d( DustEnrichFactor   )
+      DustOutflowRate     = np.atleast_1d( DustOutflowRate     )
+      Dust2GasRatio       = np.atleast_1d( Dust2GasRatio       )
+      DustEnrichFactor    = np.atleast_1d( DustEnrichFactor    )
 
       _, sorted_indices   = np.unique(DataID[::-1], return_index=True)
       DataID              = DataID             [::-1][sorted_indices]
@@ -273,10 +268,9 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       EnergyOutflowRate   = EnergyOutflowRate  [::-1][sorted_indices]
       MassLoadingFactor   = MassLoadingFactor  [::-1][sorted_indices]
       EnergyLoadingFactor = EnergyLoadingFactor[::-1][sorted_indices]
-      if hasDust:
-         DustOutflowRate  = DustOutflowRate   [::-1][sorted_indices]
-         Dust2GasRatio    = Dust2GasRatio     [::-1][sorted_indices]
-         DustEnrichFactor = DustEnrichFactor  [::-1][sorted_indices]
+      DustOutflowRate     = DustOutflowRate    [::-1][sorted_indices]
+      Dust2GasRatio       = Dust2GasRatio      [::-1][sorted_indices]
+      DustEnrichFactor    = DustEnrichFactor   [::-1][sorted_indices]
 
       ax_or[0].plot( Time_Myr, MassOutflowRate, ls_phase[phase], label=phase, lw=1 )
       if hasDust:
@@ -286,7 +280,7 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
          ax_or[1].plot( Time_Myr, EnergyOutflowRate/1e51*yr_in_s, ls_phase[phase], lw=1 )
 
    def plot_outflow_rate():
-      f_or, ax_or = plt.subplots( 2, 1, figsize=(6.4, 7.2) )
+      f_or, ax_or = plt.subplots( 2, 1, figsize=(5.6, 7.2) )
 
       for phase in outflow_phase_list:
          plot_outflow_rate_phase(ax_or, phase)
@@ -295,8 +289,8 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       ax_or[0].set_yscale( 'log', nonpositive='clip' )
       ax_or[0].set_xlim(    0.0, 1000.0 )
       ax_or[0].set_ylim( 1.0e-6, 5.0e-1 )
-      ax_or[0].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-      ax_or[0].set_ylabel( '$\dot{M}_\mathrm{g, %dkpc}\mathrm{\ [M_{\odot}\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
+      ax_or[0].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+      ax_or[0].set_ylabel( r'$\dot{M}_\mathrm{g, %dkpc}\mathrm{\ [M_{\odot}\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
       ax_or[0].legend(loc=2, labelspacing=0.3)
 
       # (2) dust outflow rate
@@ -304,8 +298,8 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
          ax_or[1].set_yscale( 'log', nonpositive='clip' )
          ax_or[1].set_xlim(    0.0, 1000.0 )
          ax_or[1].set_ylim( 1.0e-9, 5.0e-4 )
-         ax_or[1].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-         ax_or[1].set_ylabel( '$\dot{M}_\mathrm{d, %dkpc}\mathrm{\ [M_{\odot}\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
+         ax_or[1].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+         ax_or[1].set_ylabel( r'$\dot{M}_\mathrm{d, %dkpc}\mathrm{\ [M_{\odot}\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
 
       # (3) energy outflow rate
       else:
@@ -313,8 +307,8 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
          ax_or[1].set_xlim(     0.0, 1000.0 )
          ax_or[1].set_ylim( 1.0e-11, 3.0e-4 )
          ax_or[1].yaxis.set_minor_locator( plt.LogLocator(base=10.0, subs=[i for i in range(0, 10, 1)]) )
-         ax_or[1].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-         ax_or[1].set_ylabel( '$\dot{E}_\mathrm{%dkpc}\mathrm{\ [10^{51}erg\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
+         ax_or[1].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+         ax_or[1].set_ylabel( r'$\dot{E}_\mathrm{%dkpc}\mathrm{\ [10^{51}erg\ yr^{-1}]}$'%int(outflow_z_kpc), fontsize='large' )
 
       # save figure
       f_or.savefig( './imgs_o/fig__galactic_outflow_rate_z_%02d_kpc.png'%(int(outflow_z_kpc)), bbox_inches='tight', pad_inches=0.05, dpi=150 )
@@ -356,7 +350,7 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
          ax_olf[1].plot( Time_Myr, EnergyLoadingFactor, ls_phase[phase], lw=1 )
 
    def plot_outflow_loading_factor():
-      f_olf, ax_olf = plt.subplots( 2, 1, figsize=(6.4, 7.2) )
+      f_olf, ax_olf = plt.subplots( 2, 1, figsize=(5.6, 7.2) )
 
       for phase in outflow_phase_list:
          plot_outflow_loading_factor_phase(ax_olf, phase)
@@ -365,16 +359,16 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       ax_olf[0].set_yscale( 'log', nonpositive='clip' )
       ax_olf[0].set_xlim(    0.0, 1000.0 )
       ax_olf[0].set_ylim( 1.0e-4,  5.0e1 )
-      ax_olf[0].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-      ax_olf[0].set_ylabel( '$\eta_\mathrm{m}$',      fontsize='large' )
+      ax_olf[0].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+      ax_olf[0].set_ylabel( r'$\eta_\mathrm{m}$',      fontsize='large' )
       ax_olf[0].legend(loc=2, labelspacing=0.3)
 
       # (2) dust enrichment factor
       if hasDust:
          ax_olf[1].set_xlim(    0.0, 1000.0 )
          ax_olf[1].set_ylim(    0.5,  1.5   )
-         ax_olf[1].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-         ax_olf[1].set_ylabel( '$y_{d}$',                fontsize='large' )
+         ax_olf[1].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+         ax_olf[1].set_ylabel( r'$y_{d}$',                fontsize='large' )
 
       # (2) energy loading factor
       else:
@@ -382,8 +376,8 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
          ax_olf[1].set_xlim(    0.0, 1000.0 )
          ax_olf[1].set_ylim( 1.0e-6,  3.0e1 )
          ax_olf[1].yaxis.set_minor_locator( plt.LogLocator(base=10.0, subs=[i for i in range(0, 10, 1)]) )
-         ax_olf[1].set_xlabel( '$\mathrm{time\ [Myr]}$', fontsize='large' )
-         ax_olf[1].set_ylabel( '$\eta_\mathrm{e}$',      fontsize='large' )
+         ax_olf[1].set_xlabel( r'$\mathrm{time\ [Myr]}$', fontsize='large' )
+         ax_olf[1].set_ylabel( r'$\eta_\mathrm{e}$',      fontsize='large' )
 
       # save figure
       f_olf.savefig( './imgs_o/fig__galactic_outflow_loading_factor_z_%02d_kpc.png'%(int(outflow_z_kpc)), bbox_inches='tight', pad_inches=0.05, dpi=150 )

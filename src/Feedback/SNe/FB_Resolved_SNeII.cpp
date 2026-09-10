@@ -7,9 +7,9 @@ static const int      maxfbDiameter  =   FB_GHOST_SIZE + 1;  // maximum diameter
 static       real  ***fbDepositWeighting[FB_GHOST_SIZE + 1]; // array of weighting for each feedback diameter
 
 #if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
-static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
+static const int      nVarRecSNeII   = 25;                   // number of variables to be record for each SNII
 #else
-static const int      nVarRecSNeII   = 23;                   // number of variables to be record for each SNII
+static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
 #endif
 static const int      maxNumRecSNeII = 100;                  // maximum  number of recorded SNeII in each OpenMP thread
 static       int     *numRecSNeII    = NULL;                 // number of recorded SNeII in each OpenMP thread
@@ -348,6 +348,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = TimeNew;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_SNIITime;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedEnergy;
+         recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedIntEnergy;
 #        if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedCREnergy;
 #        endif
@@ -590,11 +591,11 @@ void Record_FB_Resolved_SNeII( const int lv )
             fprintf( File, "#%5s%6s%6s%16s%16s",
                      "Rank", "TID", "lv", "TimeOld", "TimeNew" );
 #           if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
-            fprintf( File, "%16s%16s%16s%16s%16s%16s%16s",
-                     "SNII_Time", "SNII_Energy", "SNII_CREnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
+            fprintf( File, "%16s%16s%16s%16s%16s%16s%16s%16s",
+                     "SNII_Time", "SNII_Energy", "SNII_IntEnergy", "SNII_CREnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
 #           else
-            fprintf( File, "%16s%16s%16s%16s%16s%16s",
-                     "SNII_Time", "SNII_Energy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
+            fprintf( File, "%16s%16s%16s%16s%16s%16s%16s",
+                     "SNII_Time", "SNII_Energy", "SNII_IntEnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
 #           endif
             fprintf( File, "%16s%16s%16s%16s%16s",
                      "Par_ID", "Par_Mass", "Par_PosX", "Par_PosY", "Par_PosZ" );
