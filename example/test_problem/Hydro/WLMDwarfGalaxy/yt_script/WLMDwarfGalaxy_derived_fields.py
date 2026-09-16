@@ -116,10 +116,8 @@ def set_derived_fields(ds):
 
 
    def _dual_internal_energy_density( field, data ):
-      Enth = data[('gas', 'total_energy_density')] - data[('gas', 'thermal_energy_density')]
-      mask = data[('gas', 'thermal_energy_density')]/Enth > 2.0e-1
       dual_pres = data['Dual']*(data['Dens'].in_units('code_density').d)**(gamma - 1.0)
-      return np.where( mask, data[('gas', 'thermal_energy_density')].in_units('code_pressure').d, dual_pres / (gamma - 1.0) ) * data.ds.quan(1, 'code_pressure')
+      return dual_pres / (gamma - 1.0) * data.ds.quan(1, 'code_pressure')
    ds.add_field( ('gas', 'dual_internal_energy_density'), function=_dual_internal_energy_density, sampling_type=sampling_type, units='erg/cm**3' )
 
    def _dual_specific_thermal_energy( field, data ):
@@ -199,12 +197,28 @@ def set_derived_fields(ds):
       def _grackle_Tcool( field, data ):
          return data[('gamer', 'GrackleTCool')] * data.ds.quan(1, 'code_time')
       ds.add_field( ('gas', 'Tcool'), function=_grackle_Tcool, sampling_type=sampling_type, units='Myr' )
+      def _grackle_TcoolStrength( field, data ):
+         return 1.0 / data[('gas', 'Tcool')]
+      ds.add_field( ('gas', 'TcoolStrength'), function=_grackle_TcoolStrength, sampling_type=sampling_type, units='1/Myr' )
+      def _minus_grackle_Tcool( field, data ):
+         return -1.0*data[('gamer', 'GrackleTCool')] * data.ds.quan(1, 'code_time')
+      ds.add_field( ('gas', 'mTcool'), function=_minus_grackle_Tcool, sampling_type=sampling_type, units='Myr' )
 
    if ('gamer', 'CR_E') in ds.derived_field_list:
       def _cr_e( field, data ):
          return data[('gamer', 'CR_E')] * data.ds.quan(1, 'code_density')*data.ds.quan(1, 'code_velocity')**2
       ds.add_field( ('gas', 'cosmic_ray_energy_density'), function=_cr_e, sampling_type=sampling_type, units='erg/cm**3' )
 
+   if ('gas', 'cosmic_ray_energy_density') in ds.derived_field_list:
+      def _cell_cray_z_outflow_flux( field, data ):
+         return data[('gas', 'cosmic_ray_energy_density')]*data[('gas', 'cell_volume')]*data[('gas', 'outflow_z_velocity')]
+      ds.add_field( ('gas', 'cell_cray_z_outflow_flux'), function=_cell_cray_z_outflow_flux, sampling_type=sampling_type, units='erg*km/s' )
+
+   if ('gas', 'cosmic_ray_pressure') in ds.derived_field_list:
+      def _cray_adv_loss( field, data ):
+         p_div_v = data[('gas', 'cosmic_ray_pressure')]*data[('gas', 'velocity_divergence')]
+         return p_div_v
+      ds.add_field( ('gas', 'cray_adv_loss'), function=_cray_adv_loss, sampling_type=sampling_type, units='erg/s/pc**3' )
 
    # auxiliary fields
    def _Tsqr_over_rho( field, data ):

@@ -112,8 +112,8 @@ for sto, ds in ts.piter(storage=my_storage):
 #  convert mass to surface density in Msun/pc^2
    dr = gas_radius[1] - gas_radius[0] # assuming linear bin
    for b in range( len(gas_radius) ):
-      area         = np.pi*( (gas_radius[b]+0.5*dr)**2 - (gas_radius[b]-0.5*dr)**2 )
-      gas_dens[b] /= area*1.0e6
+      area         = np.pi*( (gas_radius[b]+0.5*dr)**2 - (gas_radius[b]-0.5*dr)**2 )*1.0e6
+      gas_dens[b] /= area
 
 
 #  (2) gas energy
@@ -204,7 +204,7 @@ if yt.is_root():
       for r in results:
          idx  = r["idx"]
          time = r["time"]
-         color = cm.Blues(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues(0.6)
+         color = cm.Blues(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues(0.9)
          plt.plot(r["mean_r"], r["%s"%field], color = color, label ='t=%3d Myr'%(np.round(time)))
          np.save('Data_Disk_%06d_%s'%(idx, title), np.array([r["mean_r"], r["%s"%field]]))
 
@@ -223,7 +223,7 @@ if yt.is_root():
       plt.close()
 
    plot_fig( 'mean_vp',  'rotation_curve',  r"$v_{\rm cir}$ (km/s)",                        0,   80, False )
-   plot_fig( 'surdens',  'surface_density', r"$\Sigma$ (${\rm M}_{\odot}/{\rm kpc}^2$)",  1e2,  1e8, True  )
+   plot_fig( 'surdens',  'surface_density', r"$\Sigma$ (${\rm M}_{\odot}/{\rm pc}^2$)",   1e2,  1e8, True  )
    plot_fig( 'sigma_v',  'sigma_v',         r"$\sigma$ (${\rm km}/{\rm s}$)",               0,   30, False )
    plot_fig( 'beta',     'plasma_beta',     r"$\beta$",                                  None, None, True  )
    plot_fig( 'betak',    'plasma_betak',    r"$\beta_k$",                                None, None, True  )
@@ -242,9 +242,9 @@ if yt.is_root():
       Bp2  = r["mean_Bp2"]
       Bz2  = r["mean_Bz2"]
 
-      color1 = cm.Blues (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues (0.6)
-      color2 = cm.Reds  (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Reds  (0.6)
-      color3 = cm.Greens(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Greens(0.6)
+      color1 = cm.Blues (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Blues (0.9)
+      color2 = cm.Reds  (0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Reds  (0.9)
+      color3 = cm.Greens(0.3+0.6*(idx-idx_start)/(idx_end-idx_start)) if idx_start != idx_end else cm.Greens(0.9)
 
       l1, = axs.plot(r["mean_r"], Br2, color = color1, label =r'$B_r^2$'   )
       l2, = axs.plot(r["mean_r"], Bp2, color = color2, label =r'$B_\phi^2$')

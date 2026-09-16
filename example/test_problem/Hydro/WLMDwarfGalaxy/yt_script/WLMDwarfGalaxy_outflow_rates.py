@@ -152,14 +152,21 @@ def calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, outflow_
    outflow_slab, outflow_slab_p_type = get_inoutflow_slab( ds, outflow_z_kpc, outflow_dz_kpc, outflow_phase )
 
    # initilize dust properties
-   dust_mass_outflow_rate = 0.0
-   dust_to_gas_ratio      = 0.0
-   dust_enrichment_factor = 0.0
+   dust_mass_outflow_rate = ds.quan( 0.0, 'Msun/yr' )
+   dust_to_gas_ratio      = ds.quan( 0.0, 'dimensionless' )
+   dust_enrichment_factor = ds.quan( 0.0, 'dimensionless' )
+   cray_outflow_rate      = ds.quan( 0.0, 'erg/s')
 
    # compute the outflow rate
    if ds.dataset_type == 'gamer':
-      mass_outflow_rate   = ( outflow_slab.quantities.total_quantity( (outflow_slab_p_type,   'cell_mass_z_outflow_flux') ) / ds.quan( outflow_dz_kpc, 'kpc') ).in_units('Msun/yr')
+      mass_total          =   outflow_slab.quantities.total_quantity( (outflow_slab_p_type, 'cell_mass') ).in_units('Msun')
+      mass_outflow_flux   =   outflow_slab.quantities.total_quantity( (outflow_slab_p_type, 'cell_mass_z_outflow_flux') )
+      mass_outflow_vel    =   ds.quan( 0.0, 'km/s') if mass_total.d == 0.0 else ( mass_outflow_flux / mass_total ).in_units('km/s')
+      mass_outflow_rate   = ( mass_outflow_flux / ds.quan( outflow_dz_kpc, 'kpc') ).in_units('Msun/yr')
       energy_outflow_rate = ( outflow_slab.quantities.total_quantity( (outflow_slab_p_type, 'cell_energy_z_outflow_flux') ) / ds.quan( outflow_dz_kpc, 'kpc') ).in_units('erg/s')
+
+      if ('gas', 'cosmic_ray_energy_density') in ds.derived_field_list:
+         cray_outflow_rate   = ( outflow_slab.quantities.total_quantity( (outflow_slab_p_type,   'cell_cray_z_outflow_flux') ) / ds.quan( outflow_dz_kpc, 'kpc') ).in_units('erg/s')
 
       if ('gamer', 'Dust') in ds.derived_field_list:
          dust_mass_outflow_rate = ( outflow_slab.quantities.total_quantity( (outflow_slab_p_type, 'cell_dust_mass_z_outflow_flux') ) / ds.quan( outflow_dz_kpc, 'kpc') ).in_units('Msun/yr')
@@ -202,9 +209,12 @@ def calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, outflow_
       headerstr = '# % 7s'%('DataID') +\
                   '  % 19s'%('Time_cu') +\
                   '  % 19s'%('Time_Myr') +\
+                  '  % 19s'%('Mass') +\
+                  '  % 19s'%('MassOutflowVel') +\
                   '  % 19s'%('MassOutflowRate') +\
                   '  % 19s'%('DustOutflowRate') +\
                   '  % 19s'%('EnergyOutflowRate') +\
+                  '  % 19s'%('CRayOutflowRate') +\
                   '  % 19s'%('StarFormationRate') +\
                   '  % 19s'%('MassLoadingFactor') +\
                   '  % 19s'%('EnergyLoadingFactor') +\
@@ -218,9 +228,12 @@ def calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, outflow_
    printstr = '  % 7d'%(int(str(ds)[5:11])) +\
               '  % 19.8e'%(ds.current_time.in_units('code_time').d) +\
               '  % 19.8e'%(ds.current_time.in_units('Myr').d) +\
+              '  % 19.8e'%(mass_total.in_units('Msun').d) +\
+              '  % 19.8e'%(mass_outflow_vel.in_units('km/s').d) +\
               '  % 19.8e'%(mass_outflow_rate.in_units('Msun/yr').d) +\
               '  % 19.8e'%(dust_mass_outflow_rate.in_units('Msun/yr').d) +\
               '  % 19.8e'%(energy_outflow_rate.in_units('erg/s').d) +\
+              '  % 19.8e'%(cray_outflow_rate.in_units('erg/s').d) +\
               '  % 19.8e'%(star_formation_rate.in_units('Msun/yr').d) +\
               '  % 19.8e'%(mass_loading_factor) +\
               '  % 19.8e'%(energy_loading_factor) +\
@@ -245,18 +258,21 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
    def plot_outflow_rate_phase(ax_or, phase):
 
       filename_outflow_rate_table = './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))
-      DataID, Time_cu, Time_Myr, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, \
+      DataID, Time_cu, Time_Myr, Mass, MassOutflowVel, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, CRayOutflowRate, \
       StarFormationRate, MassLoadingFactor, EnergyLoadingFactor, Dust2GasRatio, DustEnrichFactor \
       = np.loadtxt( filename_outflow_rate_table, skiprows=1, unpack=True )
 
       DataID              = np.atleast_1d( DataID              )
       Time_cu             = np.atleast_1d( Time_cu             )
       Time_Myr            = np.atleast_1d( Time_Myr            )
+      Mass                = np.atleast_1d( Mass                )
+      MassOutflowVel      = np.atleast_1d( MassOutflowVel      )
       MassOutflowRate     = np.atleast_1d( MassOutflowRate     )
+      DustOutflowRate     = np.atleast_1d( DustOutflowRate     )
       EnergyOutflowRate   = np.atleast_1d( EnergyOutflowRate   )
+      CRayOutflowRate     = np.atleast_1d( CRayOutflowRate     )
       MassLoadingFactor   = np.atleast_1d( MassLoadingFactor   )
       EnergyLoadingFactor = np.atleast_1d( EnergyLoadingFactor )
-      DustOutflowRate     = np.atleast_1d( DustOutflowRate     )
       Dust2GasRatio       = np.atleast_1d( Dust2GasRatio       )
       DustEnrichFactor    = np.atleast_1d( DustEnrichFactor    )
 
@@ -264,11 +280,14 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       DataID              = DataID             [::-1][sorted_indices]
       Time_cu             = Time_cu            [::-1][sorted_indices]
       Time_Myr            = Time_Myr           [::-1][sorted_indices]
+      Mass                = Mass               [::-1][sorted_indices]
+      MassOutflowVel      = MassOutflowVel     [::-1][sorted_indices]
       MassOutflowRate     = MassOutflowRate    [::-1][sorted_indices]
+      DustOutflowRate     = DustOutflowRate    [::-1][sorted_indices]
       EnergyOutflowRate   = EnergyOutflowRate  [::-1][sorted_indices]
+      CRayOutflowRate     = CRayOutflowRate    [::-1][sorted_indices]
       MassLoadingFactor   = MassLoadingFactor  [::-1][sorted_indices]
       EnergyLoadingFactor = EnergyLoadingFactor[::-1][sorted_indices]
-      DustOutflowRate     = DustOutflowRate    [::-1][sorted_indices]
       Dust2GasRatio       = Dust2GasRatio      [::-1][sorted_indices]
       DustEnrichFactor    = DustEnrichFactor   [::-1][sorted_indices]
 
@@ -316,18 +335,21 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
    def plot_outflow_loading_factor_phase(ax_olf, phase):
       filename_outflow_rate_table = './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))
 
-      DataID, Time_cu, Time_Myr, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, \
+      DataID, Time_cu, Time_Myr, Mass, MassOutflowVel, MassOutflowRate, DustOutflowRate, EnergyOutflowRate, CRayOutflowRate, \
       StarFormationRate, MassLoadingFactor, EnergyLoadingFactor, Dust2GasRatio, DustEnrichFactor \
       = np.loadtxt( filename_outflow_rate_table, skiprows=1, unpack=True )
 
       DataID              = np.atleast_1d( DataID              )
       Time_cu             = np.atleast_1d( Time_cu             )
       Time_Myr            = np.atleast_1d( Time_Myr            )
+      Mass                = np.atleast_1d( Mass                )
+      MassOutflowVel      = np.atleast_1d( MassOutflowVel      )
       MassOutflowRate     = np.atleast_1d( MassOutflowRate     )
+      DustOutflowRate     = np.atleast_1d( DustOutflowRate     )
       EnergyOutflowRate   = np.atleast_1d( EnergyOutflowRate   )
+      CRayOutflowRate     = np.atleast_1d( CRayOutflowRate     )
       MassLoadingFactor   = np.atleast_1d( MassLoadingFactor   )
       EnergyLoadingFactor = np.atleast_1d( EnergyLoadingFactor )
-      DustOutflowRate     = np.atleast_1d( DustOutflowRate     )
       Dust2GasRatio       = np.atleast_1d( Dust2GasRatio       )
       DustEnrichFactor    = np.atleast_1d( DustEnrichFactor    )
 
@@ -335,11 +357,14 @@ def plot_galactic_outflow_rate_evolution(outflow_z_kpc, outflow_phase_list, hasD
       DataID              = DataID             [::-1][sorted_indices]
       Time_cu             = Time_cu            [::-1][sorted_indices]
       Time_Myr            = Time_Myr           [::-1][sorted_indices]
+      Mass                = Mass               [::-1][sorted_indices]
+      MassOutflowVel      = MassOutflowVel     [::-1][sorted_indices]
       MassOutflowRate     = MassOutflowRate    [::-1][sorted_indices]
+      DustOutflowRate     = DustOutflowRate    [::-1][sorted_indices]
       EnergyOutflowRate   = EnergyOutflowRate  [::-1][sorted_indices]
+      CRayOutflowRate     = CRayOutflowRate    [::-1][sorted_indices]
       MassLoadingFactor   = MassLoadingFactor  [::-1][sorted_indices]
       EnergyLoadingFactor = EnergyLoadingFactor[::-1][sorted_indices]
-      DustOutflowRate     = DustOutflowRate    [::-1][sorted_indices]
       Dust2GasRatio       = Dust2GasRatio      [::-1][sorted_indices]
       DustEnrichFactor    = DustEnrichFactor   [::-1][sorted_indices]
 

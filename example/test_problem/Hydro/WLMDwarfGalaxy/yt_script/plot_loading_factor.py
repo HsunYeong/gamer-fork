@@ -52,9 +52,6 @@ y_lim_max   = 2.0e7
 v_lim_min   = 8.0e-1
 v_lim_max   = 3.0e+3
 
-outflow_z_kpc  =  1.0
-outflow_dz_kpc =  0.1*outflow_z_kpc
-
 list_phases = ["hot", "warm-hot", "warm-cool", "cool", "all"]
 
 yt.enable_parallelism()
@@ -66,37 +63,40 @@ WLMDwarfGalaxy_derived_fields.set_particle_types(code)
 
 hasDust = True
 
-for ds in ts.piter():
+for outflow_z_kpc in [1.0, 2.0, 10.0]:
+   outflow_dz_kpc =  0.1*outflow_z_kpc
 
-   idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
-   WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
+   for ds in ts.piter():
 
-   for phase in list_phases:
+      idx = int(str(ds)[5:11]) if code == 'GAMER' else int(str(ds)[5:11])
+      WLMDwarfGalaxy_derived_fields.set_derived_fields(ds)
 
-      # outflow rates at a speific z
-      WLMDwarfGalaxy_outflow_rates.calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, phase, hasDust )
+      for phase in list_phases:
 
-
-comm = communication_system.communicators[-1]
-comm.barrier()
+         # outflow rates at a speific z
+         WLMDwarfGalaxy_outflow_rates.calculate_galactic_outflow_rate( ds, outflow_z_kpc, outflow_dz_kpc, phase, hasDust )
 
 
-if yt.is_root():
-   idx_min     = 30 if code == 'GAMER' else 150
-   idx_sta     = max( idx_start, idx_min ) if idx_end > idx_min else idx_start
-   didx_avg    = 1 if code == 'GAMER' else 5
-   didx_avg    = max( didx_avg, didx )
-   indices_avg = range(idx_sta, idx_end+1, didx_avg)
+   comm = communication_system.communicators[-1]
+   comm.barrier()
 
-   for phase in list_phases:
 
-      for idx in indices_avg:
-         prefix = 'Data_%06d'%idx if code == 'GAMER' else 'snap_%03d'%idx
-         if idx == idx_start:
-            os.system("head -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
-         os.system("tail -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
+   if yt.is_root():
+      idx_min     = 30 if code == 'GAMER' else 150
+      idx_sta     = max( idx_start, idx_min ) if idx_end > idx_min else idx_start
+      didx_avg    = 1 if code == 'GAMER' else 5
+      didx_avg    = max( didx_avg, didx )
+      indices_avg = range(idx_sta, idx_end+1, didx_avg)
 
-   # outflow rates time-evolution
-   WLMDwarfGalaxy_outflow_rates.plot_galactic_outflow_rate_evolution(outflow_z_kpc, list_phases, hasDust)
+      for phase in list_phases:
+
+         for idx in indices_avg:
+            prefix = 'Data_%06d'%idx if code == 'GAMER' else 'snap_%03d'%idx
+            if idx == idx_start:
+               os.system("head -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
+            os.system("tail -1 %s >> %s"%('./tables/%s_Galactic_Outflow_Rate_%s_z_%02d_kpc'%(prefix, phase, int(outflow_z_kpc)), './tables/Galactic_Outflow_Rate_%s_z_%02d_kpc'%(phase, int(outflow_z_kpc))))
+
+      # outflow rates time-evolution
+      WLMDwarfGalaxy_outflow_rates.plot_galactic_outflow_rate_evolution(outflow_z_kpc, list_phases, hasDust)
 
 
