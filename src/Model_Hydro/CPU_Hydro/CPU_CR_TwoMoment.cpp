@@ -150,9 +150,9 @@ static void CR_ComputeBFieldAngles( const real Bx, const real By, const real Bz,
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 static void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
-                              const real Bx, const real By, const real Bz,
-                              const real grad_pc[3], const real vmax,
-                              real &sigma_adv, real v_adv[3], const MicroPhy_t *MicroPhy )
+                                        const real Bx, const real By, const real Bz,
+                                        const real grad_pc[3], const real vmax,
+                                        real &sigma_adv, real v_adv[3], const MicroPhy_t *MicroPhy )
 {
    const real invlim = (real)1.0 / vmax;
 
@@ -223,12 +223,12 @@ static void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_UpdateStreaming( real g_Output[][ CUBE(FLU_NXT) ],
-                       const real g_CellVar[][ CUBE(FLU_NXT) ],
-                       const real g_CC_B[][ CUBE(FLU_NXT) ],
-                       const real g_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                       const int NFlux, const int NVar_Out, const int NVar_In, const int NVar_B,
-                       const int out_offset, const int in_offset,
-                       const real dh, const MicroPhy_t *MicroPhy )
+                         const real g_CellVar[][ CUBE(FLU_NXT) ],
+                         const real g_CC_B[][ CUBE(FLU_NXT) ],
+                         const real g_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                         const int NFlux, const int NVar_Out, const int NVar_In, const int NVar_B,
+                         const int out_offset, const int in_offset,
+                         const real dh, const MicroPhy_t *MicroPhy )
 {
    const real vmax = MicroPhy->CR_vmax;
    const real _dh  = (real)1.0 / dh;
@@ -680,10 +680,10 @@ static void CR_ComputeHLLEFlux( const real Ec_L, const real Ec_R,
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
-                                  real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                            const real g_FC_B[][ SQR(FLU_NXT)*FLU_NXT_P1 ],   //unuse
-                            const real g_CC_B[][ CUBE(FLU_NXT) ],
-                            const real dh, const MicroPhy_t *MicroPhy )
+                                      real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                                const real g_FC_B[][ SQR(FLU_NXT)*FLU_NXT_P1 ],   //unuse
+                                const real g_CC_B[][ CUBE(FLU_NXT) ],
+                                const real dh, const MicroPhy_t *MicroPhy )
 {
 
 
@@ -835,11 +835,11 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
 //-----------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_VAR) ],
-                                 const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
-                                       real g_FC_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                 const real g_FC_B_Half[][ FLU_NXT_P1*SQR(FLU_NXT) ],   //unuse
-                                 const int NFlux, const int NSkip_N, const int NSkip_T,
-                                 const real dh, const MicroPhy_t *MicroPhy )
+                                const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
+                                      real g_FC_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                                const real g_FC_B_Half[][ FLU_NXT_P1*SQR(FLU_NXT) ],   //unuse
+                                const int NFlux, const int NSkip_N, const int NSkip_T,
+                                const real dh, const MicroPhy_t *MicroPhy )
 {
    const int  didx_fc[3]   = { 1, N_FC_VAR, SQR(N_FC_VAR) };
    const int  didx_pvar[3] = { 1, N_HF_VAR, SQR(N_HF_VAR) };
@@ -1025,12 +1025,12 @@ void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUB
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
-                            const real g_ConVar_In[][ CUBE(FLU_NXT) ],
-                            const real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                            const real B_n[],
-                            const int idx_in, const int didx_in[3],   //unuse: didx_in
-                            const int idx_flux, const int didx_flux[3],
-                            const real dt, const real dh, const EoS_t *EoS , const MicroPhy_t *MicroPhy )   //unuse: EoS
+                                  const real g_ConVar_In[][ CUBE(FLU_NXT) ],
+                                  const real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                                  const real B_n[],
+                                  const int idx_in, const int didx_in[3],   //unuse: didx_in
+                                  const int idx_flux, const int didx_flux[3],
+                                  const real dt, const real dh, const EoS_t *EoS , const MicroPhy_t *MicroPhy )   //unuse: EoS
 {
 // The flux divergence update for CR_E, CR_F1, CR_F2, CR_F3 is already done
 // in the main Hydro_RiemannPredict loop above where out_con is updated.
