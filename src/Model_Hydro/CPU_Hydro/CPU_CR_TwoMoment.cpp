@@ -149,10 +149,10 @@ static void CR_ComputeBFieldAngles( const real Bx, const real By, const real Bz,
 // Reference   : Athena++ src/cr/cr.cpp DefaultStreaming()
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
-static void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
-                                        const real Bx, const real By, const real Bz,
-                                        const real grad_pc[3], const real vmax,
-                                        real &sigma_adv, real v_adv[3], const MicroPhy_t *MicroPhy )
+void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
+                                 const real Bx, const real By, const real Bz,
+                                 const real grad_pc[3], const real vmax,
+                                 real &sigma_adv, real v_adv[3], const MicroPhy_t *MicroPhy )
 {
    const real invlim = (real)1.0 / vmax;
 
@@ -1488,5 +1488,306 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
    } // CGPU_LOOP( idx_out, CUBE(PS2) )
 
 } // FUNCTION : CR_TwoMomentSource_FullStep
+
+#ifndef __CUDACC__
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  CR_UpdateOpacity_OneCell
+// Description :  Compute the ADV_* fields for one cell
+//
+// Note        :  1. Invoked by CorrectUnphysical()
+//                2. This function is CPU only
+//
+// Parameter   :  OneCell   : Single-cell fluid array
+//                FluIn     : input fluid array
+//                idx_in    : current cell idx
+//                didx      : idx increment at each direction
+//                _2dh      : 0.5 / cell_size
+//                invlim    : 1.0 / vmax
+//                MicroPhy  : Microphysics object
+//-------------------------------------------------------------------------------------------------------
+void CR_UpdateOpacity_OneCell( real  OneCell[NCOMP_TOTAL_PLUS_MAG],
+                               const real FluIn[][ CUBE(FLU_NXT) ],
+                               const int idx_in, const int didx[3],
+                               const real _2dh, const real invlim,
+                               const MicroPhy_t *MicroPhy )
+{
+   const real inv_sqrt_rho = (real)1.0 / SQRT( OneCell[DENS] );
+   const real Ec   = OneCell[ CR_E ];
+   const real Bx   = OneCell[ MAG_OFFSET + MAGX ];
+   const real By   = OneCell[ MAG_OFFSET + MAGY ];
+   const real Bz   = OneCell[ MAG_OFFSET + MAGZ ];
+   const real btot = SQRT( SQR(Bx) + SQR(By) + SQR(Bz) );
+   const real va   = btot * inv_sqrt_rho;
+
+   real grad_pc[3];
+   for (int d=0; d<3; d++)
+      grad_pc[d]  = ( FluIn[CR_E][ idx_in + didx[d] ] - FluIn[CR_E][ idx_in - didx[d] ] ) / (real)3.0 * _2dh;
+
+   const real b_grad_pc = Bx*grad_pc[0] + By*grad_pc[1] + Bz*grad_pc[2];
+   const real dpc_sign = ( b_grad_pc > TINY_NUMBER )? (real)1.0 : ( -b_grad_pc > TINY_NUMBER )? (real)-1.0 : 0.0;
+
+   const real sigma_adv = ( va > TINY_NUMBER && Ec > TINY_NUMBER )? FABS(b_grad_pc) / FMAX( btot * va * ((real)4.0/(real)3.0) * invlim * Ec, TINY_NUMBER )
+                                                                  : MicroPhy->CR_max_opacity;
+   OneCell[ADV_SIGMA] = sigma_adv;
+   OneCell[ADV_VX   ] = -Bx * inv_sqrt_rho * dpc_sign;
+   OneCell[ADV_VY   ] = -By * inv_sqrt_rho * dpc_sign;
+   OneCell[ADV_VZ   ] = -Bz * inv_sqrt_rho * dpc_sign;
+
+} // FUNCTION : CR_UpdateOpacity_OneCell
+
+
+//-------------------------------------------------------------------------------------------------------
+// Function    :  CR_TwoMomentFlux_1stCorr
+// Description :  Compute the CR two-moment flux for first-order flux correction
+//
+// Note        :  1. Invoked by CorrectUnphysical()
+//                2. This function is CPU only
+//
+// Parameter   :  d         : flux direction (0=x, 1=y, 2=z)
+//                L/In/R_In : input left/right states
+//                Flux_Out  : output flux array
+//                dh        : cell size
+//                MicroPhy  : Microphysics object
+//-------------------------------------------------------------------------------------------------------
+void CR_TwoMomentFlux_1stCorr( const int d, const real L_In[], const real R_In[], real Flux_Out[],
+                               const real dh, const MicroPhy_t *MicroPhy )
+{
+
+   const real vmax = MicroPhy->CR_vmax;
+
+   const real Ec_L    = L_In[CR_E];
+   const real Ec_R    = R_In[CR_E];
+   const real Fc_L[3] = { L_In[CR_F1], L_In[CR_F2], L_In[CR_F3] };
+   const real Fc_R[3] = { R_In[CR_F1], R_In[CR_F2], R_In[CR_F3] };
+
+   const real rho_L = FMAX( L_In[DENS], TINY_NUMBER );
+   const real rho_R = FMAX( R_In[DENS], TINY_NUMBER );
+   const real v_L   = L_In[MOMX+d] / rho_L;
+   const real v_R   = R_In[MOMX+d] / rho_R;
+
+   const real vdiff_L = CR_ComputeVdiff( L_In[ADV_SIGMA],
+                                         L_In[MAG_OFFSET+MAGX], L_In[MAG_OFFSET+MAGY], L_In[MAG_OFFSET+MAGZ],
+                                         Ec_L, rho_L, vmax, dh, d, MicroPhy );
+   const real vdiff_R = CR_ComputeVdiff( R_In[ADV_SIGMA],
+                                         R_In[MAG_OFFSET+MAGX], R_In[MAG_OFFSET+MAGY], R_In[MAG_OFFSET+MAGZ],
+                                         Ec_R, rho_R, vmax, dh, d, MicroPhy );
+
+   real flux_E, flux_F[3];
+   CR_ComputeHLLEFlux( Ec_L, Ec_R, Fc_L, Fc_R, v_L, v_R, vdiff_L, vdiff_R, vmax, d, flux_E, flux_F );
+
+   Flux_Out[CR_E ] = flux_E;
+   Flux_Out[CR_F1] = flux_F[0];
+   Flux_Out[CR_F2] = flux_F[1];
+   Flux_Out[CR_F3] = flux_F[2];
+
+   Flux_Out[ADV_SIGMA] = (real)0.0;
+   Flux_Out[ADV_VX   ] = (real)0.0;
+   Flux_Out[ADV_VY   ] = (real)0.0;
+   Flux_Out[ADV_VZ   ] = (real)0.0;
+
+} // FUNCTION : TwoMomentFlux_1stCorr
+
+//-------------------------------------------------------------------------------------------------------
+// Function    : CR_TwoMomentSource_1stCorr
+//
+// Description : Apply implicit source term update for CR two-moment equations for first-order flux correction
+//
+// Note        :  1. Invoked by CorrectUnphysical()
+//                2. This function is CPU only
+//                3. Basically the same as CR_TwoMomentSource_HalfStep(), but use full dt to update
+//
+// Parameter   : OneCell  : Single-cell fluid array to be updated
+//               VarC     : Single-cell fluid array storing the input cell-centered conserved variables
+//               grad_pc  : Array storing cr pressure gradient computed from flux divergence
+//               dt       : Full time step
+//               dh       : Cell size
+//               MicroPhy : Microphysics object
+//
+// Return      : OneCell[] (modified CR and gas fields)
+//-------------------------------------------------------------------------------------------------------
+void CR_TwoMomentSource_1stCorr( real OneCell[NCOMP_TOTAL],
+                           const real VarC[NCOMP_TOTAL_PLUS_MAG],
+                           const real grad_pc[3],
+                           const real dt, const real dh, const MicroPhy_t *MicroPhy )
+{
+// CR parameters
+   const real vmax   = MicroPhy->CR_vmax;
+   const real invlim = (real)1.0 / vmax;
+
+// 1. Get current CR state (already has flux divergence applied)
+   real ec  = FMAX( OneCell[CR_E], TINY_NUMBER );
+   real fc1 = OneCell[CR_F1];
+   real fc2 = OneCell[CR_F2];
+   real fc3 = OneCell[CR_F3];
+
+// 2. Get gas density and velocity from the STAGE-UPDATED conserved variables
+   const real rho = FMAX( OneCell[DENS], TINY_NUMBER );
+   real v1 = OneCell[MOMX] / rho;
+   real v2 = OneCell[MOMY] / rho;
+   real v3 = OneCell[MOMZ] / rho;
+
+// 3. Get B field: t^n cell-centered B
+   const real Bx = VarC[MAG_OFFSET+MAGX];
+   const real By = VarC[MAG_OFFSET+MAGY];
+   const real Bz = VarC[MAG_OFFSET+MAGZ];
+
+// 4. Compute B-field angles for rotation
+   real sint, cost, sinp, cosp;
+   CR_ComputeBFieldAngles( Bx, By, Bz, sint, cost, sinp, cosp );
+
+// 5. READ sigma_adv and v_adv from stored fields (updated by flux function)
+//    This follows the Python/Athena++ pattern where add_source() READS sigma_adv/v_adv
+   const real sigma_adv_para = VarC[ADV_SIGMA];
+   const real v_adv_x        = VarC[ADV_VX];
+   const real v_adv_y        = VarC[ADV_VY];
+   const real v_adv_z        = VarC[ADV_VZ];
+   const real sigma_adv_perp = MicroPhy->CR_max_opacity;
+   const bool CR_source      = MicroPhy->CR_source;      // flag to enable back-reaction to gas
+   const bool CR_stream      = MicroPhy->CR_stream;      // flag to enable streaming
+   const bool CR_Ec_source   = MicroPhy->CR_Ec_source;   // flag to include the CR energy source term
+
+// Total velocity = gas velocity + streaming velocity (streaming added only if enabled)
+   real vtot1 = v1;
+   real vtot2 = v2;
+   real vtot3 = v3;
+   if ( CR_stream ) {
+      vtot1 += v_adv_x;
+      vtot2 += v_adv_y;
+      vtot3 += v_adv_z;
+   }
+
+// 6. Save original CR energy and flux for the floor check and gas back-reaction
+   const real ec_old  = ec;
+   const real fc1_old = fc1;
+   const real fc2_old = fc2;
+   const real fc3_old = fc3;
+
+// 7. Rotate all vectors to B-aligned frame
+   real fr1 = fc1, fr2 = fc2, fr3 = fc3;
+
+#  ifdef MHD
+   RotateVec( sint, cost, sinp, cosp, v1, v2, v3 );
+   RotateVec( sint, cost, sinp, cosp, fr1, fr2, fr3 );
+   RotateVec( sint, cost, sinp, cosp, vtot1, vtot2, vtot3 );
+
+// Perpendicular components have no streaming velocity contribution in B-frame
+   vtot2 = (real)0.0;
+   vtot3 = (real)0.0;
+#  endif
+
+// 8. Compute effective sigma: combine sigma_diff with sigma_adv only if streaming is enabled
+   const real sigma_diff      = MicroPhy->CR_sigma;
+   const real sigma_diff_perp = MicroPhy->CR_sigma_perp;
+
+   real sigma_x = sigma_diff;
+   real sigma_y = sigma_diff_perp;
+   real sigma_z = sigma_diff_perp;
+   if ( CR_stream ) {
+      sigma_x = (real)1.0 / ( (real)1.0/sigma_diff      + (real)1.0/sigma_adv_para );
+      sigma_y = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
+      sigma_z = (real)1.0 / ( (real)1.0/sigma_diff_perp + (real)1.0/sigma_adv_perp );
+   }
+
+// 9. Build implicit matrix and solve
+//     Source terms:
+//     dEc/dt = -vtot · sigma · (Fc - v*Ec*(4/3)/vmax)
+//     dFc/dt = -vmax · sigma · (Fc - v*Ec*(4/3)/vmax)
+
+   const real rhs1 = ec;
+   const real rhs2 = fr1;
+   const real rhs3 = fr2;
+   const real rhs4 = fr3;
+
+// Coefficients for Ec equation (row 1)
+   const real coef_11 = (real)1.0 - dt * sigma_x * vtot1 * v1 * invlim * ((real)4.0/(real)3.0)
+                                  - dt * sigma_y * vtot2 * v2 * invlim * ((real)4.0/(real)3.0)
+                                  - dt * sigma_z * vtot3 * v3 * invlim * ((real)4.0/(real)3.0);
+   const real coef_12 = dt * sigma_x * vtot1;
+   const real coef_13 = dt * sigma_y * vtot2;
+   const real coef_14 = dt * sigma_z * vtot3;
+
+// Coefficients for Fr1 equation (row 2)
+   const real coef_21 = -dt * v1 * sigma_x * ((real)4.0/(real)3.0);
+   const real coef_22 = (real)1.0 + dt * vmax * sigma_x;
+
+// Coefficients for Fr2 equation (row 3)
+   const real coef_31 = -dt * v2 * sigma_y * ((real)4.0/(real)3.0);
+   const real coef_33 = (real)1.0 + dt * vmax * sigma_y;
+
+// Coefficients for Fr3 equation (row 4)
+   const real coef_41 = -dt * v3 * sigma_z * ((real)4.0/(real)3.0);
+   const real coef_44 = (real)1.0 + dt * vmax * sigma_z;
+
+// Solve by substitution (since flux equations are decoupled from each other)
+   const real e_coef = coef_11 - coef_12 * coef_21 / coef_22
+                               - coef_13 * coef_31 / coef_33
+                               - coef_14 * coef_41 / coef_44;
+
+   real new_ec = rhs1 - coef_12 * rhs2 / coef_22
+                      - coef_13 * rhs3 / coef_33
+                      - coef_14 * rhs4 / coef_44;
+   new_ec /= e_coef;
+
+// CR_Ec_source=0 drops the CR energy source term so that the conservative system
+// dEc/dt = -div(Fc) (Eq. 19 of Jiang & Oh 2018) is solved; the flux equations keep
+// their full source terms
+   if ( !CR_Ec_source )   new_ec = rhs1;
+
+// Back-substitute to get new flux
+   real newfr1 = ( rhs2 - coef_21 * new_ec ) / coef_22;
+   real newfr2 = ( rhs3 - coef_31 * new_ec ) / coef_33;
+   real newfr3 = ( rhs4 - coef_41 * new_ec ) / coef_44;
+
+// 10. Rotate back to lab frame
+#  ifdef MHD
+   InvRotateVec( sint, cost, sinp, cosp, newfr1, newfr2, newfr3 );
+#  endif
+
+// 11. Compute perpendicular heating term (ec_source)
+#  ifdef MHD
+   real dpcdx_B = grad_pc[0], dpcdy_B = grad_pc[1], dpcdz_B = grad_pc[2];
+   RotateVec( sint, cost, sinp, cosp, dpcdx_B, dpcdy_B, dpcdz_B );
+
+// Perpendicular velocity (in B-frame, gas velocity only)
+   const real rho_n = VarC[DENS];
+   real v1_B = VarC[MOMX] / rho_n;
+   real v2_B = VarC[MOMY] / rho_n;
+   real v3_B = VarC[MOMZ] / rho_n;
+   RotateVec( sint, cost, sinp, cosp, v1_B, v2_B, v3_B );
+
+   const real ec_source = v2_B * dpcdy_B + v3_B * dpcdz_B;
+   if ( CR_Ec_source )   new_ec += dt * ec_source;
+#  endif
+
+// 12. Floor CR energy
+   if ( new_ec < TINY_NUMBER )
+      new_ec = ec_old;
+
+// 13. Apply back-reaction to gas momentum and energy
+   if ( CR_source ) {
+//    momentum change: delta_p = -(new_Fc - old_Fc) / vmax
+      OneCell[MOMX] += -( newfr1 - fc1_old ) * invlim;
+      OneCell[MOMY] += -( newfr2 - fc2_old ) * invlim;
+      OneCell[MOMZ] += -( newfr3 - fc3_old ) * invlim;
+
+//    energy change: delta_E = -(new_Ec - old_Ec)
+//    (CR energy lost goes to gas thermal energy)
+      real new_eg = OneCell[ENGY] - ( new_ec - ec_old );
+      if ( new_eg < (real)0.0 )
+         new_eg = OneCell[ENGY];
+      OneCell[ENGY] = new_eg;
+   }
+
+// 14. Update CR fields
+   OneCell[CR_E ] = new_ec;
+   OneCell[CR_F1] = newfr1;
+   OneCell[CR_F2] = newfr2;
+   OneCell[CR_F3] = newfr3;
+
+} // FUNCTION : CR_TwoMomentSource_1stCorr
+
+
+#endif // #ifndef __CUDACC__
 
 #endif // #ifdef CR_TWOMOMENT

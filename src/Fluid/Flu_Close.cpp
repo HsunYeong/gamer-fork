@@ -54,6 +54,19 @@ extern void Hydro_RiemannSolver_HLLD( const int XYZ, real Flux_Out[], const real
                                       const EoS_DP2C_t EoS_DensPres2CSqr, const double EoS_AuxArray_Flt[],
                                       const int EoS_AuxArray_Int[], const real* const EoS_Table[EOS_NTABLE_MAX] );
 #endif
+#ifdef CR_TWOMOMENT
+extern void CR_TwoMomentSource_1stCorr( real OneCell[NCOMP_TOTAL], const real VarC[NCOMP_TOTAL_PLUS_MAG],
+                                        const real grad_pc[3], const real dt, const real dh, const MicroPhy_t *MicroPhy );
+extern void CR_TwoMomentFlux_1stCorr( const int d, const real L_In[], const real R_In[], real Flux_Out[],
+                                      const real dh, const MicroPhy_t *MicroPhy );
+extern void CR_UpdateOpacity_OneCell( real  OneCell[NCOMP_TOTAL_PLUS_MAG], const real FluIn[][ CUBE(FLU_NXT) ],
+                                      const int idx_in, const int didx[3], const real _2dh, const real invlim,
+                                      const MicroPhy_t *MicroPhy );
+extern void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
+                                        const real Bx, const real By, const real Bz,
+                                        const real grad_pc[3], const real vmax,
+                                        real &sigma_adv, real v_adv[3], const MicroPhy_t *MicroPhy );
+#endif
 #endif // #if ( MODEL == HYDRO )
 
 
@@ -685,6 +698,18 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                CC_Engy = VarC[ENGY];
 #              endif
 
+//             update opacity
+#              ifdef CR_TWOMOMENT
+               const real _2dh = (real)0.5 / dh;
+               const real invlim = MicroPhy.CR_vmax;
+               CR_UpdateOpacity_OneCell( VarC, h_Flu_Array_F_In[TID], idx_in, didx, _2dh, invlim, &MicroPhy );
+               for (int d=0; d<3; d++)
+               {
+                  CR_UpdateOpacity_OneCell( VarL[d], h_Flu_Array_F_In[TID], idx_in - didx[d], didx, _2dh, invlim, &MicroPhy );
+                  CR_UpdateOpacity_OneCell( VarR[d], h_Flu_Array_F_In[TID], idx_in + didx[d], didx, _2dh, invlim, &MicroPhy );
+               }
+#              endif
+
 //             invoke Riemann solver to calculate the fluxes
 //             (note that the recalculated flux does NOT include gravity even for UNSPLIT_GRAVITY --> reduce to 1st-order accuracy)
                for (int d=0; d<3; d++)
@@ -697,6 +722,13 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                   idx_b   = IDX321_B( idx_in_i, idx_in_j, idx_in_k, FLU_NXT, FLU_NXT, d );
                   FC_B[0] = h_Mag_Array_F_In[TID][d][ idx_b           ];
                   FC_B[1] = h_Mag_Array_F_In[TID][d][ idx_b + didx[d] ];
+
+//                back up cell-centered longitudinal B field
+//                two-moment CR flux requires cell-centered B field
+#                 ifdef CR_TWOMOMENT
+                  real BL = VarL[d][ MAG_OFFSET + d ];
+                  real BR = VarR[d][ MAG_OFFSET + d ];
+#                 endif
 #                 endif
 
                   switch ( OPT__1ST_FLUX_CORR_SCHEME )
@@ -722,6 +754,11 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore cell-centered lonitudinal B field
+#                       ifdef CR_TWOMOMENT
+                        VarL[d][ MAG_OFFSET + d ] = BL;
+                        VarR[d][ MAG_OFFSET + d ] = BR;
+#                       endif
 #                       endif
                      break;
 
@@ -763,6 +800,11 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore cell-centered lonitudinal B field
+#                       ifdef CR_TWOMOMENT
+                        VarL[d][ MAG_OFFSET + d ] = BL;
+                        VarR[d][ MAG_OFFSET + d ] = BR;
+#                       endif
 #                       endif
                      break;
 
@@ -788,6 +830,11 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore cell-centered lonitudinal B field
+#                       ifdef CR_TWOMOMENT
+                        VarL[d][ MAG_OFFSET + d ] = BL;
+                        VarR[d][ MAG_OFFSET + d ] = BR;
+#                       endif
 #                       endif
                      break;
 #                    endif
@@ -795,14 +842,49 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                      default:
                      Aux_Error( ERROR_INFO, "unnsupported Riemann solver (%d) !!\n", OPT__1ST_FLUX_CORR_SCHEME );
                   } // switch ( OPT__1ST_FLUX_CORR_SCHEME )
+
+#                 ifdef CR_TWOMOMENT
+//                compute two-moment CR flux
+                  CR_TwoMomentFlux_1stCorr( d, VarL[d], VarC,    FluxL[d], dh, &MicroPhy );
+                  CR_TwoMomentFlux_1stCorr( d, VarC,    VarR[d], FluxR[d], dh, &MicroPhy );
+#                 endif
+
                } // for (int d=0; d<3; d++)
 
 //             recalculate the first-order solution for a full time-step
                for (int d=0; d<3; d++)
                for (int v=0; v<NCOMP_TOTAL; v++)   dF[d][v] = FluxR[d][v] - FluxL[d][v];
 
+#              ifdef CR_TWOMOMENT
+//             compute grad_pc from flux divergence
+               const int  CRF_v[3] = { CR_F1, CR_F2, CR_F3 };
+               real grad_pc[3];
+               for (int n=0; n<3; n++)
+               {
+                  grad_pc[n] = (real)0.0;
+                  for (int d=0; d<3; d++)
+                     grad_pc[n] += dF[d][ CRF_v[n] ];
+                  grad_pc[n] /= ( MicroPhy.CR_vmax * dh );
+               }
+//             update streaming velocity/opacity
+               real sigma_adv_new;
+               real v_adv_new[3];
+               CR_UpdateStreaming_OneCell( VarC[CR_E], VarC[DENS], VarC[MAG_OFFSET+MAGX], VarC[MAG_OFFSET+MAGY], VarC[MAG_OFFSET+MAGZ],
+                                           grad_pc, MicroPhy.CR_vmax, sigma_adv_new, v_adv_new, &MicroPhy );
+               VarC[ADV_SIGMA] = sigma_adv_new;
+               VarC[ADV_VX   ] = v_adv_new[0];
+               VarC[ADV_VY   ] = v_adv_new[1];
+               VarC[ADV_VZ   ] = v_adv_new[2];
+#              endif
+
                for (int v=0; v<NCOMP_TOTAL; v++)
                   Update[v] = h_Flu_Array_F_In[TID][v][idx_in] - dt_dh*( dF[0][v] + dF[1][v] + dF[2][v] );
+
+#              ifdef CR_TWOMOMENT
+//             add two-moment CR source terms
+               CR_TwoMomentSource_1stCorr( Update, VarC, grad_pc, dt, dh, &MicroPhy );
+#              endif
+
 
             } // if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
 
