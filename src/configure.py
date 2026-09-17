@@ -708,7 +708,7 @@ def load_arguments( sys_setting : SystemSetting ):
                          help="Enable cosmic-ray diffusion. Must enable <--mhd> and <--cosmic_ray>.\n"
                        )
 
-    parser.add_argument( "--cr_streaming", type=str2bool, metavar="BOOLEAN", gamer_name="CR_STREAMING",
+    parser.add_argument( "--cr_two_moment", type=str2bool, metavar="BOOLEAN", gamer_name="CR_TWOMOMENT",
                          default=False,
                          constraint={ True:{"mhd":True, "eos":["GAMMA", "COSMIC_RAY"]} },
                          help="Enable cosmic-ray streaming (two-moment method; Jiang & Oh 2018).\n"

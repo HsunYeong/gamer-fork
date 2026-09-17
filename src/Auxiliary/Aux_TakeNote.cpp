@@ -185,11 +185,11 @@ void Aux_TakeNote()
 #     else // #ifdef COSMIC_RAY
       fprintf( Note, "COSMIC_RAY                      OFF\n" );
 #     endif // #ifdef COSMIC_RAY ... else ...
-//    CR_STREAMING is a standalone module and may be enabled without COSMIC_RAY
-#     ifdef CR_STREAMING
-      fprintf( Note, "CR_STREAMING                    ON\n" );
+//    CR_TWOMOMENT is a standalone module and may be enabled without COSMIC_RAY
+#     ifdef CR_TWOMOMENT
+      fprintf( Note, "CR_TWOMOMENT                    ON\n" );
 #     else
-      fprintf( Note, "CR_STREAMING                    OFF\n" );
+      fprintf( Note, "CR_TWOMOMENT                    OFF\n" );
 #     endif
 
 #     if   ( EOS == EOS_GAMMA )
@@ -1261,7 +1261,7 @@ void Aux_TakeNote()
       fprintf( Note, "                              =% 14.7e Msun\n",  FB_RESOLVED_SNEII_EJECT_METAL*UNIT_M/Const_Msun );
       fprintf( Note, "FB_RESOLVED_SNEII_MIN_M_GAS    % 14.7e\n",       FB_RESOLVED_SNEII_MIN_M_GAS                     );
       fprintf( Note, "                              =% 14.7e Msun\n",  FB_RESOLVED_SNEII_MIN_M_GAS*UNIT_M/Const_Msun   );
-#     if ( defined COSMIC_RAY || defined CR_STREAMING )
+#     if ( defined COSMIC_RAY || defined CR_TWOMOMENT )
       fprintf( Note, "FB_RESOLVED_SNEII_CRAY_RATIO   % 14.7e\n",       FB_RESOLVED_SNEII_CRAY_RATIO                    );
 #     endif
       fprintf( Note, "FB_RESOLVED_SNEII_RECORD       % d\n",           FB_RESOLVED_SNEII_RECORD                        );

@@ -542,10 +542,10 @@ void Init_ResetParameter()
 #  if ( MODEL == HYDRO )
    if ( OPT__1ST_FLUX_CORR < 0 )
    {
-#     ifdef CR_STREAMING
+#     ifdef CR_TWOMOMENT
       OPT__1ST_FLUX_CORR = FIRST_FLUX_CORR_NONE;
 
-      PRINT_RESET_PARA( OPT__1ST_FLUX_CORR, FORMAT_INT, "for CR_STREAMING" );
+      PRINT_RESET_PARA( OPT__1ST_FLUX_CORR, FORMAT_INT, "for CR_TWOMOMENT" );
 
 #     elif ( defined SRHD )
       OPT__1ST_FLUX_CORR = FIRST_FLUX_CORR_NONE;
@@ -566,7 +566,7 @@ void Init_ResetParameter()
 #     endif
 
       PRINT_RESET_PARA( OPT__1ST_FLUX_CORR, FORMAT_INT, "for HYDRO" );
-#     endif // #ifdef CR_STREAMING ... elif SRHD ... elif MHD ... else ...
+#     endif // #ifdef CR_TWOMOMENT ... elif SRHD ... elif MHD ... else ...
    }
 
    if      ( OPT__1ST_FLUX_CORR == FIRST_FLUX_CORR_NONE  &&  OPT__1ST_FLUX_CORR_SCHEME != RSOLVER_1ST_NONE )

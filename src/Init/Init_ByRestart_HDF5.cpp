@@ -1396,7 +1396,7 @@ void LoadOnePatch( const hid_t H5_FileID, const int lv, const int GID, const boo
          for (int j=0; j<PS1; j++) {
          for (int i=0; i<PS1; i++) {
             amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i] = (real)0.0;
-#           ifdef CR_STREAMING
+#           ifdef CR_TWOMOMENT
             if ( v == CR_E )
                amr->patch[ amr->FluSg[lv] ][lv][PID]->fluid[v][k][j][i] = (real)1.0e-30;
 #           endif
@@ -2366,7 +2366,7 @@ void Check_InputPara( const char *FileName, const int FormatVersion )
    LoadField( "FB_ResolvedSNeII_EjectMass",  &RS.FB_ResolvedSNeII_EjectMass,  SID, TID, NonFatal, &RT.FB_ResolvedSNeII_EjectMass,  1, NonFatal );
    LoadField( "FB_ResolvedSNeII_EjectMetal", &RS.FB_ResolvedSNeII_EjectMetal, SID, TID, NonFatal, &RT.FB_ResolvedSNeII_EjectMetal, 1, NonFatal );
    LoadField( "FB_ResolvedSNeII_MinMGas",    &RS.FB_ResolvedSNeII_MinMGas,    SID, TID, NonFatal, &RT.FB_ResolvedSNeII_MinMGas,    1, NonFatal );
-#  if ( defined COSMIC_RAY || defined CR_STREAMING )
+#  if ( defined COSMIC_RAY || defined CR_TWOMOMENT )
    LoadField( "FB_ResolvedSNeII_CRayRatio",  &RS.FB_ResolvedSNeII_CRayRatio,  SID, TID, NonFatal, &RT.FB_ResolvedSNeII_CRayRatio,  1, NonFatal );
 #  endif
    LoadField( "FB_ResolvedSNeII_Record",     &RS.FB_ResolvedSNeII_Record,     SID, TID, NonFatal, &RT.FB_ResolvedSNeII_Record,     1, NonFatal );

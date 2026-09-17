@@ -149,7 +149,7 @@ void Init_Field()
    if ( Idx_TCool != TCOOL )    Aux_Error( ERROR_INFO, "inconsistent Idx_TCool (%d != %d) !!\n", Idx_TCool, TCOOL );
 #  endif
 
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    // CR streaming advection fields (sigma_adv and v_adv components)
    // --> FIXUP_FLUX_NO since these are auxiliary fields that don't need flux correction
    Idx_ADV_VZ    = AddField( "ADV_VZ",    FIXUP_FLUX_NO, FIXUP_REST_YES, FLOOR_NO, NORMALIZE_NO, INTERP_FRAC_NO );

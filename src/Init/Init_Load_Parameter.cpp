@@ -312,7 +312,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "FB_RESOLVED_SNEII_EJECT_MASS",  &FB_RESOLVED_SNEII_EJECT_MASS,  0.0,            0.0,           NoMax_double   );
    ReadPara->Add( "FB_RESOLVED_SNEII_EJECT_METAL", &FB_RESOLVED_SNEII_EJECT_METAL, 0.0,            0.0,           NoMax_double   );
    ReadPara->Add( "FB_RESOLVED_SNEII_MIN_M_GAS",   &FB_RESOLVED_SNEII_MIN_M_GAS,   0.0,            0.0,           NoMax_double   );
-#  if ( defined COSMIC_RAY || defined CR_STREAMING )
+#  if ( defined COSMIC_RAY || defined CR_TWOMOMENT )
    ReadPara->Add( "FB_RESOLVED_SNEII_CRAY_RATIO",  &FB_RESOLVED_SNEII_CRAY_RATIO,  0.1,            0.0,           1.0            );
 #  endif
    ReadPara->Add( "FB_RESOLVED_SNEII_RECORD",      &FB_RESOLVED_SNEII_RECORD,      false,          Useless_bool,  Useless_bool   );
@@ -320,8 +320,8 @@ void Init_Load_Parameter()
 
 // cosmic ray
 // --> GAMMA_CR is the CR adiabatic index; needed by both the classic (COSMIC_RAY) module and the
-//     standalone two-moment (CR_STREAMING) module (P_cr = (GAMMA_CR-1)*E_cr)
-#  if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+//     standalone two-moment (CR_TWOMOMENT) module (P_cr = (GAMMA_CR-1)*E_cr)
+#  if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
    ReadPara->Add( "GAMMA_CR",                   &GAMMA_CR,                        4.0/3.0,         1.0,           NoMax_double   );
 #  endif
 
@@ -332,7 +332,7 @@ void Init_Load_Parameter()
    ReadPara->Add( "CR_DIFF_MIN_B",              &CR_DIFF_MIN_B,                   0.0,             NoMin_double,  NoMax_double   );
 #  endif
 
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
    ReadPara->Add( "CR_SOURCE",                  &CR_SOURCE,                       false,           Useless_bool,  Useless_bool   );
    ReadPara->Add( "CR_STREAM",                  &CR_STREAM,                       true,            Useless_bool,  Useless_bool   );
    ReadPara->Add( "CR_EC_SOURCE",               &CR_EC_SOURCE,                    true,            Useless_bool,  Useless_bool   );

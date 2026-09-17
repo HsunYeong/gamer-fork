@@ -33,7 +33,7 @@ void Microphysics_Init()
    MicroPhy.CR_diff_min_b      = CR_DIFF_MIN_B;
 #  endif // #ifdef CR_DIFFUSION
 
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    MicroPhy.CR_source          = CR_SOURCE;
    MicroPhy.CR_stream          = CR_STREAM;
    MicroPhy.CR_Ec_source       = CR_EC_SOURCE;
@@ -51,7 +51,7 @@ void Microphysics_Init()
    MicroPhy.CR_taufact         = CR_TAUFACT;
    MicroPhy.CR_vel_flx_flag    = CR_VEL_FLX_FLAG;
    MicroPhy.CR_cfl             = CR_CFL;
-#  endif // #ifdef CR_STREAMING
+#  endif // #ifdef CR_TWOMOMENT
 
    MicroPhy_Initialized = true;
 

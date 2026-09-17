@@ -267,7 +267,7 @@ double Mis_GetTimeStep( const int lv, const double dTime_SyncFaLv, const double 
 // is folded into CRITERION ONE (see CPU_dtSolver_HydroCFL.cpp); the flat criterion below is redundant
 // with it (always >= it) and is kept only as a fallback because OPT__FREEZE_FLUID resets CRITERION ONE
 // to HUGE_NUMBER, which would otherwise leave CR streaming without any dt limit
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    dTime[NdTime] = dTime_dt * MicroPhy.CR_cfl * amr->dh[lv] / MicroPhy.CR_vmax;
    sprintf( dTime_Name[NdTime++], "%s", "CR_Stream" );
 #  endif

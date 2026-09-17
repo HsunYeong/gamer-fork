@@ -320,7 +320,7 @@ EoS_CRE2CRP_t EoS_CREint2CRPres_CPUPtr   = NULL;   // declare for Hydro_Con2Dual
 EoS_GP2GE_t   EoS_GasPres2GasEint_CPUPtr = NULL;
 EoS_GE2GP_t   EoS_GasEint2GasPres_CPUPtr = NULL;
 #endif
-#if ( defined CR_STREAMING && !defined COSMIC_RAY )
+#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
 EoS_DPC2C_t   EoS_DensPresCR2CSqr_CPUPtr = NULL;
 #endif
 
@@ -340,7 +340,7 @@ EoS_CRE2CRP_t EoS_CREint2CRPres_GPUPtr   = NULL;   // declare for Hydro_Con2Dual
 EoS_GP2GE_t   EoS_GasPres2GasEint_GPUPtr = NULL;
 EoS_GE2GP_t   EoS_GasEint2GasPres_GPUPtr = NULL;
 #endif
-#if ( defined CR_STREAMING && !defined COSMIC_RAY )
+#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
 EoS_DPC2C_t   EoS_DensPresCR2CSqr_GPUPtr = NULL;
 #endif
 #endif
@@ -380,7 +380,7 @@ double FB_RESOLVED_SNEII_EJECT_ENGY;
 double FB_RESOLVED_SNEII_EJECT_MASS;
 double FB_RESOLVED_SNEII_EJECT_METAL;
 double FB_RESOLVED_SNEII_MIN_M_GAS;
-#if ( defined COSMIC_RAY || defined CR_STREAMING )
+#if ( defined COSMIC_RAY || defined CR_TWOMOMENT )
 double FB_RESOLVED_SNEII_CRAY_RATIO;
 #endif
 bool   FB_RESOLVED_SNEII_RECORD;
@@ -398,8 +398,8 @@ InterpolationHandler Int_InterpolationHandler;
 #endif // #ifdef SUPPORT_SPECTRAL_INT
 
 // (2-14) cosmic ray
-// GAMMA_CR (CR adiabatic index) is shared by the classic (COSMIC_RAY) and two-moment (CR_STREAMING) modules
-#if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+// GAMMA_CR (CR adiabatic index) is shared by the classic (COSMIC_RAY) and two-moment (CR_TWOMOMENT) modules
+#if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
 double GAMMA_CR;
 #endif
 #ifdef COSMIC_RAY
@@ -420,7 +420,7 @@ double CR_DIFF_MIN_B;
 #endif
 
 // c. cosmic-ray streaming
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 bool CR_SOURCE;
 bool CR_STREAM;
 bool CR_EC_SOURCE;

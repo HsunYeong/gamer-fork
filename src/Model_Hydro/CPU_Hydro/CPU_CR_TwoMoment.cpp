@@ -1,6 +1,6 @@
 #include "CUFLU.h"
 
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 
 
 
@@ -671,7 +671,6 @@ static void CR_ComputeHLLEFlux( const real Ec_L, const real Ec_R,
 //
 // Parameter   : g_Con_Var   : Array storing the input cell-centered conserved fluid variables
 //               g_Flux_Half : Array with hydrodynamic fluxes for adding the cosmic-ray diffusive fluxes
-//               g_FC_B      : Array storing the input face-centered B field
 //               g_CC_B      : Array storing the input cell-centered B field
 //               dh          : Cell size
 //               MicroPhy    : Microphysics object
@@ -681,7 +680,6 @@ static void CR_ComputeHLLEFlux( const real Ec_L, const real Ec_R,
 GPU_DEVICE
 void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
                                       real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                const real g_FC_B[][ SQR(FLU_NXT)*FLU_NXT_P1 ],   //unuse
                                 const real g_CC_B[][ CUBE(FLU_NXT) ],
                                 const real dh, const MicroPhy_t *MicroPhy )
 {
@@ -689,14 +687,9 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
 
    const int  didx_cvar[3] = { 1, FLU_NXT, SQR(FLU_NXT) };
    const int  flux_offset  = 1;  // skip the additional fluxes along the transverse directions for computing the CT electric field
-   const real _dh          = (real)1.0 / dh;   //unuse
 
    for (int d=0; d<3; d++)
    {
-      const int TDir1 = (d+1)%3;    // transverse direction 1   //unuse
-      const int TDir2 = (d+2)%3;    // transverse direction 2   //unuse
-
-      int sizeB_i, sizeB_j, stride_fc_B;   //unuse (assigned in the switch below but only feed the unused idx_fc_B)
       int size_i, size_j, size_k;
       int i_offset, j_offset, k_offset;
 
@@ -704,17 +697,14 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
       {
          case 0 : size_i   = N_HF_FLUX-1;              size_j   = N_HF_FLUX-2*flux_offset;  size_k      = N_HF_FLUX-2*flux_offset;
                   i_offset = 0;                        j_offset = flux_offset;              k_offset    = flux_offset;
-                  sizeB_i  = FLU_NXT_P1;               sizeB_j  = FLU_NXT;                  stride_fc_B = 1;
                   break;
 
          case 1 : size_i   = N_HF_FLUX-2*flux_offset;  size_j   = N_HF_FLUX-1;              size_k      = N_HF_FLUX-2*flux_offset;
                   i_offset = flux_offset;              j_offset = 0;                        k_offset    = flux_offset;
-                  sizeB_i  = FLU_NXT;                  sizeB_j  = FLU_NXT_P1;               stride_fc_B = FLU_NXT;
                   break;
 
          case 2 : size_i   = N_HF_FLUX-2*flux_offset;  size_j   = N_HF_FLUX-2*flux_offset;  size_k      = N_HF_FLUX-1;
                   i_offset = flux_offset;              j_offset = flux_offset;              k_offset    = 0;
-                  sizeB_i  = FLU_NXT;                  sizeB_j  = FLU_NXT;                  stride_fc_B = SQR(FLU_NXT);
                   break;
       } // switch ( d )
 
@@ -733,9 +723,6 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
          const int j_cvar   = j_flux;
          const int k_cvar   = k_flux;
          const int idx_cvar = IDX321( i_cvar, j_cvar, k_cvar, FLU_NXT, FLU_NXT );
-
-//       face-centered magnetic field index
-         const int idx_fc_B = IDX321( i_cvar, j_cvar, k_cvar, sizeB_i, sizeB_j ) + stride_fc_B;   //unuse
 
 //       get left and right cell indices
          const int idx_L = idx_cvar;
@@ -824,7 +811,6 @@ void CR_TwoMomentFlux_HalfStep( const real g_ConVar[][ CUBE(FLU_NXT) ],
 //               g_PriVar_Half : Array storing the cell-centered half-step primitive variables
 //                               (for B field and sigma_adv used by vdiff computation)
 //               g_FC_Flux     : Array with hydrodynamic fluxes for adding the cosmic-ray diffusive fluxes
-//               g_FC_B_Half   : Array storing the input face-centered, half-step magnetic field
 //               NFlux         : Stride for accessing g_FC_Flux[]
 //               NSkip_N       : Number of fluxes to skip at the beginning and end in the normal direction
 //               NSkip_T       : Number of fluxes to skip at the beginning and end in the transverse direction
@@ -837,13 +823,11 @@ GPU_DEVICE
 void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_VAR) ],
                                 const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
                                       real g_FC_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                const real g_FC_B_Half[][ FLU_NXT_P1*SQR(FLU_NXT) ],   //unuse
                                 const int NFlux, const int NSkip_N, const int NSkip_T,
                                 const real dh, const MicroPhy_t *MicroPhy )
 {
    const int  didx_fc[3]   = { 1, N_FC_VAR, SQR(N_FC_VAR) };
    const int  didx_pvar[3] = { 1, N_HF_VAR, SQR(N_HF_VAR) };
-   const real _dh          = (real)1.0 / dh;   //unuse
 
 // offset from g_FC_Var index to g_PriVar_Half index
 // g_FC_Var has size N_FC_VAR, g_PriVar_Half has size N_HF_VAR
@@ -854,27 +838,20 @@ void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUB
    {
       const int faceL = 2*d;        // left face index
       const int faceR = faceL + 1;  // right face index
-      const int TDir1 = (d+1)%3;    // transverse direction 1   //unuse
-      const int TDir2 = (d+2)%3;    // transverse direction 2   //unuse
-
-      int sizeB_i, sizeB_j, stride_fc_B;   //unuse (assigned in the switch below but only feed the unused idx_fc_B)
       int idx_fc_s[3], idx_flux_e[3];
 
       switch ( d )
       {
          case 0 : idx_fc_s  [0] = NSkip_N;              idx_fc_s  [1] = NSkip_T;              idx_fc_s  [2] = NSkip_T;
                   idx_flux_e[0] = N_FC_VAR-1-2*NSkip_N; idx_flux_e[1] = N_FC_VAR-2*NSkip_T;   idx_flux_e[2] = N_FC_VAR-2*NSkip_T;
-                  sizeB_i  = FLU_NXT_P1;                sizeB_j  = FLU_NXT;                   stride_fc_B = 1;
                   break;
 
          case 1 : idx_fc_s  [0] = NSkip_T;              idx_fc_s  [1] = NSkip_N;              idx_fc_s  [2] = NSkip_T;
                   idx_flux_e[0] = N_FC_VAR-2*NSkip_T;   idx_flux_e[1] = N_FC_VAR-1-2*NSkip_N; idx_flux_e[2] = N_FC_VAR-2*NSkip_T;
-                  sizeB_i  = FLU_NXT;                   sizeB_j  = FLU_NXT_P1;                stride_fc_B = FLU_NXT;
                   break;
 
          case 2 : idx_fc_s  [0] = NSkip_T;              idx_fc_s  [1] = NSkip_T;              idx_fc_s  [2] = NSkip_N;
                   idx_flux_e[0] = N_FC_VAR-2*NSkip_T;   idx_flux_e[1] = N_FC_VAR-2*NSkip_T;   idx_flux_e[2] = N_FC_VAR-1-2*NSkip_N;
-                  sizeB_i  = FLU_NXT;                   sizeB_j  = FLU_NXT;                   stride_fc_B = SQR(FLU_NXT);
                   break;
       } // switch ( d )
 
@@ -899,9 +876,6 @@ void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUB
          const int j_pvar   = j_fc + fc2pvar_offset;
          const int k_pvar   = k_fc + fc2pvar_offset;
          const int idx_pvar = IDX321( i_pvar, j_pvar, k_pvar, N_HF_VAR, N_HF_VAR );
-
-//       face-centered B index
-         const int idx_fc_B = IDX321( i_pvar, j_pvar, k_pvar, sizeB_i, sizeB_j ) + stride_fc_B;   //unuse
 
 //       get left and right cell indices for cell-centered arrays (g_PriVar_Half)
          const int idx_pvar_L = idx_pvar;
@@ -1013,24 +987,21 @@ void CR_TwoMomentFlux_FullStep( const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUB
 //               g_Flux_Half : Array storing the input face-centered fluxes
 //               B_n         : t^n cell-centered B field [3] (see Note 7)
 //               idx_in      : Index of accessing g_ConVar_In[]
-//               didx_in     : Index increment of g_ConVar_In[]
 //               idx_flux    : Index of accessing g_Flux_Half[]
 //               didx_flux   : Index increment of g_Flux_Half[]
 //               dt          : Full time step (source uses 0.5*dt for half-step)
 //               dh          : Cell size
-//               EoS         : EoS object
 //               MicroPhy    : Microphysics object
 //
 // Return      : OneCell[] (modified CR and gas fields)
 //-------------------------------------------------------------------------------------------------------
 GPU_DEVICE
 void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
-                                  const real g_ConVar_In[][ CUBE(FLU_NXT) ],
-                                  const real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                  const real B_n[],
-                                  const int idx_in, const int didx_in[3],   //unuse: didx_in
-                                  const int idx_flux, const int didx_flux[3],
-                                  const real dt, const real dh, const EoS_t *EoS , const MicroPhy_t *MicroPhy )   //unuse: EoS
+                            const real g_ConVar_In[][ CUBE(FLU_NXT) ],
+                            const real g_Flux_Half[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
+                            const real B_n[],
+                            const int idx_in, const int idx_flux, const int didx_flux[3],
+                            const real dt, const real dh, const MicroPhy_t *MicroPhy )
 {
 // The flux divergence update for CR_E, CR_F1, CR_F2, CR_F3 is already done
 // in the main Hydro_RiemannPredict loop above where out_con is updated.
@@ -1065,7 +1036,7 @@ void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
 
 // 3. Get B field: t^n cell-centered B passed in by the caller, matching Athena++'s stage-1 b_angle
 //    computed from the t^n bcc — NOT the CT-half-step-updated OneCell[MAG_OFFSET+*] (see Note 7)
-//    (MHD is compile-enforced for CR_STREAMING, see Aux_Check_Parameter.cpp)
+//    (MHD is compile-enforced for CR_TWOMOMENT, see Aux_Check_Parameter.cpp)
    const real Bx = B_n[MAGX];
    const real By = B_n[MAGY];
    const real Bz = B_n[MAGZ];
@@ -1270,10 +1241,8 @@ void CR_TwoMomentSource_HalfStep( real OneCell[NCOMP_TOTAL_PLUS_MAG],
 // Parameter   : g_PriVar_Half : Array storing the input cell-centered primitive variables
 //               g_Output      : Array to store the updated fluid data (already has flux divergence applied)
 //               g_Flux        : Array storing the input face-centered fluxes
-//               g_FC_Var      : Array storing the input face-centered conserved variables
 //               dt            : Time interval to advance solution
 //               dh            : Cell size
-//               EoS           : EoS object
 //               MicroPhy      : Microphysics object
 //
 // Return      : g_Output[] with updated CR and gas fields
@@ -1282,8 +1251,7 @@ GPU_DEVICE
 void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
                                         real g_Output[][ CUBE(PS2) ],
                                   const real g_Flux[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_FLUX) ],
-                                  const real g_FC_Var[][NCOMP_TOTAL_PLUS_MAG][ CUBE(N_FC_VAR) ],   //unuse
-                                  const real dt, const real dh, const EoS_t *EoS, const MicroPhy_t *MicroPhy )   //unuse: EoS
+                                  const real dt, const real dh, const MicroPhy_t *MicroPhy )
 {
    const int  didx_flux[3] = { 1, N_FL_FLUX, SQR(N_FL_FLUX) };
 
@@ -1332,7 +1300,7 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
       real v3 = g_Output[MOMZ][idx_out] / rho;
 
 //    3. get cell-centered B field from half-step primitive variables
-//       (MHD is compile-enforced for CR_STREAMING, see Aux_Check_Parameter.cpp)
+//       (MHD is compile-enforced for CR_TWOMOMENT, see Aux_Check_Parameter.cpp)
       const real Bx = g_PriVar_Half[MAG_OFFSET+MAGX][idx_pvar];
       const real By = g_PriVar_Half[MAG_OFFSET+MAGY][idx_pvar];
       const real Bz = g_PriVar_Half[MAG_OFFSET+MAGZ][idx_pvar];
@@ -1463,7 +1431,7 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
 
 //    flux index: one flux ring is skipped along each transverse direction for the CT electric
 //    field, hence the +1 offset (same mapping as Hydro_FullStepUpdate() with MHD, which is
-//    compile-enforced for CR_STREAMING)
+//    compile-enforced for CR_TWOMOMENT)
       const int idx_flux = IDX321( i_out+1, j_out+1, k_out+1, N_FL_FLUX, N_FL_FLUX );
 
       const int CRF_v[3] = { CR_F1, CR_F2, CR_F3 };  // CR_F* field indices DESCEND, hence the explicit list
@@ -1521,4 +1489,4 @@ void CR_TwoMomentSource_FullStep( const real g_PriVar_Half[][ CUBE(FLU_NXT) ],
 
 } // FUNCTION : CR_TwoMomentSource_FullStep
 
-#endif // #ifdef CR_STREAMING
+#endif // #ifdef CR_TWOMOMENT

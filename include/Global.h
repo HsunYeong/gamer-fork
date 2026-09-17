@@ -339,7 +339,7 @@ extern EoS_CRE2CRP_t EoS_CREint2CRPres_CPUPtr;
 extern EoS_GP2GE_t   EoS_GasPres2GasEint_CPUPtr;
 extern EoS_GE2GP_t   EoS_GasEint2GasPres_CPUPtr;
 #endif
-#if ( defined CR_STREAMING && !defined COSMIC_RAY )
+#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
 extern EoS_DPC2C_t   EoS_DensPresCR2CSqr_CPUPtr;
 #endif
 
@@ -359,7 +359,7 @@ extern EoS_CRE2CRP_t EoS_CREint2CRPres_GPUPtr;
 extern EoS_GP2GE_t   EoS_GasPres2GasEint_GPUPtr;
 extern EoS_GE2GP_t   EoS_GasEint2GasPres_GPUPtr;
 #endif
-#if ( defined CR_STREAMING && !defined COSMIC_RAY )
+#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
 extern EoS_DPC2C_t   EoS_DensPresCR2CSqr_GPUPtr;
 #endif
 #endif
@@ -405,7 +405,7 @@ extern double FB_RESOLVED_SNEII_EJECT_ENGY;
 extern double FB_RESOLVED_SNEII_EJECT_MASS;
 extern double FB_RESOLVED_SNEII_EJECT_METAL;
 extern double FB_RESOLVED_SNEII_MIN_M_GAS;
-#if ( defined COSMIC_RAY || defined CR_STREAMING )
+#if ( defined COSMIC_RAY || defined CR_TWOMOMENT )
 extern double FB_RESOLVED_SNEII_CRAY_RATIO;
 #endif
 extern bool   FB_RESOLVED_SNEII_RECORD;
@@ -426,8 +426,8 @@ extern InterpolationHandler Int_InterpolationHandler;
 
 // (2-13) cosmic ray
 // =======================================================================================================
-// GAMMA_CR (CR adiabatic index) is shared by the classic (COSMIC_RAY) and two-moment (CR_STREAMING) modules
-#if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+// GAMMA_CR (CR adiabatic index) is shared by the classic (COSMIC_RAY) and two-moment (CR_TWOMOMENT) modules
+#if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
 extern double GAMMA_CR;
 #endif
 #ifdef COSMIC_RAY
@@ -446,7 +446,7 @@ extern double DT__CR_DIFFUSION;
 extern double CR_DIFF_MIN_B;
 #endif
 
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 extern bool   CR_SOURCE;
 extern bool   CR_STREAM;
 extern bool   CR_EC_SOURCE;

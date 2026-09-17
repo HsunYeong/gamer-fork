@@ -61,7 +61,7 @@ void EoS_SetAuxArray_Gamma( double AuxArray_Flt[], int AuxArray_Int[] )
    AuxArray_Flt[4] = ( OPT__UNIT ) ? MOLECULAR_WEIGHT * MU_NORM / Const_kB * (UNIT_E/UNIT_M)
                                    : MOLECULAR_WEIGHT;
    AuxArray_Flt[5] = 1.0 / AuxArray_Flt[4];
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    AuxArray_Flt[6] = GAMMA_CR;
    AuxArray_Flt[7] = GAMMA_CR - 1.0;
 #  endif
@@ -360,7 +360,7 @@ static void EoS_General_Gamma( const int Mode, real Out[], const real In_Flt[], 
 
 
 
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 //-------------------------------------------------------------------------------------------------------
 // Function    :  EoS_CREint2CRPres_Gamma
 // Description :  Convert cosmic-ray energy density to cosmic-ray pressure
@@ -450,7 +450,7 @@ static real EoS_DensPresCR2CSqr_Gamma( const real Dens, const real Pres, const r
    return Cs2;
 
 } // FUNCTION : EoS_DensPresCR2CSqr_Gamma
-#endif // #ifdef CR_STREAMING
+#endif // #ifdef CR_TWOMOMENT
 
 
 
@@ -471,7 +471,7 @@ FUNC_SPACE EoS_DE2T_t EoS_DensEint2Temp_Ptr = EoS_DensEint2Temp_Gamma;
 FUNC_SPACE EoS_DT2P_t EoS_DensTemp2Pres_Ptr = EoS_DensTemp2Pres_Gamma;
 FUNC_SPACE EoS_DE2S_t EoS_DensEint2Entr_Ptr = EoS_DensEint2Entr_Gamma;
 FUNC_SPACE EoS_GENE_t EoS_General_Ptr       = EoS_General_Gamma;
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 FUNC_SPACE EoS_CRE2CRP_t   EoS_CREint2CRPres_Ptr   = EoS_CREint2CRPres_Gamma;
 FUNC_SPACE EoS_DPC2C_t     EoS_DensPresCR2CSqr_Ptr = EoS_DensPresCR2CSqr_Gamma;
 #endif
@@ -512,7 +512,7 @@ void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_GPUPtr,
                            EoS_DE2T_t &EoS_DensEint2Temp_GPUPtr,
                            EoS_DT2P_t &EoS_DensTemp2Pres_GPUPtr,
                            EoS_DE2S_t &EoS_DensEint2Entr_GPUPtr,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                            EoS_CRE2CRP_t &EoS_CREint2CRPres_GPUPtr,
                            EoS_DPC2C_t   &EoS_DensPresCR2CSqr_GPUPtr,
 #endif
@@ -525,7 +525,7 @@ void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_GPUPtr,
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensTemp2Pres_GPUPtr, EoS_DensTemp2Pres_Ptr, sizeof(EoS_DT2P_t) )  );
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensEint2Entr_GPUPtr, EoS_DensEint2Entr_Ptr, sizeof(EoS_DE2S_t) )  );
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_General_GPUPtr,       EoS_General_Ptr,       sizeof(EoS_GENE_t) )  );
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_CREint2CRPres_GPUPtr,   EoS_CREint2CRPres_Ptr,   sizeof(EoS_CRE2CRP_t) )  );
    CUDA_CHECK_ERROR(  cudaMemcpyFromSymbol( &EoS_DensPresCR2CSqr_GPUPtr, EoS_DensPresCR2CSqr_Ptr, sizeof(EoS_DPC2C_t  ) )  );
 #  endif
@@ -540,7 +540,7 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
                            EoS_DE2T_t &EoS_DensEint2Temp_CPUPtr,
                            EoS_DT2P_t &EoS_DensTemp2Pres_CPUPtr,
                            EoS_DE2S_t &EoS_DensEint2Entr_CPUPtr,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                            EoS_CRE2CRP_t &EoS_CREint2CRPres_CPUPtr,
                            EoS_DPC2C_t   &EoS_DensPresCR2CSqr_CPUPtr,
 #endif
@@ -553,7 +553,7 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
    EoS_DensTemp2Pres_CPUPtr = EoS_DensTemp2Pres_Ptr;
    EoS_DensEint2Entr_CPUPtr = EoS_DensEint2Entr_Ptr;
    EoS_General_CPUPtr       = EoS_General_Ptr;
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    EoS_CREint2CRPres_CPUPtr   = EoS_CREint2CRPres_Ptr;
    EoS_DensPresCR2CSqr_CPUPtr = EoS_DensPresCR2CSqr_Ptr;
 #  endif
@@ -569,13 +569,13 @@ void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &EoS_DensEint2Pres_CPUPtr,
 // local function prototypes
 void EoS_SetAuxArray_Gamma( double [], int [] );
 void EoS_SetCPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                            EoS_CRE2CRP_t &, EoS_DPC2C_t &,
 #endif
                            EoS_GENE_t & );
 #ifdef GPU
 void EoS_SetGPUFunc_Gamma( EoS_DE2P_t &, EoS_DP2E_t &, EoS_DP2C_t &, EoS_DE2T_t &, EoS_DT2P_t &, EoS_DE2S_t &,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                            EoS_CRE2CRP_t &, EoS_DPC2C_t &,
 #endif
                            EoS_GENE_t & );
@@ -603,7 +603,7 @@ void EoS_Init_Gamma()
    EoS_SetCPUFunc_Gamma( EoS_DensEint2Pres_CPUPtr, EoS_DensPres2Eint_CPUPtr,
                          EoS_DensPres2CSqr_CPUPtr, EoS_DensEint2Temp_CPUPtr,
                          EoS_DensTemp2Pres_CPUPtr, EoS_DensEint2Entr_CPUPtr,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                          EoS_CREint2CRPres_CPUPtr, EoS_DensPresCR2CSqr_CPUPtr,
 #endif
                          EoS_General_CPUPtr );
@@ -611,7 +611,7 @@ void EoS_Init_Gamma()
    EoS_SetGPUFunc_Gamma( EoS_DensEint2Pres_GPUPtr, EoS_DensPres2Eint_GPUPtr,
                          EoS_DensPres2CSqr_GPUPtr, EoS_DensEint2Temp_GPUPtr,
                          EoS_DensTemp2Pres_GPUPtr, EoS_DensEint2Entr_GPUPtr,
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
                          EoS_CREint2CRPres_GPUPtr, EoS_DensPresCR2CSqr_GPUPtr,
 #endif
                          EoS_General_GPUPtr );

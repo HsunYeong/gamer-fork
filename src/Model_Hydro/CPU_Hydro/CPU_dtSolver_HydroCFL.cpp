@@ -203,7 +203,7 @@ void CPU_dtSolver_HydroCFL  ( real g_dt_Array[], const real g_Flu_Array[][FLU_NI
 
 #     ifdef SRHD
       g_dt_Array[p] = dhSafety / ( MaxCFL / SQRT( (real)1.0 + MaxCFL*MaxCFL ) );
-#     elif ( defined CR_STREAMING )
+#     elif ( defined CR_TWOMOMENT )
 //    match Athena's dt semantics: a single CFL number applied to the per-cell signal speed
 //    max( |v|+c_fast, CR_VMAX ) (see hydro/new_blockdt.cpp in Athena++)
 //    --> since CR_VMAX is spatially constant, max() commutes with the patch-wide reduction of MaxCFL,

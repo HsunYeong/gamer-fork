@@ -47,7 +47,7 @@ struct MicroPhy_t
    real CR_diff_min_b;
 #  endif
 
-#  ifdef CR_STREAMING
+#  ifdef CR_TWOMOMENT
    bool CR_source;
    bool CR_stream;
    bool CR_Ec_source;

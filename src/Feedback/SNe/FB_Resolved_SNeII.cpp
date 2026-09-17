@@ -6,7 +6,7 @@
 static const int      maxfbDiameter  =   FB_GHOST_SIZE + 1;  // maximum diameter to apply feedback, constraint by ghost zone size
 static       real  ***fbDepositWeighting[FB_GHOST_SIZE + 1]; // array of weighting for each feedback diameter
 
-#if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+#if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
 static const int      nVarRecSNeII   = 25;                   // number of variables to be record for each SNII
 #else
 static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
@@ -244,7 +244,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
       real SNII_DepositedEnergy     = FB_RESOLVED_SNEII_EJECT_ENGY;
       real SNII_DepositedIntEnergy  = FB_RESOLVED_SNEII_EJECT_ENGY;
 
-#     if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+#     if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
       real SNII_DepositedCREnergy   = FB_RESOLVED_SNEII_EJECT_ENGY*FB_RESOLVED_SNEII_CRAY_RATIO;
            SNII_DepositedIntEnergy *= ( 1.0 - FB_RESOLVED_SNEII_CRAY_RATIO );
 #     endif
@@ -349,7 +349,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_SNIITime;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedEnergy;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedIntEnergy;
-#        if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+#        if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedCREnergy;
 #        endif
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = SNII_DepositedMass;
@@ -423,7 +423,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          Fluid_Out[CRAY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
          Fluid_Out[ENGY     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        endif
-#        ifdef CR_STREAMING
+#        ifdef CR_TWOMOMENT
          Fluid_Out[CR_E     ][k][j][i] += SNII_DepositedCREnergy                * fbDepositWeighting[fbDiameterMinus1][k_w][j_w][i_w] / dv;
 #        endif
 
@@ -590,7 +590,7 @@ void Record_FB_Resolved_SNeII( const int lv )
          {
             fprintf( File, "#%5s%6s%6s%16s%16s",
                      "Rank", "TID", "lv", "TimeOld", "TimeNew" );
-#           if ( defined COSMIC_RAY  ||  defined CR_STREAMING )
+#           if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
             fprintf( File, "%16s%16s%16s%16s%16s%16s%16s%16s",
                      "SNII_Time", "SNII_Energy", "SNII_IntEnergy", "SNII_CREnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
 #           else

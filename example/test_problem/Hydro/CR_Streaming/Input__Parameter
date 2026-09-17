@@ -137,13 +137,13 @@ CR_EC_SOURCE                  1           # include the CR-energy source term; 0
                                           # dEc/dt = -div(Fc) (Eq. 19 of Jiang & Oh 2018, streaming tests) [1]
 CR_VMAX                       1e2         # Maximum velocity on the streaming direction
 CR_SIGMA                      1e6         # inverse diffusion coefficient in PAPER units: kappa = 1/(3*CR_SIGMA)
-                                          # (internal/Athena-input sigma = CR_SIGMA*CR_VMAX) ##CR_STREAMING only##
-CR_SIGMA_PERP                 1e6         # perpendicular to B, same units as CR_SIGMA [1e8] ##CR_STREAMING only##
-CR_MAX_OPACITY                1e10        # Maximum opacity for cosmic-ray streaming [1e10] ##CR_STREAMING only##
-CR_TAU_ASYM_LIM               1e-3        # optical depth limit for asymptotic expansion [1e-3] ##CR_STREAMING only##
-CR_TAUFACT                    1.0         # tau factor for optical depth calculation [1.0] ##CR_STREAMING only##
-CR_VEL_FLX_FLAG               0           # add CR sound speed to v_diff [0/1] ##CR_STREAMING only##
-CR_CFL                        0.3         # CFL safety factor for cosmic-ray streaming time-step [0.3] ##CR_STREAMING only##
+                                          # (internal/Athena-input sigma = CR_SIGMA*CR_VMAX) ##CR_TWOMOMENT only##
+CR_SIGMA_PERP                 1e6         # perpendicular to B, same units as CR_SIGMA [1e8] ##CR_TWOMOMENT only##
+CR_MAX_OPACITY                1e10        # Maximum opacity for cosmic-ray streaming [1e10] ##CR_TWOMOMENT only##
+CR_TAU_ASYM_LIM               1e-3        # optical depth limit for asymptotic expansion [1e-3] ##CR_TWOMOMENT only##
+CR_TAUFACT                    1.0         # tau factor for optical depth calculation [1.0] ##CR_TWOMOMENT only##
+CR_VEL_FLX_FLAG               0           # add CR sound speed to v_diff [0/1] ##CR_TWOMOMENT only##
+CR_CFL                        0.3         # CFL safety factor for cosmic-ray streaming time-step [0.3] ##CR_TWOMOMENT only##
 
 # fluid solver in HYDRO (MODEL==HYDRO only)
 GAMMA                         1.666666667 # ratio of specific heats (i.e., adiabatic index) [5.0/3.0] ##EOS_GAMMA ONLY##

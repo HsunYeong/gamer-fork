@@ -675,7 +675,7 @@ void Hydro_RiemannSolver_HLLE( const int XYZ, real Flux_Out[], const real L_In[]
 
 
 // 5. evaluate the fluxes of passive scalars
-//    --> with CR_STREAMING, the advective fluxes computed here for the CR fields (ADV_VZ to CR_E)
+//    --> with CR_TWOMOMENT, the advective fluxes computed here for the CR fields (ADV_VZ to CR_E)
 //        are placeholders only: CR_TwoMomentFlux_HalfStep/FullStep() later overwrite the CR_E/CR_F*
 //        slots with the two-moment HLLE fluxes and zero the ADV_* slots (all slots are still filled
 //        here so that no flux component is left uninitialized)

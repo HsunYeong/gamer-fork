@@ -1137,8 +1137,8 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "please set \"%s\" for \"%s\" !!\n",
                  "FLU_GHOST_SIZE = 3", "MHM_RP scheme + PLM reconstruction + non-EXTPRE limiter" );
 
-// CR_STREAMING deliberately widens FLU_GHOST_SIZE by one (see Macro.h)
-#  ifndef CR_STREAMING
+// CR_TWOMOMENT deliberately widens FLU_GHOST_SIZE by one (see Macro.h)
+#  ifndef CR_TWOMOMENT
    if ( OPT__LR_LIMITER != LR_LIMITER_EXTPRE  &&  FLU_GHOST_SIZE > 3  &&  MPI_Rank == 0 )
       Aux_Message( stderr, "WARNING : please set \"%s\" in \"%s\" for higher performance !!\n",
                    "FLU_GHOST_SIZE = 3", "MHM_RP scheme + PLM reconstruction + non-EXTPRE limiter" );
@@ -1150,8 +1150,8 @@ void Aux_Check_Parameter()
       Aux_Error( ERROR_INFO, "please set \"%s\" for \"%s\" !!\n",
                  "FLU_GHOST_SIZE = 4", "MHM_RP scheme + PPM reconstruction + non-EXTPRE limiter" );
 
-// CR_STREAMING deliberately widens FLU_GHOST_SIZE by one (see Macro.h)
-#  ifndef CR_STREAMING
+// CR_TWOMOMENT deliberately widens FLU_GHOST_SIZE by one (see Macro.h)
+#  ifndef CR_TWOMOMENT
    if ( FLU_GHOST_SIZE > 4  &&  MPI_Rank == 0 )
       Aux_Message( stderr, "WARNING : please set \"%s\" in \"%s\" for higher performance !!\n",
                    "FLU_GHOST_SIZE = 4", "MHM_RP scheme + PPM reconstruction + non-EXTPRE limiter" );
@@ -2014,35 +2014,35 @@ void Aux_Check_Parameter()
 
 
 // =======================================================================================
-// check : CR_STREAMING (two-moment cosmic-ray transport; Jiang & Oh 2018)
+// check : CR_TWOMOMENT (two-moment cosmic-ray transport; Jiang & Oh 2018)
 // --> standalone module: does NOT require COSMIC_RAY (gas may use a pure gamma-law EoS)
 // =======================================================================================
-#ifdef CR_STREAMING
+#ifdef CR_TWOMOMENT
 
 // errors
 // ------------------------------
 #  ifndef MHD
-#     error : ERROR : must enable MHD for CR_STREAMING (CR transport is field-aligned) !!
+#     error : ERROR : must enable MHD for CR_TWOMOMENT (CR transport is field-aligned) !!
 #  endif
 
 #  if ( FLU_SCHEME != MHM_RP )
-#     error : ERROR : CR_STREAMING currently only supports the MHM_RP fluid scheme !!
+#     error : ERROR : CR_TWOMOMENT currently only supports the MHM_RP fluid scheme !!
 #  endif
 
 #  if ( EOS != EOS_GAMMA  &&  EOS != EOS_COSMIC_RAY )
-#     error : ERROR : CR_STREAMING must use EOS_GAMMA (standalone) or EOS_COSMIC_RAY !!
+#     error : ERROR : CR_TWOMOMENT must use EOS_GAMMA (standalone) or EOS_COSMIC_RAY !!
 #  endif
 
-// CR_STREAMING widens FLU_GHOST_SIZE by one so that the outermost ADV_* ghost ring
+// CR_TWOMOMENT widens FLU_GHOST_SIZE by one so that the outermost ADV_* ghost ring
 // (not recomputable by CR_UpdateOpacity()) cannot influence any PS2 output cell
 #  if ( FLU_GHOST_SIZE != 3 + LR_GHOST_SIZE )
-#     error : ERROR : CR_STREAMING requires FLU_GHOST_SIZE == 3 + LR_GHOST_SIZE (see Macro.h) !!
+#     error : ERROR : CR_TWOMOMENT requires FLU_GHOST_SIZE == 3 + LR_GHOST_SIZE (see Macro.h) !!
 #  endif
 
 // the extrema-preserving limiter reconstructs with a +/-2 stencil, which reaches the stale
 // outermost ADV_* ghost ring again and would void the widened-ghost guarantee above
    if ( OPT__LR_LIMITER == LR_LIMITER_EXTPRE )
-      Aux_Error( ERROR_INFO, "OPT__LR_LIMITER == LR_LIMITER_EXTPRE is not supported for CR_STREAMING !!\n" );
+      Aux_Error( ERROR_INFO, "OPT__LR_LIMITER == LR_LIMITER_EXTPRE is not supported for CR_TWOMOMENT !!\n" );
 
 // warning
 // ------------------------------
@@ -2058,13 +2058,13 @@ void Aux_Check_Parameter()
 
 //    the 1st-order flux correction recomputes failing cells with hydro-only fluxes, which
 //    update CR_E/CR_F* as passively advected scalars WITHOUT any two-moment physics
-//    (disabled by default for CR_STREAMING; see Init_ResetParameter())
+//    (disabled by default for CR_TWOMOMENT; see Init_ResetParameter())
       if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
          Aux_Message( stderr, "WARNING : OPT__1ST_FLUX_CORR re-updates CR fields with hydro-only 1st-order fluxes "
                               "(no two-moment physics) on cells where it triggers !!\n" );
    } // if ( MPI_Rank == 0 )
 
-#endif // ifdef CR_STREAMING
+#endif // ifdef CR_TWOMOMENT
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "Aux_Check_Parameter ... done\n" );

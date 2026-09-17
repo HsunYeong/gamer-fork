@@ -207,7 +207,7 @@
 # endif
 
 // cosmic ray streaming
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
 #  define NCOMP_PASSIVE_BUILTIN2    8
 # else
 #  define NCOMP_PASSIVE_BUILTIN2    0
@@ -331,7 +331,7 @@
 #  define PASSIVE_NEXT_IDX2   ( PASSIVE_NEXT_IDX1 )
 # endif
 
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
 // two-moment cosmic-ray fields (Jiang & Oh 2018):
 //    CR_E      : CR energy density Ec
 //    CR_F1/2/3 : REDUCED CR energy flux Fc/CR_VMAX (same convention as Athena++'s u_cr(1:3));
@@ -396,7 +396,7 @@
 #  define FLUX_NEXT_IDX2   ( FLUX_NEXT_IDX1  )
 # endif
 
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
 #  define FLUX_CR_E        ( FLUX_NEXT_IDX2  )
 #  define FLUX_CR_F1       ( FLUX_CR_E - 1   )
 #  define FLUX_CR_F2       ( FLUX_CR_F1 - 1  )
@@ -439,7 +439,7 @@
 #  define _CRAY               ( 1L << CRAY )
 # endif
 
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
 #  define _CR_E               ( 1L << CR_E )
 #  define _CR_F1              ( 1L << CR_F1 )
 #  define _CR_F2              ( 1L << CR_F2 )
@@ -483,7 +483,7 @@
 #  define _FLUX_CRAY          ( 1L << FLUX_CRAY )
 # endif
 
-# ifdef CR_STREAMING
+# ifdef CR_TWOMOMENT
 #  define _FLUX_CR_E          ( 1L << FLUX_CR_E )
 #  define _FLUX_CR_F1         ( 1L << FLUX_CR_F1 )
 #  define _FLUX_CR_F2         ( 1L << FLUX_CR_F2 )
@@ -751,7 +751,7 @@
 #  elif ( FLU_SCHEME == MHM )
 #     define FLU_GHOST_SIZE         ( 1 + LR_GHOST_SIZE )
 #  elif ( FLU_SCHEME == MHM_RP )
-#    ifdef CR_STREAMING
+#    ifdef CR_TWOMOMENT
 //    one extra ghost layer so that the outermost ADV_* ghost ring -- which CR_UpdateOpacity()
 //    cannot recompute (no +/-1 neighbors) and therefore keeps stale ghost-filled values --
 //    lies outside the stencil of every PS2 output cell
