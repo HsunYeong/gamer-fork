@@ -701,7 +701,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 //             update opacity
 #              ifdef CR_TWOMOMENT
                const real _2dh = (real)0.5 / dh;
-               const real invlim = MicroPhy.CR_vmax;
+               const real invlim = (real)1.0 / MicroPhy.CR_vmax;
                CR_UpdateOpacity_OneCell( VarC, h_Flu_Array_F_In[TID], idx_in, didx, _2dh, invlim, &MicroPhy );
                for (int d=0; d<3; d++)
                {
