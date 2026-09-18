@@ -53,15 +53,15 @@ extern void Hydro_RiemannSolver_HLLD( const int XYZ, real Flux_Out[], const real
                                       const real MinDens, const real MinPres, const long PassiveFloor, const EoS_DE2P_t EoS_DensEint2Pres,
                                       const EoS_DP2C_t EoS_DensPres2CSqr, const double EoS_AuxArray_Flt[],
                                       const int EoS_AuxArray_Int[], const real* const EoS_Table[EOS_NTABLE_MAX] );
+#endif
 #ifdef CR_DIFFUSION
-extern void CR_AddDiffuseFlux_OneCell( const real g_ConVar[][ CUBE(FLU_NXT) ],
+extern void CR_AddDiffuseFlux_OneFace( const real g_ConVar[][ CUBE(FLU_NXT) ],
                                              real FluxR[NCOMP_TOTAL_PLUS_MAG],
                                        const real FC_B, const real VarC[], const real VarR[],
                                        const int idx, const int didx[3], const int d, const real dh,
                                        const MicroPhy_t *MicroPhy );
+#endif
 
-#endif
-#endif
 #endif // #if ( MODEL == HYDRO )
 
 
@@ -695,7 +695,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                   FC_B[d][0] = h_Mag_Array_F_In[TID][d][ idx_b           ];
                   FC_B[d][1] = h_Mag_Array_F_In[TID][d][ idx_b + didx[d] ];
 
-//                back up cell-centered longitudinal B field
+//                back-up cell-centered longitudinal B fields since cosmic ray requires nearby cell-centered B fields
                   real BL = VarL[d][ MAG_OFFSET + d ];
                   real BR = VarR[d][ MAG_OFFSET + d ];
 #                 endif
@@ -723,6 +723,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
 #                       endif
@@ -766,6 +767,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
 #                       endif
@@ -793,6 +795,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
 #                       endif
@@ -808,8 +811,8 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #              ifdef CR_DIFFUSION
                for (int d=0; d<3; d++)
                {
-                  CR_AddDiffuseFlux_OneCell( h_Flu_Array_F_In[TID], FluxL[d], FC_B[d][0], VarL[d], VarC,    idx_in-didx[d], didx, d, dh, &MicroPhy );
-                  CR_AddDiffuseFlux_OneCell( h_Flu_Array_F_In[TID], FluxR[d], FC_B[d][1], VarC,    VarR[d], idx_in,         didx, d, dh, &MicroPhy );
+                  CR_AddDiffuseFlux_OneFace( h_Flu_Array_F_In[TID], FluxL[d], FC_B[d][0], VarL[d], VarC,    idx_in-didx[d], didx, d, dh, &MicroPhy );
+                  CR_AddDiffuseFlux_OneFace( h_Flu_Array_F_In[TID], FluxR[d], FC_B[d][1], VarC,    VarR[d], idx_in,         didx, d, dh, &MicroPhy );
                }
 #              endif
 

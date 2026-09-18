@@ -447,8 +447,8 @@ static real minmod( const real a, const real b )
 #ifndef __CUDACC__
 
 //-----------------------------------------------------------------------------------------
-// Function    : CR_AddDiffuseFlux_OneCell
-// Description : Compute the cosmic-ray diffusive fluxes for 1st order flux correction
+// Function    : CR_AddDiffuseFlux_OneFace
+// Description : Compute the cosmic-ray diffusive flux of one face, used for 1st order flux correction
 //
 // Note        : 1. Must enable MHD, COSMIC_RAY, and CR_DIFFUSION
 //               2. Invoked by Fluid_Close()
@@ -456,12 +456,12 @@ static real minmod( const real a, const real b )
 //
 // Reference   : Yang et al., ApJ 761, 185 (2012); doi:10.1088/0004-637X/761/2/185
 //
-// Parameter   : FluIn    : Array storing the input cell-centered conserved fluid variables
-//               FluxR    : Right flux to be updated
-//               FC_B     : Face-centered magnetic filed between current cell and right cell
-//               VarC     : One-cell data of current cell
-//               VarR     : One-cell data of the cell on the right
-//               idx      : Current cell idx
+// Parameter   : Flu_In   : Array storing the input cell-centered conserved fluid variables
+//               Flux_Out : Flux to be updated
+//               FC_B     : Face-centered magnetic filed between left and right cell
+//               L_In     : One-cell data of the left cell
+//               R_In     : One-cell data of the right cell
+//               idxL     : Left cell idx
 //               didx     : Array storing the index increments
 //               d        : Direction of the flux
 //               dh       : Cell size
@@ -469,13 +469,13 @@ static real minmod( const real a, const real b )
 //
 // Return      : FluxR[]
 //-----------------------------------------------------------------------------------------
-void CR_AddDiffuseFlux_OneCell( const real FluIn[][ CUBE(FLU_NXT) ],
-                                      real FluxR[NCOMP_TOTAL_PLUS_MAG],
-                                const real FC_B, const real VarC[], const real VarR[],
-                                const int idx, const int didx[3], const int d, const real dh,
+void CR_AddDiffuseFlux_OneFace( const real Flu_In[][ CUBE(FLU_NXT) ],
+                                      real Flux_Out[NCOMP_TOTAL_PLUS_MAG],
+                                const real FC_B, const real L_In[], const real R_In[],
+                                const int idxL, const int didx[3], const int d, const real dh,
                                 const MicroPhy_t *MicroPhy )
 {
-   const real _dh          = (real)1.0 / dh;
+   const real _dh = (real)1.0 / dh;
 
    const int TDir1 = (d+1)%3;    // transverse direction 1
    const int TDir2 = (d+2)%3;    // transverse direction 2
@@ -504,9 +504,13 @@ void CR_AddDiffuseFlux_OneCell( const real FluIn[][ CUBE(FLU_NXT) ],
 // ---------------------
    real B_N_mean, B_T1_mean, B_T2_mean, B_amp;
    B_N_mean  = FC_B;
-   B_T1_mean = (real)0.5*( VarC[MAG_OFFSET + TDir1] + VarR[MAG_OFFSET + TDir1] );
-   B_T2_mean = (real)0.5*( VarC[MAG_OFFSET + TDir2] + VarR[MAG_OFFSET + TDir2] );
+   B_T1_mean = (real)0.5*( L_In[MAG_OFFSET + TDir1] + R_In[MAG_OFFSET + TDir1] );
+   B_T2_mean = (real)0.5*( L_In[MAG_OFFSET + TDir2] + R_In[MAG_OFFSET + TDir2] );
    B_amp     = SQRT( SQR(B_N_mean) + SQR(B_T1_mean) + SQR(B_T2_mean) );
+
+// disable diffusion locally when B field amplitude is smaller than the given minimum threshold
+   if ( B_amp < MicroPhy->CR_diff_min_b || B_amp < TINY_NUMBER )
+      return;
 
 // normalize magnetic field
    B_N_mean  /= B_amp;
@@ -528,30 +532,29 @@ void CR_AddDiffuseFlux_OneCell( const real FluIn[][ CUBE(FLU_NXT) ],
    real al, bl, ar, br;
 
 // normal direction
-   N_slope = ( FluIn[CRAY][ idx + didx[d] ] - FluIn[CRAY][ idx ] ) * _dh;
+   N_slope = ( Flu_In[CRAY][ idxL + didx[d] ] - Flu_In[CRAY][ idxL ] ) * _dh;
 
 // transverse direction 1
-   al = FluIn[CRAY][ idx                         ] -
-        FluIn[CRAY][ idx           - didx[TDir1] ];
-   bl = FluIn[CRAY][ idx           + didx[TDir1] ] -
-        FluIn[CRAY][ idx                         ];
-   ar = FluIn[CRAY][ idx + didx[d]               ] -
-        FluIn[CRAY][ idx + didx[d] - didx[TDir1] ];
-   br = FluIn[CRAY][ idx + didx[d] + didx[TDir1] ] -
-        FluIn[CRAY][ idx + didx[d]               ];
+   al = Flu_In[CRAY][ idxL                         ] -
+        Flu_In[CRAY][ idxL           - didx[TDir1] ];
+   bl = Flu_In[CRAY][ idxL           + didx[TDir1] ] -
+        Flu_In[CRAY][ idxL                         ];
+   ar = Flu_In[CRAY][ idxL + didx[d]               ] -
+        Flu_In[CRAY][ idxL + didx[d] - didx[TDir1] ];
+   br = Flu_In[CRAY][ idxL + didx[d] + didx[TDir1] ] -
+        Flu_In[CRAY][ idxL + didx[d]               ];
    T1_slope = (  MC_limiter( MC_limiter(al,bl), MC_limiter(ar,br) )  ) * _dh;
 
 // transverse direction 2
-   al = FluIn[CRAY][ idx                         ] -
-        FluIn[CRAY][ idx           - didx[TDir2] ];
-   bl = FluIn[CRAY][ idx           + didx[TDir2] ] -
-        FluIn[CRAY][ idx                         ];
-   ar = FluIn[CRAY][ idx + didx[d]               ] -
-        FluIn[CRAY][ idx + didx[d] - didx[TDir2] ];
-   br = FluIn[CRAY][ idx + didx[d] + didx[TDir2] ] -
-        FluIn[CRAY][ idx + didx[d]               ];
+   al = Flu_In[CRAY][ idxL                         ] -
+        Flu_In[CRAY][ idxL           - didx[TDir2] ];
+   bl = Flu_In[CRAY][ idxL           + didx[TDir2] ] -
+        Flu_In[CRAY][ idxL                         ];
+   ar = Flu_In[CRAY][ idxL + didx[d]               ] -
+        Flu_In[CRAY][ idxL + didx[d] - didx[TDir2] ];
+   br = Flu_In[CRAY][ idxL + didx[d] + didx[TDir2] ] -
+        Flu_In[CRAY][ idxL + didx[d]               ];
    T2_slope = (  MC_limiter( MC_limiter(al,bl), MC_limiter(ar,br) )  ) * _dh;
-
 
 // 4. compute CR diffusive flux
    real Flux_Total, Flux_Para, Flux_Perp, common;
@@ -561,17 +564,11 @@ void CR_AddDiffuseFlux_OneCell( const real FluIn[][ CUBE(FLU_NXT) ],
    Flux_Perp  = -diff_cr_eff_perp*( common + N_slope );
    Flux_Total = Flux_Para + Flux_Perp;
 
+// 5. flux add-up
+   Flux_Out[CRAY] += Flux_Total;
+   Flux_Out[ENGY] += Flux_Total;
 
-// 5. disable diffusion locally when B field amplitude is smaller than the given minimum threshold
-   if ( B_amp < MicroPhy->CR_diff_min_b )    Flux_Total = (real)0.0;
-
-
-// 6. flux add-up
-   FluxR[CRAY] += Flux_Total;
-   FluxR[ENGY] += Flux_Total;
-
-
-} // FUNCTION : CR_AddDiffuseFlux_OneCell
+} // FUNCTION : CR_AddDiffuseFlux_OneFace
 #endif // #ifndef __CUDACC__
 
 #endif // #ifdef CR_DIFFUSION
