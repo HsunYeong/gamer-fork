@@ -1512,7 +1512,8 @@ void CR_UpdateOpacity_OneCell( real  OneCell[NCOMP_TOTAL_PLUS_MAG],
                                const real _2dh, const real invlim,
                                const MicroPhy_t *MicroPhy )
 {
-   const real inv_sqrt_rho = (real)1.0 / SQRT( OneCell[DENS] );
+
+   const real inv_sqrt_rho = (real)1.0 / FMAX( SQRT( OneCell[DENS] ), TINY_NUMBER );
    const real Ec   = OneCell[ CR_E ];
    const real Bx   = OneCell[ MAG_OFFSET + MAGX ];
    const real By   = OneCell[ MAG_OFFSET + MAGY ];
@@ -1784,6 +1785,12 @@ void CR_TwoMomentSource_1stCorr( real OneCell[NCOMP_TOTAL],
    OneCell[CR_F1] = newfr1;
    OneCell[CR_F2] = newfr2;
    OneCell[CR_F3] = newfr3;
+
+// also update opacity for consistency
+   OneCell[ADV_SIGMA] = sigma_adv_para;
+   OneCell[ADV_VX   ] = v_adv_x;
+   OneCell[ADV_VY   ] = v_adv_y;
+   OneCell[ADV_VZ   ] = v_adv_z;
 
 } // FUNCTION : CR_TwoMomentSource_1stCorr
 

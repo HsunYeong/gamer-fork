@@ -324,7 +324,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
       {
 //       Sec 4.1.1 / 4.1.4: Ec = exp(-40 r^2)   (r relative to the box center)
          const double r = ( (CR_Streaming_Dir==0)?x : (CR_Streaming_Dir==1)?y : z ) - amr->BoxCenter[CR_Streaming_Dir];
-         cr_E = std::exp( -40.0 * r*r );
+         cr_E = std::exp( -40.0 * r*r ) + 1.0;
          vx   = ( CR_Streaming_Dir==0 ) ? CR_Streaming_FlowV : 0.0;
          vy   = ( CR_Streaming_Dir==1 ) ? CR_Streaming_FlowV : 0.0;
          vz   = ( CR_Streaming_Dir==2 ) ? CR_Streaming_FlowV : 0.0;

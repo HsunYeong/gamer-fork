@@ -700,7 +700,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 
 //             update opacity
 #              ifdef CR_TWOMOMENT
-               const real _2dh = (real)0.5 / dh;
+               const real _2dh   = (real)0.5 / dh;
                const real invlim = (real)1.0 / MicroPhy.CR_vmax;
                CR_UpdateOpacity_OneCell( VarC, h_Flu_Array_F_In[TID], idx_in, didx, _2dh, invlim, &MicroPhy );
                for (int d=0; d<3; d++)
@@ -869,7 +869,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 //             update streaming velocity/opacity
                real sigma_adv_new;
                real v_adv_new[3];
-               CR_UpdateStreaming_OneCell( VarC[CR_E], VarC[DENS], VarC[MAG_OFFSET+MAGX], VarC[MAG_OFFSET+MAGY], VarC[MAG_OFFSET+MAGZ],
+               CR_UpdateStreaming_OneCell( VarC[CR_E], VarC[DENS], CC_B[MAGX], CC_B[MAGY], CC_B[MAGZ],
                                            grad_pc, MicroPhy.CR_vmax, sigma_adv_new, v_adv_new, &MicroPhy );
                VarC[ADV_SIGMA] = sigma_adv_new;
                VarC[ADV_VX   ] = v_adv_new[0];
@@ -884,7 +884,6 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 //             add two-moment CR source terms
                CR_TwoMomentSource_1stCorr( Update, VarC, grad_pc, dt, dh, &MicroPhy );
 #              endif
-
 
             } // if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
 
