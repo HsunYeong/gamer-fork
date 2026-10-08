@@ -2047,10 +2047,6 @@ void Aux_Check_Parameter()
    if ( OPT__LR_LIMITER == LR_LIMITER_EXTPRE )
       Aux_Error( ERROR_INFO, "OPT__LR_LIMITER == LR_LIMITER_EXTPRE is not supported for CR_TWOMOMENT !!\n" );
 
-   if ( OPT__1ST_FLUX_CORR != FIRST_FLUX_CORR_NONE )
-      Aux_Error( ERROR_INFO, "The 1st-order flux correction re-updates CR fields with hydro-only 1st-order fluxes "
-                             "(no two-moment fluxes) !!\n" );
-
 // warning
 // ------------------------------
    if ( MPI_Rank == 0 ) {
