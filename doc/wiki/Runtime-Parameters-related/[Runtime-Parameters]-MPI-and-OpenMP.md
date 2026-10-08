@@ -40,13 +40,14 @@ Only applicable when enabling the compilation option
 <a name="OPT__OVERLAP_MPI"></a>
 * #### `OPT__OVERLAP_MPI` &ensp; (0=off, 1=on) &ensp; [0]
     * **Description:**
-Whether or not to enable the overlapping MPI communication
-of CPU/GPU computation. **NOT SUPPORTED YET!!**
+Whether to enable overlapping MPI communication
+with CPU/GPU computation.
     * **Restriction:**
-Only applicable when enabling the compilation option
+Only applicable when enabling the compilation options
 [[--overlap_mpi | [Installation]-Option-List#--overlap_mpi]], 
-[[--mpi | [Installation]-Option-List#--mpi]],
+[[--mpi | [Installation]-Option-List#--mpi]], and
 [[--openmp | [Installation]-Option-List#--openmp]].
+ **NOT SUPPORTED YET!!**
 
 <a name="LB_INPUT__WLI_MAX"></a>
 * #### `LB_INPUT__WLI_MAX` &ensp; (&#8805;0.0) &ensp; [0.1]
@@ -104,13 +105,13 @@ must be disabled. In addition, it is currently recommended to disable
 [[AUTO_REDUCE_DT | [Runtime-Parameters]-Timestep#AUTO_REDUCE_DT]].
 
 <a name="OPT__LB_EXCHANGE_FATHER"></a>
-* #### `OPT__LB_EXCHANGE_FATHER` &ensp; (0=off, 1=on) &ensp; [0 usually, 1 for [[--ELBDM_SCHEME=HYBRID | [Installation]-Option-List#--elbdm_scheme]]]
+* #### `OPT__LB_EXCHANGE_FATHER` &ensp; (0=off, 1=on) &ensp; [0 usually, 1 for [[--elbdm_scheme=HYBRID | [Installation]-Option-List#--elbdm_scheme]]]
     * **Description:**
 Enables the exchange of all cells from all father patches during load balancing.
     * **Restriction:**
 Only applicable when enabling the compilation option
 [[--mpi | [Installation]-Option-List#--mpi]].
-This option is mandatory for [[--ELBDM_SCHEME=HYBRID | [Installation]-Option-List#--elbdm_scheme]] 
+This option is mandatory for [[--elbdm_scheme=HYBRID | [Installation]-Option-List#--elbdm_scheme]] 
 to ensure proper phase field matching.
 
 

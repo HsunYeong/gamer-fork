@@ -396,6 +396,7 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
 #                 ifdef COSMIC_RAY
                   Pres[k][j][i] += EoS_CREint2CRPres_CPUPtr( Fluid[CRAY][k][j][i], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 #                 endif // COSMIC_RAY
+
 #                 if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
                   Pres[k][j][i] += EoS_CREint2CRPres_CPUPtr( Fluid[CR_E][k][j][i], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 #                 endif
@@ -425,6 +426,7 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
                                                   EoS_DensEint2Pres_CPUPtr, EoS_GuessHTilde_CPUPtr, EoS_HTilde2Temp_CPUPtr,
                                                   EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table,
                                                   NULL );
+
 #                 endif // #ifdef DUAL_ENERGY ... else ...
                } // k,j,i
             } // if ( NeedPres )
@@ -1139,6 +1141,7 @@ bool Flag_IterateCells( const int Mode, const int lv, const int PID, const real 
                                  const int i_end   = ( i + FlagBuf >= PS1 ) ? 2 : 1;
 
 //    retrieve the adiabatic index for Jeans length refinement criterion
+//###REVISE: support general EoS (e.g., cosmic rays) and magnetic field
 #     if ( MODEL == HYDRO  &&  defined GRAVITY )
       const real JeansCoeff = ( OPT__FLAG_JEANS )
                             ? JeansCoeff_Factor * Cs2[k][j][i] * Fluid[DENS][k][j][i] / Pres[k][j][i]
