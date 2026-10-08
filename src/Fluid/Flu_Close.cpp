@@ -54,6 +54,13 @@ extern void Hydro_RiemannSolver_HLLD( const int XYZ, real Flux_Out[], const real
                                       const EoS_DP2C_t EoS_DensPres2CSqr, const double EoS_AuxArray_Flt[],
                                       const int EoS_AuxArray_Int[], const real* const EoS_Table[EOS_NTABLE_MAX] );
 #endif
+#ifdef CR_DIFFUSION
+extern void CR_AddDiffuseFlux_1Face( const real g_ConVar[][ CUBE(FLU_NXT) ],
+                                           real FluxR[NCOMP_TOTAL_PLUS_MAG],
+                                     const real FC_B, const real VarC[], const real VarR[],
+                                     const int idx, const int didx[3], const int d, const real dh,
+                                     const MicroPhy_t *MicroPhy );
+#endif
 #ifdef CR_TWOMOMENT
 extern void CR_TwoMomentSource_1stCorr( real OneCell[NCOMP_TOTAL], const real VarC[NCOMP_TOTAL_PLUS_MAG],
                                         const real grad_pc[3], const real dt, const real dh, const MicroPhy_t *MicroPhy );
@@ -599,7 +606,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
    real FluxL_1D[NCOMP_TOTAL_PLUS_MAG], FluxR_1D[NCOMP_TOTAL_PLUS_MAG];
    int  ijk_out[3];
 #  ifdef MHD
-   real CC_B[3], CC_Engy;
+   real CC_B[3], CC_Engy, FC_B[3][2];
 #  endif
 
 // variables for OPT__1ST_FLUX_CORR == FIRST_FLUX_CORR_3D1D
@@ -715,25 +722,21 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 //                get the face-centered longitudinal B field
 #                 ifdef MHD
                   int  idx_b;
-                  real FC_B[2];
 
                   idx_b   = IDX321_B( idx_in_i, idx_in_j, idx_in_k, FLU_NXT, FLU_NXT, d );
-                  FC_B[0] = h_Mag_Array_F_In[TID][d][ idx_b           ];
-                  FC_B[1] = h_Mag_Array_F_In[TID][d][ idx_b + didx[d] ];
+                  FC_B[d][0] = h_Mag_Array_F_In[TID][d][ idx_b           ];
+                  FC_B[d][1] = h_Mag_Array_F_In[TID][d][ idx_b + didx[d] ];
 
-//                back up cell-centered longitudinal B field
-//                two-moment CR flux requires cell-centered B field
-#                 ifdef CR_TWOMOMENT
+//                back-up cell-centered longitudinal B fields since cosmic ray requires nearby cell-centered B fields
                   real BL = VarL[d][ MAG_OFFSET + d ];
                   real BR = VarR[d][ MAG_OFFSET + d ];
-#                 endif
 #                 endif
 
                   switch ( OPT__1ST_FLUX_CORR_SCHEME )
                   {
                      case RSOLVER_1ST_ROE:
 #                       ifdef MHD
-                        ResetLongB( VarL[d], VarC,    FC_B[0], d );  // reset the longitudinal B field
+                        ResetLongB( VarL[d], VarC,    FC_B[d][0], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_Roe ( d, FluxL[d], VarL[d], VarC,    MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -741,7 +744,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                                                   EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 
 #                       ifdef MHD
-                        ResetLongB( VarC,    VarR[d], FC_B[1], d );  // reset the longitudinal B field
+                        ResetLongB( VarC,    VarR[d], FC_B[d][1], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_Roe ( d, FluxR[d], VarC,    VarR[d], MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -752,11 +755,9 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
-//                      restore cell-centered lonitudinal B field
-#                       ifdef CR_TWOMOMENT
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
-#                       endif
 #                       endif
                      break;
 
@@ -777,7 +778,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 
                      case RSOLVER_1ST_HLLE:
 #                       ifdef MHD
-                        ResetLongB( VarL[d], VarC,    FC_B[0], d );  // reset the longitudinal B field
+                        ResetLongB( VarL[d], VarC,    FC_B[d][0], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_HLLE( d, FluxL[d], VarL[d], VarC,    MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -786,7 +787,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                                                   EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 
 #                       ifdef MHD
-                        ResetLongB( VarC,    VarR[d], FC_B[1], d );  // reset the longitudinal B field
+                        ResetLongB( VarC,    VarR[d], FC_B[d][1], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_HLLE( d, FluxR[d], VarC,    VarR[d], MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -798,18 +799,16 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
-//                      restore cell-centered lonitudinal B field
-#                       ifdef CR_TWOMOMENT
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
-#                       endif
 #                       endif
                      break;
 
 #                    ifdef MHD
                      case RSOLVER_1ST_HLLD:
 #                       ifdef MHD
-                        ResetLongB( VarL[d], VarC,    FC_B[0], d );  // reset the longitudinal B field
+                        ResetLongB( VarL[d], VarC,    FC_B[d][0], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_HLLD( d, FluxL[d], VarL[d], VarC,    MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -817,7 +816,7 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                                                   EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 
 #                       ifdef MHD
-                        ResetLongB( VarC,    VarR[d], FC_B[1], d );  // reset the longitudinal B field
+                        ResetLongB( VarC,    VarR[d], FC_B[d][1], d );  // reset the longitudinal B field
 #                       endif
                         Hydro_RiemannSolver_HLLD( d, FluxR[d], VarC,    VarR[d], MIN_DENS, MIN_PRES,
                                                   PassiveFloorMask,
@@ -828,11 +827,9 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                       ifdef MHD
                         VarC[ MAG_OFFSET + d ] = CC_B[d];
                         VarC[ ENGY           ] = CC_Engy;
-//                      restore cell-centered lonitudinal B field
-#                       ifdef CR_TWOMOMENT
+//                      restore the cell-centered longitudinal B field
                         VarL[d][ MAG_OFFSET + d ] = BL;
                         VarR[d][ MAG_OFFSET + d ] = BR;
-#                       endif
 #                       endif
                      break;
 #                    endif
@@ -848,6 +845,15 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 #                 endif
 
                } // for (int d=0; d<3; d++)
+
+//             add cosmic-ray fluxes
+#              ifdef CR_DIFFUSION
+               for (int d=0; d<3; d++)
+               {
+                  CR_AddDiffuseFlux_1Face( h_Flu_Array_F_In[TID], FluxL[d], FC_B[d][0], VarL[d], VarC,    idx_in-didx[d], didx, d, dh, &MicroPhy );
+                  CR_AddDiffuseFlux_1Face( h_Flu_Array_F_In[TID], FluxR[d], FC_B[d][1], VarC,    VarR[d], idx_in,         didx, d, dh, &MicroPhy );
+               }
+#              endif
 
 //             recalculate the first-order solution for a full time-step
                for (int d=0; d<3; d++)
@@ -878,8 +884,21 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
                for (int v=0; v<NCOMP_TOTAL; v++)
                   Update[v] = h_Flu_Array_F_In[TID][v][idx_in] - dt_dh*( dF[0][v] + dF[1][v] + dF[2][v] );
 
-#              ifdef CR_TWOMOMENT
+//             add the cosmic-ray source term of adiabatic work
+#              ifdef COSMIC_RAY
+               real p_cr = EoS_CREint2CRPres_CPUPtr( VarC[CRAY], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+               real div_V[3];
+               for (int d=0; d<3; d++)
+               {
+                  div_V[d]  = ( FluxR[d][DENS] > (real)0.0 )? FluxR[d][DENS]/VarC   [DENS] : FluxR[d][DENS]/VarR[d][DENS];
+                  div_V[d] -= ( FluxL[d][DENS] > (real)0.0 )? FluxL[d][DENS]/VarL[d][DENS] : FluxL[d][DENS]/VarC   [DENS];
+               } // for (int d=0; d<3; d++)
+
+               Update[CRAY] -= p_cr*dt_dh*( div_V[0] + div_V[1] + div_V[2] );
+#              endif
+
 //             add two-moment CR source terms
+#              ifdef CR_TWOMOMENT
                CR_TwoMomentSource_1stCorr( Update, VarC, grad_pc, dt, dh, &MicroPhy );
 #              endif
 
