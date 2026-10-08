@@ -38,12 +38,9 @@ void Microphysics_Init()
    MicroPhy.CR_stream          = CR_STREAM;
    MicroPhy.CR_Ec_source       = CR_EC_SOURCE;
    MicroPhy.CR_vmax            = CR_VMAX;
-// CR_SIGMA/CR_SIGMA_PERP are the physical inverse-diffusion coefficients sigma' of Jiang & Oh (2018),
-// defined so that the field-aligned diffusivity is D = 1/(3*sigma') (Eq. 25, Sec. 4.1.4).
-// Internally the two-moment source/transport terms use the "code-unit" opacity sigma_code = Vm*sigma'
-// (the same convention as Athena++; see src/pgen/cr_diffusion.cpp where D = vmax/(3*sigma)). This also
-// matches the streaming opacity sigma_adv, which already carries a factor of Vm via invlim=1/Vm.
-// --> multiply by CR_VMAX here so that D = 1/(3*CR_SIGMA) as intended.
+// Input parameters CR_SIGMA/CR_SIGMA_PERP are the physical inverse-diffusion coefficients
+// sigma' of Jiang & Oh (2018), defined so that the diffusivity is D = 1/(3*sigma').
+// While the two-moment use the "code-unit" opacity sigma_code = Vm*sigma'
    MicroPhy.CR_sigma           = CR_SIGMA      * CR_VMAX;
    MicroPhy.CR_sigma_perp      = CR_SIGMA_PERP * CR_VMAX;
    MicroPhy.CR_max_opacity     = CR_MAX_OPACITY;

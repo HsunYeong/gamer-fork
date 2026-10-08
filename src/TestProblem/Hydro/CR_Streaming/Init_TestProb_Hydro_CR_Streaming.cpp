@@ -95,10 +95,10 @@ void Validate()
    Aux_Error( ERROR_INFO, "MHD must be enabled (CR streaming/diffusion is field-aligned) !!\n" );
 #  endif
 
-// the two-moment CR_TWOMOMENT module is standalone: the gas may use a pure gamma-law EoS
-// (recommended, fully decoupled from CRAY) or the COSMIC_RAY EoS during the transition period
-#  if ( EOS != EOS_GAMMA  &&  EOS != EOS_COSMIC_RAY )
-   Aux_Error( ERROR_INFO, "EOS must be EOS_GAMMA (standalone) or EOS_COSMIC_RAY !!\n" );
+// the two-moment CR_TWOMOMENT module is standalone: the gas should use a pure gamma-law EoS
+// and the pressure is added only in the kernel.
+#  if ( EOS != EOS_GAMMA )
+   Aux_Error( ERROR_INFO, "EOS must be EOS_GAMMA !!\n" );
 #  endif
 
 #  ifdef CR_DIFFUSION
@@ -422,7 +422,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 //       CR_SOURCE=1 providing the CR-pressure back-reaction.  Ec = Pcr/(gamma_cr-1) = 3*Pcr.
 //       L (x<xc): rho=1.0, Pgas=6.7e4, Pcr=1.3e5 ;  R (x>xc): rho=0.2, Pgas=2.4e2, Pcr=2.4e2.
          const double Pcr_L = 1.3e5, Pcr_R = 2.4e2;
-         const double _gcrm1 = 1.0/(GAMMA_CR - 1.0);
+         const double _gcrm1 = 3.0;   // = 1/(gamma_cr-1) with gamma_cr = 4/3
          if      ( x < xc ) { Dens = 1.0;            Pgas = 6.7e4;             cr_E = Pcr_L*_gcrm1;             }
          else if ( x > xc ) { Dens = 0.2;            Pgas = 2.4e2;             cr_E = Pcr_R*_gcrm1;             }
          else               { Dens = 0.5*(1.0+0.2); Pgas = 0.5*(6.7e4+2.4e2); cr_E = 0.5*(Pcr_L+Pcr_R)*_gcrm1; }
@@ -437,7 +437,8 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 //       CR_Streaming_Dir = 0/1/2 -> grid-aligned 1D wave along x/y/z (B along same axis);
 //       CR_Streaming_Dir = 3     -> diagonal wave along (1,1,1) with B = (1,1,1)/sqrt(3).
          const double Rho0 = 1.0, Pg0 = 1.0, Pcr0 = 1.0, Delta = 1.0e-6, Sign = 1.0;
-         const double cs       = std::sqrt( GAMMA*Pg0 + GAMMA_CR*Pcr0 );   // rho0 = 1
+         const double gamma_cr  = 4.0/3.0;
+         const double cs       = std::sqrt( GAMMA*Pg0 + gamma_cr*Pcr0 );   // rho0 = 1
          const double delta_cs = Delta/cs;
          const bool    diag    = ( CR_Streaming_Dir == 3 );
          const double WaveL    = diag ? amr->BoxSize[0]/std::sqrt(3.0) : amr->BoxSize[CR_Streaming_Dir];
@@ -455,7 +456,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
             vz = ( CR_Streaming_Dir==2 ) ? vel : 0.0;
          }
          Pgas = ( 1.0 + delta_cs*wave*GAMMA    )*Pg0;
-         cr_E = ( 1.0 + delta_cs*wave*GAMMA_CR )*Pcr0/(GAMMA_CR - 1.0);    // Ec = 3*Pcr
+         cr_E = ( 1.0 + delta_cs*wave*gamma_cr )*Pcr0/(gamma_cr - 1.0);
          break;
       }
 
@@ -490,19 +491,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
    const double MomX = Dens*vx;
    const double MomY = Dens*vy;
    const double MomZ = Dens*vz;
-
-// gas pressure for the EoS
-// --> standalone two-moment build (EOS_GAMMA, no COSMIC_RAY): the gas is a pure gamma-law fluid;
-//     ALL CR back-reaction is handled by the two-moment source terms (CR_E/CR_F), so no CR pressure
-//     is folded into the gas energy here
-   double Pres = Pgas;
-#  ifdef COSMIC_RAY
-// COSMIC_RAY EoS path (transition only): the EoS needs a CRAY value, so add a constant background
-// CR pressure. This couples the gas EoS to CRAY and is exactly what the standalone build removes.
-   const double P_cr = 1.0;
-   Pres       += P_cr;
-   fluid[CRAY] = P_cr / (GAMMA_CR - 1.0);
-#  endif
+   const double Pres = Pgas;  // using the gamma-law EoS, not including the CR pressure
 
    const double Eint = EoS_DensPres2Eint_CPUPtr( Dens, Pres, fluid+NCOMP_FLUID, EoS_AuxArray_Flt,
                                                  EoS_AuxArray_Int, h_EoS_Table );

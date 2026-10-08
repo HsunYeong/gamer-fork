@@ -182,8 +182,7 @@ void CR_UpdateStreaming( real g_Output[][ CUBE(FLU_NXT) ],
                        const int NFlux, const int NVar_Out, const int NVar_In, const int NVar_B,
                        const int out_offset, const int in_offset,
                        const real dh, const MicroPhy_t *MicroPhy );
-void CR_UpdateOpacity( real *g_Output,
-                       const int OutStride,
+void CR_UpdateOpacity( real g_Output[][ CUBE(FLU_NXT) ],
                        const real g_CC_B[][ CUBE(FLU_NXT) ],
                        const int NVar_Out, const int NVar_In, const int NVar_B,
                        const int out_offset, const int in_offset, const int NSize,
@@ -241,6 +240,9 @@ static void Hydro_RiemannPredict( const real g_ConVar_In[][ CUBE(FLU_NXT) ],
 //
 //
 // Parameter   :  g_Flu_Array_In     : Array storing the input fluid variables
+//                                     --> non-const under CR_TWOMOMENT: the ADV_* work-array rows are
+//                                         updated in place during the half step because no other ghost-padded
+//                                         array persisting through the full step is available
 //                g_Flu_Array_Out    : Array to store the output fluid variables
 //                g_Mag_Array_In     : Array storing the input B field (for MHD only)
 //                g_Mag_Array_Out    : Array to store the output B field (for MHD only)
@@ -302,7 +304,11 @@ static void Hydro_RiemannPredict( const real g_ConVar_In[][ CUBE(FLU_NXT) ],
 #ifdef __CUDACC__
 __global__
 void CUFLU_FluidSolver_MHM(
+#ifdef CR_TWOMOMENT
          real   g_Flu_Array_In [][NCOMP_TOTAL][ CUBE(FLU_NXT) ],
+#else
+   const real   g_Flu_Array_In [][NCOMP_TOTAL][ CUBE(FLU_NXT) ],
+#endif
          real   g_Flu_Array_Out[][NCOMP_TOTAL][ CUBE(PS2) ],
    const real   g_Mag_Array_In [][NCOMP_MAG][ FLU_NXT_P1*SQR(FLU_NXT) ],
          real   g_Mag_Array_Out[][NCOMP_MAG][ PS2P1*SQR(PS2) ],
@@ -330,7 +336,11 @@ void CUFLU_FluidSolver_MHM(
    const EoS_t EoS, const MicroPhy_t MicroPhy )
 #else
 void CPU_FluidSolver_MHM(
+#ifdef CR_TWOMOMENT
          real   g_Flu_Array_In [][NCOMP_TOTAL][ CUBE(FLU_NXT) ],
+#else
+   const real   g_Flu_Array_In [][NCOMP_TOTAL][ CUBE(FLU_NXT) ],
+#endif
          real   g_Flu_Array_Out[][NCOMP_TOTAL][ CUBE(PS2) ],
    const real   g_Mag_Array_In [][NCOMP_MAG][ FLU_NXT_P1*SQR(FLU_NXT) ],
          real   g_Mag_Array_Out[][NCOMP_MAG][ PS2P1*SQR(PS2) ],
@@ -477,7 +487,8 @@ void CPU_FluidSolver_MHM(
 //       update opacity before half-step flux computation
 //       Uses CENTRAL DIFFERENCE grad(Pc) - requires ±1 neighbors
 //       output: g_Flu_Array_In[P], input: same array, B from g_PriVar_1PG+MAG_OFFSET
-         CR_UpdateOpacity( reinterpret_cast<real*>(g_Flu_Array_In[P]), CUBE(FLU_NXT),
+//       --> writes the ADV_* rows of the input array in place (see the function header)
+         CR_UpdateOpacity( g_Flu_Array_In[P],
                            g_PriVar_1PG+MAG_OFFSET,
                            FLU_NXT, FLU_NXT, FLU_NXT, 1, 1, FLU_NXT-2, dh, &MicroPhy );
 #        ifdef __CUDACC__
@@ -555,7 +566,7 @@ void CPU_FluidSolver_MHM(
 //          (same call as at the end of Hydro_RiemannPredict())
             if ( Iteration > 0 )
             {
-               CR_UpdateOpacity( reinterpret_cast<real*>(g_PriVar_Half_1PG), CUBE(FLU_NXT),
+               CR_UpdateOpacity( g_PriVar_Half_1PG,
                                  g_PriVar_Half_1PG+MAG_OFFSET,
                                  N_HF_VAR, N_HF_VAR, N_HF_VAR, 1, 1, N_HF_VAR-2, dh, &MicroPhy );
 #              ifdef __CUDACC__
@@ -1097,7 +1108,7 @@ void Hydro_RiemannPredict( const real g_ConVar_In[][ CUBE(FLU_NXT) ],
    __syncthreads();
 #  endif
 // NSize=N_HF_VAR-2 (interior cells), out_offset=1 (skip boundary), in_offset=1
-   CR_UpdateOpacity( reinterpret_cast<real*>(g_PriVar_Half), CUBE(FLU_NXT),
+   CR_UpdateOpacity( g_PriVar_Half,
                      g_PriVar_Half+MAG_OFFSET,
                      N_HF_VAR, N_HF_VAR, N_HF_VAR, 1, 1, N_HF_VAR-2, dh, MicroPhy );
 #  endif

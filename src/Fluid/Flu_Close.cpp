@@ -60,8 +60,7 @@ extern void CR_TwoMomentSource_1stCorr( real OneCell[NCOMP_TOTAL], const real Va
 extern void CR_TwoMomentFlux_1stCorr( const int d, const real L_In[], const real R_In[], real Flux_Out[],
                                       const real dh, const MicroPhy_t *MicroPhy );
 extern void CR_UpdateOpacity_OneCell( real  OneCell[NCOMP_TOTAL_PLUS_MAG], const real FluIn[][ CUBE(FLU_NXT) ],
-                                      const int idx_in, const int didx[3], const real _2dh, const real invlim,
-                                      const MicroPhy_t *MicroPhy );
+                                      const int idx_in, const int didx[3], const real _2dh, const MicroPhy_t *MicroPhy );
 extern void CR_UpdateStreaming_OneCell( const real Ec, const real rho,
                                         const real Bx, const real By, const real Bz,
                                         const real grad_pc[3], const real vmax,
@@ -701,12 +700,11 @@ void CorrectUnphysical( const int lv, const int NPG, const int *PID0_List,
 //             update opacity
 #              ifdef CR_TWOMOMENT
                const real _2dh   = (real)0.5 / dh;
-               const real invlim = (real)1.0 / MicroPhy.CR_vmax;
-               CR_UpdateOpacity_OneCell( VarC, h_Flu_Array_F_In[TID], idx_in, didx, _2dh, invlim, &MicroPhy );
+               CR_UpdateOpacity_OneCell( VarC, h_Flu_Array_F_In[TID], idx_in, didx, _2dh, &MicroPhy );
                for (int d=0; d<3; d++)
                {
-                  CR_UpdateOpacity_OneCell( VarL[d], h_Flu_Array_F_In[TID], idx_in - didx[d], didx, _2dh, invlim, &MicroPhy );
-                  CR_UpdateOpacity_OneCell( VarR[d], h_Flu_Array_F_In[TID], idx_in + didx[d], didx, _2dh, invlim, &MicroPhy );
+                  CR_UpdateOpacity_OneCell( VarL[d], h_Flu_Array_F_In[TID], idx_in - didx[d], didx, _2dh, &MicroPhy );
+                  CR_UpdateOpacity_OneCell( VarR[d], h_Flu_Array_F_In[TID], idx_in + didx[d], didx, _2dh, &MicroPhy );
                }
 #              endif
 

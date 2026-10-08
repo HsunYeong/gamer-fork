@@ -12,7 +12,7 @@
 #    8 = classic CR_ShockTube port        (CR locked to gas via CR_SIGMA/CR_STREAM=0, CR_SOURCE=1)
 #    9 = classic CR_SoundWave port        (CR-modified acoustic wave, CR locked to gas as in 8)
 #   10 = colliding-flow CR-modified shock (Sec 4.2.2, Fig. 11); set CR_Streaming_Ec0 per run
-#   11 = 3D CR-driven blast wave           (3D generalization of Test 6; B direction set by CR_Streaming_B_theta/B_phi)
+#   11 = 3D CR-driven blast wave          (3D generalization of Test 6)
 
 CR_Streaming_Test          0              # selects which test problem to run (see above)
 CR_Streaming_Dir           0              # streaming/diffusion axis for the 1D tests (0/1/2 = x/y/z)

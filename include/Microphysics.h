@@ -21,19 +21,15 @@
 //
 //                CR_source          : Flag for enabling cosmic-ray source terms (runtime parameter: CR_SOURCE)
 //                CR_stream          : Flag for enabling cosmic-ray streaming (runtime parameter: CR_STREAM)
-//                CR_Ec_source       : Flag for including the CR energy source term in the two-moment update;
-//                                     0 solves the conservative system dEc/dt = -div(Fc) (Eq. 19 of
-//                                     Jiang & Oh 2018, used by their streaming test problems)
-//                                     (runtime parameter: CR_EC_SOURCE)
+//                CR_Ec_source       : Flag for including the CR energy source term (runtime parameter: CR_EC_SOURCE)
 //                CR_vmax            : Maximum velocity (effective speed of light) (runtime parameter: CR_VMAX)
-//                CR_sigma           : Code-unit opacity = Vm*CR_SIGMA, where CR_SIGMA is the physical inverse
-//                                     diffusion coefficient sigma' (D = 1/(3*CR_SIGMA)) (runtime parameter: CR_SIGMA)
+//                CR_sigma           : Parallel opacity in code-unit = Vm*CR_SIGMA) (runtime parameter: CR_SIGMA)
 //                CR_sigma_perp      : Perpendicular code-unit opacity = Vm*CR_SIGMA_PERP (runtime parameter: CR_SIGMA_PERP)
-//                CR_max_opacity     : Maximum opacity for cosmic-ray streaming (runtime parameter: CR_MAX_OPACITY)
+//                CR_max_opacity     : Maximum opacity (runtime parameter: CR_MAX_OPACITY)
 //                CR_tau_asym_lim    : Optical depth limit for asymptotic expansion (runtime parameter: CR_TAU_ASYM_LIM)
 //                CR_taufact         : Tau factor for optical depth calculation (runtime parameter: CR_TAUFACT)
-//                CR_vel_flx_flag    : Flag to add CR sound speed to v_diff (runtime parameter: CR_VEL_FLX_FLAG)
-//                CR_cfl             : CFL safety factor for cosmic-ray streaming time-step (runtime parameter: CR_CFL)
+//                CR_vel_flx_flag    : Flag for adding CR sound speed to v_diff (runtime parameter: CR_VEL_FLX_FLAG)
+//                CR_cfl             : CFL safety factor for two-moment cosmic-ray (runtime parameter: CR_CFL)
 //
 // Method      :  None --> It seems that CUDA does not support functions in a struct
 //-------------------------------------------------------------------------------------------------------

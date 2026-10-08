@@ -62,8 +62,8 @@ void EoS_SetAuxArray_Gamma( double AuxArray_Flt[], int AuxArray_Int[] )
                                    : MOLECULAR_WEIGHT;
    AuxArray_Flt[5] = 1.0 / AuxArray_Flt[4];
 #  ifdef CR_TWOMOMENT
-   AuxArray_Flt[6] = GAMMA_CR;
-   AuxArray_Flt[7] = GAMMA_CR - 1.0;
+   AuxArray_Flt[6] = 4.0/3.0; // GAMMA_CR
+   AuxArray_Flt[7] = 1.0/3.0; // GAMMA_CR - 1
 #  endif
 
 } // FUNCTION : EoS_SetAuxArray_Gamma

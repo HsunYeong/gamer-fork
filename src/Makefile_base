@@ -379,7 +379,7 @@ vpath %.cu     Microphysics/CosmicRayDiffusion
 endif # CR_DIFFUSION
 
 
-# cosmic-ray streaming source files (included only if "CR_TWOMOMENT" is turned on)
+# cosmic-ray two-moment source files (included only if "CR_TWOMOMENT" is turned on)
 # ------------------------------------------------------------------------------------
 ifeq "$(filter -DCR_TWOMOMENT, $(SIMU_OPTION))" "-DCR_TWOMOMENT"
 CPU_FILE    += CPU_CR_TwoMoment.cpp

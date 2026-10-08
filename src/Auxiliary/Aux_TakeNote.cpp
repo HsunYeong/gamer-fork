@@ -185,7 +185,7 @@ void Aux_TakeNote()
 #     else // #ifdef COSMIC_RAY
       fprintf( Note, "COSMIC_RAY                      OFF\n" );
 #     endif // #ifdef COSMIC_RAY ... else ...
-//    CR_TWOMOMENT is a standalone module and may be enabled without COSMIC_RAY
+
 #     ifdef CR_TWOMOMENT
       fprintf( Note, "CR_TWOMOMENT                    ON\n" );
 #     else
