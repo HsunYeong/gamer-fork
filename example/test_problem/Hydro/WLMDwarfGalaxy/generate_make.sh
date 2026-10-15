@@ -5,9 +5,11 @@ PYTHON=python3
 args=(
 #      --machine=spock_intel
 #      --mhd=true
-#      --comsic_ray=true
+#      --cosmic_ray=true
 #      --cr_diffusion=true
 #      --cr_two_moment=true
+#      --tracer=true
+#      --gsl=true
 )
 
 ${PYTHON} configure.py --mpi=true --hdf5=true --fftw=FFTW3 --gpu=true --model=HYDRO \

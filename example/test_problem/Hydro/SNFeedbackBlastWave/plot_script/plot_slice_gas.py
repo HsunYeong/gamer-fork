@@ -34,11 +34,38 @@ center_mode = 'c'
 dpi         = 150
 
 
+ds0   = yt.load( '../Data_000000' )
+dh    = ds0.parameters["CellSize"][3]
+dd0   = ds0.all_data()
+ptype = dd0['ParType']
+cen   = ds0.domain_center
+dx    = dd0['ParPosX'] - cen[0]
+dy    = dd0['ParPosY'] - cen[1]
+dz    = dd0['ParPosZ'] - cen[2]
+r2    = dx**2 + dy**2 + dz**2
+print(r2)
+mask = (ptype == 0) & (r2 < (16*dh)**2)
+
+PUID = dd0['ParPUID'][mask].d
+print(len(PUID))
 yt.enable_parallelism()
 
 ts = yt.DatasetSeries( [ prefix+'/Data_%06d'%idx for idx in range(idx_start, idx_end+1, didx) ] )
 
+def tracer( pfilter, data ):
+   filter = data[ 'all', 'ParType' ] == 0
+   return filter
+
+def tracer_neighbor( pfilter, data ):
+   filter = np.isin( data[ 'all', 'ParPUID' ], PUID )
+   return filter
+
+yt.add_particle_filter( 'tracer',           function=tracer,           filtered_type='all',  requires=['ParType'] )
+yt.add_particle_filter( 'tracer_neighbor',  function=tracer_neighbor,  filtered_type='all',  requires=['ParPUID'] )
+
 for ds in ts.piter():
+   ds.add_particle_filter( 'tracer' )
+   ds.add_particle_filter( 'tracer_neighbor' )
 
    ad            = ds.all_data()
 
@@ -64,6 +91,11 @@ for ds in ts.piter():
 
    ds.add_field( ('gamer','cell_metal_mass'), function=_cell_metal_mass, units='code_mass', sampling_type='cell' )
 
+   def _tracer_number_density(field, data):
+       return data[('deposit', 'tracer_count')]/data['cell_volume']
+
+   ds.add_field( ('gamer','tracer_number_density'), function=_tracer_number_density, units='1/code_length**3', sampling_type='cell' )
+
 
    # Density
    sz = yt.SlicePlot( ds, 'z', 'density', center=center_mode )
@@ -74,7 +106,7 @@ for ds in ts.piter():
    sz.set_axes_unit( 'pc' )
    sz.annotate_timestamp( time_unit='Myr', corner='upper_right', time_format='t = {time:.1f} {units}' )
    sz.annotate_grids( periodic=False )
-   sz.annotate_particles( width=ds.domain_width[2], p_size=80.0, col='y', marker='*' )
+   sz.annotate_particles( width=ds.domain_width[2], p_size=10.0, col='y', marker='o', ptype='tracer_neighbor' )
    sz.annotate_text( (-400, -370), 'Total internal energy = {: >10.2e}'.format( ad.quantities.total_quantity("thermal_energy").in_units("erg") ), coord_system='plot' )
    sz.annotate_text( (-400, -400), 'Total kinetic energy  = {: >10.2e}'.format( ad.quantities.total_quantity("kinetic_energy").in_units("erg") ), coord_system='plot' )
    sz.save( mpl_kwargs={"dpi":dpi} )
@@ -82,6 +114,15 @@ for ds in ts.piter():
    sz.zoom( 16 )
    sz.save( '%s_Slice_z_density_zoom-in.png'%ds, mpl_kwargs={"dpi":dpi} )
 
+   # Tracer density
+   sz = yt.SlicePlot( ds, 'z', 'tracer_number_density', center=center_mode )
+   sz.set_cmap( 'tracer_number_density', colormap )
+   sz.set_unit( 'tracer_number_density', '1/cm**3' )
+   sz.set_log(  'tracer_number_density', False )
+   sz.set_axes_unit( 'pc' )
+   sz.annotate_timestamp( time_unit='Myr', corner='upper_right', time_format='t = {time:.1f} {units}' )
+   sz.annotate_grids( periodic=False )
+   sz.save( mpl_kwargs={"dpi":dpi} )
 
    # Temparature
    sz = yt.SlicePlot( ds, 'z', 'temperature', center=center_mode  )

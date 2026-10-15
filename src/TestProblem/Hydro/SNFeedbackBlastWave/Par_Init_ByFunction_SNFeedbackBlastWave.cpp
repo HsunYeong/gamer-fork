@@ -6,7 +6,10 @@ extern double SNBlast_ParMass;
 extern double SNBlast_ParCenter[3];
 extern double SNBlast_ParVelocity[3];
 extern double SNBlast_ParMetalMassFrac;
-
+#ifdef TRACER
+extern double SNBlast_Use_Tracers;
+extern int    SNBlast_NPar[3];
+#endif
 
 
 
@@ -55,26 +58,113 @@ void Par_Init_ByFunction_SNFeedbackBlastWave( const long NPar_ThisRank, const lo
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ...\n", __FUNCTION__ );
 
 
-// assume there is only one particle in the box for this test problem
-   for (long p=0; p<NPar_ThisRank; p++)
-   {
-      ParMass[p] = (real_par)SNBlast_ParMass;
-      ParPosX[p] = (real_par)SNBlast_ParCenter[0];
-      ParPosY[p] = (real_par)SNBlast_ParCenter[1];
-      ParPosZ[p] = (real_par)SNBlast_ParCenter[2];
-      ParVelX[p] = (real_par)SNBlast_ParVelocity[0];
-      ParVelY[p] = (real_par)SNBlast_ParVelocity[1];
-      ParVelZ[p] = (real_par)SNBlast_ParVelocity[2];
-      ParTime[p] = (real_par)Time[0];
-      ParType[p] = PTYPE_STAR;
+   long NPar_All = 1;
+   if ( SNBlast_Use_Tracers ) NPar_All += SNBlast_NPar[0]*SNBlast_NPar[1]*SNBlast_NPar[2];
 
+   if ( NPar_All != NPar_AllRank )
+      Aux_Error( ERROR_INFO, "total number of particles found [%ld] != expect [%ld] !!\n",
+                 NPar_All, NPar_AllRank );
+
+// define the particle attribute arrays
+   real_par *ParFltData_AllRank[PAR_NATT_FLT_TOTAL];
+   for (int v=0; v<PAR_NATT_FLT_TOTAL; v++)   ParFltData_AllRank[v] = NULL;
+   long_par *ParIntData_AllRank[PAR_NATT_INT_TOTAL];
+   for (int v=0; v<PAR_NATT_INT_TOTAL; v++)   ParIntData_AllRank[v] = NULL;
+
+// only the master rank will construct the initial condition
+   if ( MPI_Rank == 0 ) {
+
+//    allocate memory for particle attribute arrays
+      ParFltData_AllRank[PAR_MASS] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_POSX] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_POSY] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_POSZ] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_VELX] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_VELY] = new real_par [NPar_AllRank];
+      ParFltData_AllRank[PAR_VELZ] = new real_par [NPar_AllRank];
+      ParIntData_AllRank[PAR_TYPE] = new long_par [NPar_AllRank];
+      ParIntData_AllRank[PAR_PUID] = new long_par [NPar_AllRank];
 #     ifdef FEEDBACK
-      AllAttributeFlt[Idx_ParSNIITime][p]  = (real_par)Time[0] + (real_par)FB_RESOLVED_SNEII_DELAY_TIME;
+      ParFltData_AllRank[Idx_ParSNIITime ] = new real_par [NPar_AllRank];
 #     endif
+      ParFltData_AllRank[Idx_ParMetalFrac] = new real_par [NPar_AllRank];
 
-      AllAttributeFlt[Idx_ParMetalFrac][p] = (real_par)SNBlast_ParMetalMassFrac;
+      long p = 0;
 
-   } // for (long p=0; p<NPar_AllRank; p++)
+      ParFltData_AllRank[PAR_MASS][p] = (real_par)SNBlast_ParMass;
+      ParFltData_AllRank[PAR_POSX][p] = (real_par)SNBlast_ParCenter[0];
+      ParFltData_AllRank[PAR_POSY][p] = (real_par)SNBlast_ParCenter[1];
+      ParFltData_AllRank[PAR_POSZ][p] = (real_par)SNBlast_ParCenter[2];
+      ParFltData_AllRank[PAR_VELX][p] = (real_par)SNBlast_ParVelocity[0];
+      ParFltData_AllRank[PAR_VELY][p] = (real_par)SNBlast_ParVelocity[1];
+      ParFltData_AllRank[PAR_VELZ][p] = (real_par)SNBlast_ParVelocity[2];
+      ParIntData_AllRank[PAR_TYPE][p] = PTYPE_STAR;
+      ParIntData_AllRank[PAR_PUID][p] = PUID_TBA;
+#     ifdef FEEDBACK
+      ParFltData_AllRank[Idx_ParSNIITime ][p] = (real_par)Time[0] + (real_par)FB_RESOLVED_SNEII_DELAY_TIME;
+#     endif
+      ParFltData_AllRank[Idx_ParMetalFrac][p] = (real_par)SNBlast_ParMetalMassFrac;
+
+      p++;
+
+#     ifdef TRACER
+      if ( SNBlast_Use_Tracers ) {
+
+         const double delta_p[3] = { amr->BoxSize[0]/(SNBlast_NPar[0]+1),
+                                     amr->BoxSize[1]/(SNBlast_NPar[1]+1),
+                                     amr->BoxSize[2]/(SNBlast_NPar[2]+1) };
+
+         for (long kk=0; kk<SNBlast_NPar[2]; kk++)
+         for (long jj=0; jj<SNBlast_NPar[1]; jj++)
+         for (long ii=0; ii<SNBlast_NPar[0]; ii++)
+         {
+
+//          tracer particles have no mass
+            ParFltData_AllRank[PAR_MASS][p] = (real_par)0.0;
+
+//          assign positions
+            ParFltData_AllRank[PAR_POSX][p] = real_par( (ii+1)*delta_p[0] );
+            ParFltData_AllRank[PAR_POSY][p] = real_par( (jj+1)*delta_p[1] );
+            ParFltData_AllRank[PAR_POSZ][p] = real_par( (kk+1)*delta_p[2] );
+
+//          set velocities to zero (these will be updated from the grid later)
+            ParFltData_AllRank[PAR_VELX][p] = (real_par)0.0;
+            ParFltData_AllRank[PAR_VELY][p] = (real_par)0.0;
+            ParFltData_AllRank[PAR_VELZ][p] = (real_par)0.0;
+
+//          set the particle type to be tracer
+            ParIntData_AllRank[PAR_TYPE][p] = PTYPE_TRACER;
+            ParIntData_AllRank[PAR_PUID][p] = PUID_TBA;
+#           ifdef FEEDBACK
+            ParFltData_AllRank[Idx_ParSNIITime ][p] = (real_par)0.0;
+#           endif
+            ParFltData_AllRank[Idx_ParMetalFrac][p] = (real_par)0.0;
+
+
+            p++;
+         }
+      } // if ( ParTest_Use_Tracers )
+#     endif
+   } // if ( MPI_Rank == 0 )
+
+// send particle attributes from the master rank to all ranks
+   Par_ScatterParticleData( NPar_ThisRank, NPar_AllRank, _PAR_MASS|_PAR_POS|_PAR_VEL|
+#                           ifdef FEEDBACK
+                            BIDX(Idx_ParSNIITime)|
+#                           endif
+                            BIDX(Idx_ParMetalFrac), _PAR_TYPE|_PAR_PUID,
+                            ParFltData_AllRank, ParIntData_AllRank, AllAttributeFlt, AllAttributeInt );
+
+// synchronize all particles to the physical time on the base level
+   for (long p=0; p<NPar_ThisRank; p++)
+      ParTime[p] = (real_par)Time[0];
+
+// free resource
+   if ( MPI_Rank == 0 )
+   {
+      for (int v=0; v<PAR_NATT_FLT_TOTAL; v++)   delete [] ParFltData_AllRank[v];
+      for (int v=0; v<PAR_NATT_INT_TOTAL; v++)   delete [] ParIntData_AllRank[v];
+   }
 
 
    if ( MPI_Rank == 0 )    Aux_Message( stdout, "%s ... done\n", __FUNCTION__ );

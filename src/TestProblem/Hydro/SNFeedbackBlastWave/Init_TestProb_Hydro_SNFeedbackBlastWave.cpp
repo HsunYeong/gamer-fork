@@ -13,6 +13,10 @@ static double SNBlast_MetalMassFrac_Bg; // background metal mass fraction (metal
        double SNBlast_ParCenter[3];     // supernova progenitor initial center
        double SNBlast_ParVelocity[3];   // supernova progenitor initial velocity
        double SNBlast_ParMetalMassFrac; // supernova progenitor initial metal mass fraction (metal_mass / particle_mass)
+#ifdef TRACER
+       bool   SNBlast_Use_Tracers;      // whether or not to include tracers
+       int    SNBlast_NPar[3];          // particles on a side
+#endif
 // =======================================================================================
 
 // problem-specific function prototypes
@@ -147,7 +151,12 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "SNBlast_ParVelocity_Y",    &SNBlast_ParVelocity[1],    0.0,          NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "SNBlast_ParVelocity_Z",    &SNBlast_ParVelocity[2],    0.0,          NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "SNBlast_ParMetalMassFrac", &SNBlast_ParMetalMassFrac,  0.0,          0.0,              1.0               );
-
+#  ifdef TRACER
+   LOAD_PARA( load_mode, "SNBlast_Use_Tracers",      &SNBlast_Use_Tracers,       false,        Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "SNBlast_NParX",            &SNBlast_NPar[0],           32,           2,                512               );
+   LOAD_PARA( load_mode, "SNBlast_NParY",            &SNBlast_NPar[1],           32,           2,                512               );
+   LOAD_PARA( load_mode, "SNBlast_NParZ",            &SNBlast_NPar[2],           32,           2,                512               );
+#  endif
 } // FUNCITON : LoadInputTestProb
 
 
@@ -234,6 +243,14 @@ void SetParameter()
    }
 
 
+// overwrite the total number of particles
+#  ifdef TRACER
+   amr->Par->NPar_Active_AllRank = 1;
+   if ( SNBlast_Use_Tracers )    amr->Par->NPar_Active_AllRank += SNBlast_NPar[0]*SNBlast_NPar[1]*SNBlast_NPar[2];
+   PRINT_RESET_PARA( amr->Par->NPar_Active_AllRank, FORMAT_LONG, "(PAR_NPAR in Input__Parameter)" );
+#  endif
+
+
 // (4) make a note
    if ( MPI_Rank == 0 )
    {
@@ -257,6 +274,12 @@ void SetParameter()
                                                                                         SNBlast_ParVelocity[1],
                                                                                         SNBlast_ParVelocity[2]   );
       Aux_Message( stdout, "  SN initial metal fracion  = %13.7e\n",                    SNBlast_ParMetalMassFrac );
+#     ifdef TRACER
+      Aux_Message( stdout, "  include tracer particles  = %d\n",                        SNBlast_Use_Tracers      );
+      Aux_Message( stdout, "  number of particles (x)   = %d\n",                        SNBlast_NPar[0]          );
+      Aux_Message( stdout, "                      (y)   = %d\n",                        SNBlast_NPar[1]          );
+      Aux_Message( stdout, "                      (z)   = %d\n",                        SNBlast_NPar[2]          );
+#     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
 

@@ -7,9 +7,9 @@ static const int      maxfbDiameter  =   FB_GHOST_SIZE + 1;  // maximum diameter
 static       real  ***fbDepositWeighting[FB_GHOST_SIZE + 1]; // array of weighting for each feedback diameter
 
 #if ( defined COSMIC_RAY  ||  defined CR_TWOMOMENT )
-static const int      nVarRecSNeII   = 25;                   // number of variables to be record for each SNII
+static const int      nVarRecSNeII   = 26;                   // number of variables to be record for each SNII
 #else
-static const int      nVarRecSNeII   = 24;                   // number of variables to be record for each SNII
+static const int      nVarRecSNeII   = 25;                   // number of variables to be record for each SNII
 #endif
 static const int      maxNumRecSNeII = 100;                  // maximum  number of recorded SNeII in each OpenMP thread
 static       int     *numRecSNeII    = NULL;                 // number of recorded SNeII in each OpenMP thread
@@ -179,6 +179,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
                                        ParAttFlt[        PAR_VELY][par_idx],
                                        ParAttFlt[        PAR_VELZ][par_idx] };              // velocity of particle
       const long_par par_type      =   ParAttInt[        PAR_TYPE][par_idx];                // type of particle
+      const long_par par_puid      =   ParAttInt[        PAR_PUID][par_idx];                // uid of particle
 #     ifdef STAR_FORMATION
       const real_par par_creTime   =   ParAttFlt[  Idx_ParCreTime][par_idx];                // creation time of particle
 #     else
@@ -357,6 +358,7 @@ int FB_Resolved_SNeII( const int lv, const double TimeNew, const double TimeOld,
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = fbDiameter*dh;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = fbFluidMass;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_idx;
+         recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_puid;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_mass;
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_pos[0];
          recordSNeII[TID][ nVarRecSNeII*numRecSNeII[TID] + (nVar++) ] = par_pos[1];
@@ -597,8 +599,8 @@ void Record_FB_Resolved_SNeII( const int lv )
             fprintf( File, "%16s%16s%16s%16s%16s%16s%16s",
                      "SNII_Time", "SNII_Energy", "SNII_IntEnergy", "SNII_Mass", "SNII_Metal", "FB_Diameter", "FB_Flu_Mass" );
 #           endif
-            fprintf( File, "%16s%16s%16s%16s%16s",
-                     "Par_ID", "Par_Mass", "Par_PosX", "Par_PosY", "Par_PosZ" );
+            fprintf( File, "%16s%16s%16s%16s%16s%16s",
+                     "Par_ID", "Par_UID", "Par_Mass", "Par_PosX", "Par_PosY", "Par_PosZ" );
             fprintf( File, "%16s%16s%16s%16s",
                      "Par_VelX", "Par_VelY", "Par_VelZ", "Par_MetalMass" );
             fprintf( File, "%16s%16s%16s%16s%16s%16s\n",

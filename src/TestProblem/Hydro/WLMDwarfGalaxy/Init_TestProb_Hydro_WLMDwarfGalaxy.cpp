@@ -23,6 +23,11 @@ static bool   WLMDwarfGalaxy_ResetB_VecPot;         // use vector potential to r
        double WLMDwarfGalaxy_r0;                    // r0 parameter (in kpc) to initialize vector potential ##WLMDwarfGalaxy_UniformB=1 ONLY##
        double WLMDwarfGalaxy_rho0;                  // rho0 parameter (in code unit) to initialize vector potential ##WLMDwarfGalaxy_UniformB=1 ONLY##
 #endif
+#ifdef TRACER
+       bool   WLMDwarfGalaxy_AddTracer;
+       int    WLMDwarfGalaxy_AddTracerMinLv;
+       double WLMDwarfGalaxy_TracerMass;
+#endif
 // =======================================================================================
 
 
@@ -39,6 +44,9 @@ double MHD_ResetByUser_BField_WLMDwarfGalaxy( const double x, const double y, co
                                               const double dt, const int lv, const char Component, double AuxArray[], const double B_in,
                                               const bool UseVecPot, const real *Ax, const real *Ay, const real *Az,
                                               const int i, const int j, const int k );
+#endif
+#if ( defined TRACER && defined SUPPORT_GSL )
+void Init_AddTracer_WLMDwarfGalaxy();
 #endif
 
 
@@ -214,6 +222,11 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_r0",                     &WLMDwarfGalaxy_r0,                      30.0,         NoMin_double,     NoMax_double      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_rho0",                   &WLMDwarfGalaxy_rho0,                    1.0,          NoMin_double,     NoMax_double      );
 #  endif
+#  ifdef TRACER
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_AddTracer",              &WLMDwarfGalaxy_AddTracer,               false,        Useless_bool,     Useless_bool      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_AddTracerMinLv",         &WLMDwarfGalaxy_AddTracerMinLv,          MAX_LEVEL-1,  0,                MAX_LEVEL         );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_TracerMass",             &WLMDwarfGalaxy_TracerMass,              1.0e-9,       0.0,              NoMax_double      );
+#  endif
 } // FUNCITON : LoadInputTestProb
 
 
@@ -252,6 +265,10 @@ void SetParameter()
    delete ReadPara;
 
 // check the runtime parameters
+#  if ( defined TRACER && !defined SUPPORT_GSL )
+   if ( WLMDwarfGalaxy_AddTracer )
+      Aux_Error( ERROR_INFO, "Must enable SUPPORT_GSL to set WLMDwarfGalaxy_AddTracer = 1 !!\n" );
+#  endif
 
 // convert to code units
    WLMDwarfGalaxy_PEHeatingScaleLength *= Const_kpc / UNIT_L;
@@ -299,6 +316,11 @@ void SetParameter()
       Aux_Message( stdout, "  WLMDwarfGalaxy_B0                   = %13.7e gauss\n",          WLMDwarfGalaxy_B0                                      );
       Aux_Message( stdout, "  WLMDwarfGalaxy_r0                   = %13.7e kpc\n",            WLMDwarfGalaxy_r0                                      );
       Aux_Message( stdout, "  WLMDwarfGalaxy_rho0                 = %13.7e code density\n",   WLMDwarfGalaxy_rho0                                    );
+#     endif
+#     ifdef TRACER
+      Aux_Message( stdout, "  add tracer particles                = %s\n",                    (WLMDwarfGalaxy_AddTracer)?"YES":"NO"                  );
+      Aux_Message( stdout, "  min lv to add tracer particles      = %d\n",                    WLMDwarfGalaxy_AddTracerMinLv                          );
+      Aux_Message( stdout, "  equivalent tracer mass              = %13.7e gauss\n",          WLMDwarfGalaxy_TracerMass * UNIT_M/Const_Msun          );
 #     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }
@@ -659,6 +681,10 @@ void Init_TestProb_Hydro_WLMDwarfGalaxy()
    Init_Function_BField_User_Ptr = SetBFieldIC;
    MHD_ResetByUser_BField_Ptr    = MHD_ResetByUser_BField_WLMDwarfGalaxy;
    MHD_ResetByUser_VecPot_Ptr    = (WLMDwarfGalaxy_ResetB_VecPot) ? MHD_ResetByUser_VecPot_WLMDwarfGalaxy : NULL;
+#  endif
+#  if ( defined TRACER && defined SUPPORT_GSL )
+   if ( WLMDwarfGalaxy_AddTracer )
+   Init_User_Ptr                 = Init_AddTracer_WLMDwarfGalaxy;
 #  endif
 #  ifdef SUPPORT_HDF5
    Output_HDF5_InputTest_Ptr     = LoadInputTestProb;

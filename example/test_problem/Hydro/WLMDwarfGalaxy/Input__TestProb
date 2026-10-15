@@ -5,8 +5,14 @@ WLMDwarfGalaxy_PEHeatingCoreLength    0.4          # core radius of the photoele
 WLMDwarfGalaxy_PEHeatingCoreHeight    0.0          # core height of the photoelectric heating rate distribution [0.0]
 WLMDwarfGalaxy_PEHeatingRate0         2.6e-27      # central photoelectric heating rate (in erg/cm^3/s/n_H) [2.6e-27]
 WLMDwarfGalaxy_PEHeatingRateBg        2.1e-29      # background photoelectric heating rate (in erg/cm^3/s/n_H) [2.1e-29]
+# MHD
 WLMDwarfGalaxy_ResetB_VecPot          1            # use vector potential to reset magnetic field [1]
 WLMDwarfGalaxy_UniformB               0            # use uniform magnetic field [1]
 WLMDwarfGalaxy_B0X                    0.0          # magnetic field along x (in gauss) [0.0]
 WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in gauss) [0.0]
 WLMDwarfGalaxy_B0Z                    1.0e-11      # magnetic field along z (in gauss) [1.0e-11]
+# tracer particles
+WLMDwarfGalaxy_AddTracer              0            # whether to add tracer particles, must enable SUPPORT_GSL for initialization [0]
+WLMDwarfGalaxy_AddTracerMinLv         8            # minimum level to add tracer particles [MAX_LEVEL]
+WLMDwarfGalaxy_TracerMass             1.0e-9       # effective mass per tracer particle (in code_mass) -> number of tracer per cell = CellMass/TracerMass [1.0e-9]
+

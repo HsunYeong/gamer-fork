@@ -10,3 +10,7 @@ SNBlast_ParVelocity_X     0.01        # supernova progenitor initial velocity x 
 SNBlast_ParVelocity_Y     0.01        # supernova progenitor initial velocity y [0.0]
 SNBlast_ParVelocity_Z     0.01        # supernova progenitor initial velocity z [0.0]
 SNBlast_ParMetalMassFrac  1.295e-1    # supernova progenitor initial metal mass fraction (metal_mass / particle_mass) [0.0]
+SNBlast_Use_Tracers       1           # whether to use tracer particles [0]
+SNBlast_NParX             256         # number of grid tracer particles along x-axis [32]
+SNBlast_NParY             256         # number of grid tracer particles along y-axis [32]
+SNBlast_NParZ             256         # number of grid tracer particles along z-axis [32]
