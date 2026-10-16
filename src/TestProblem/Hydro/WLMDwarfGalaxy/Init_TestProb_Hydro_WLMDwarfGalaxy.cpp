@@ -24,10 +24,11 @@ static bool   WLMDwarfGalaxy_ResetB_VecPot;         // use vector potential to r
        double WLMDwarfGalaxy_rho0;                  // rho0 parameter (in code unit) to initialize vector potential ##WLMDwarfGalaxy_UniformB=1 ONLY##
 #endif
 #ifdef TRACER
-       bool   WLMDwarfGalaxy_AddTracer;
-       int    WLMDwarfGalaxy_AddTracerMinLv;
-       double WLMDwarfGalaxy_TracerMass;
-#endif
+       bool   WLMDwarfGalaxy_AddTracer;             // whether to add tracer particles, must enable SUPPORT_GSL for initialization
+       int    WLMDwarfGalaxy_AddTracerMinLv;        // minimum level to add tracer particles
+       int    WLMDwarfGalaxy_AddTracerMaxN_1Cell;   // maximum number of tracer particles per cell
+       double WLMDwarfGalaxy_TracerMass;            // effective mass per tracer particle (in code_mass)
+#endif                                              // -> number of tracer per cell = CellMass/TracerMass
 // =======================================================================================
 
 
@@ -225,7 +226,8 @@ void LoadInputTestProb( const LoadParaMode_t load_mode, ReadPara_t *ReadPara, HD
 #  ifdef TRACER
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_AddTracer",              &WLMDwarfGalaxy_AddTracer,               false,        Useless_bool,     Useless_bool      );
    LOAD_PARA( load_mode, "WLMDwarfGalaxy_AddTracerMinLv",         &WLMDwarfGalaxy_AddTracerMinLv,          MAX_LEVEL-1,  0,                MAX_LEVEL         );
-   LOAD_PARA( load_mode, "WLMDwarfGalaxy_TracerMass",             &WLMDwarfGalaxy_TracerMass,              1.0e-9,       0.0,              NoMax_double      );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_AddTracerMaxN_1Cell",    &WLMDwarfGalaxy_AddTracerMaxN_1Cell,     64,           0,                128               );
+   LOAD_PARA( load_mode, "WLMDwarfGalaxy_TracerMass",             &WLMDwarfGalaxy_TracerMass,              1.25e-10,     NoMin_double,     NoMax_double      );
 #  endif
 } // FUNCITON : LoadInputTestProb
 
@@ -320,7 +322,8 @@ void SetParameter()
 #     ifdef TRACER
       Aux_Message( stdout, "  add tracer particles                = %s\n",                    (WLMDwarfGalaxy_AddTracer)?"YES":"NO"                  );
       Aux_Message( stdout, "  min lv to add tracer particles      = %d\n",                    WLMDwarfGalaxy_AddTracerMinLv                          );
-      Aux_Message( stdout, "  equivalent tracer mass              = %13.7e gauss\n",          WLMDwarfGalaxy_TracerMass * UNIT_M/Const_Msun          );
+      Aux_Message( stdout, "  max number of tracer per cell       = %d\n",                    WLMDwarfGalaxy_AddTracerMaxN_1Cell                     );
+      Aux_Message( stdout, "  effective tracer mass               = %13.7e Msun\n",           WLMDwarfGalaxy_TracerMass * UNIT_M/Const_Msun          );
 #     endif
       Aux_Message( stdout, "=============================================================================\n" );
    }

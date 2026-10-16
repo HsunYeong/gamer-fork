@@ -13,6 +13,8 @@ WLMDwarfGalaxy_B0Y                    0.0          # magnetic field along y (in 
 WLMDwarfGalaxy_B0Z                    1.0e-11      # magnetic field along z (in gauss) [1.0e-11]
 # tracer particles
 WLMDwarfGalaxy_AddTracer              0            # whether to add tracer particles, must enable SUPPORT_GSL for initialization [0]
-WLMDwarfGalaxy_AddTracerMinLv         8            # minimum level to add tracer particles [MAX_LEVEL]
-WLMDwarfGalaxy_TracerMass             1.0e-9       # effective mass per tracer particle (in code_mass) -> number of tracer per cell = CellMass/TracerMass [1.0e-9]
+WLMDwarfGalaxy_AddTracerMinLv         7            # minimum level to add tracer particles [MAX_LEVEL-1]
+WLMDwarfGalaxy_AddTracerMaxN_1Cell    64           # maximum number of tracer particles per cell [64]
+WLMDwarfGalaxy_TracerMass             1.25e-10     # effective mass per tracer particle (in code_mass) [1.25e-10]
+                                                   # -> number of tracer per cell = CellMass/TracerMass
 

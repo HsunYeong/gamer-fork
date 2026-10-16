@@ -5,6 +5,7 @@
 
 extern bool   WLMDwarfGalaxy_AddTracer;
 extern int    WLMDwarfGalaxy_AddTracerMinLv;
+extern int    WLMDwarfGalaxy_AddTracerMaxN_1Cell;
 extern double WLMDwarfGalaxy_TracerMass;
 
 
@@ -30,7 +31,7 @@ void Init_AddTracer_WLMDwarfGalaxy()
       const real   dv             = CUBE( dh );
       const int    FluSg          = amr->FluSg[lv];
 
-      const int    MaxNewParPerPatch = 8*CUBE(PS1);
+      const int    MaxNewParPerPatch = WLMDwarfGalaxy_AddTracerMaxN_1Cell*CUBE(PS1);
       real_par   (*NewParAttFlt)[PAR_NATT_FLT_TOTAL] = new real_par [MaxNewParPerPatch][PAR_NATT_FLT_TOTAL];
       long_par   (*NewParAttInt)[PAR_NATT_INT_TOTAL] = new long_par [MaxNewParPerPatch][PAR_NATT_INT_TOTAL];
       long        *NewParID                          = new long     [MaxNewParPerPatch];
@@ -61,8 +62,7 @@ void Init_AddTracer_WLMDwarfGalaxy()
             double z = z0 + k*dh;
 
 //          determine number of tracers to be added
-            int NTracer = (lv < MAX_LEVEL)? 1 : MAX( 1, std::round( GasMass/WLMDwarfGalaxy_TracerMass ) );
-            NTracer = MIN( 8, NTracer );
+            int NTracer = MIN( WLMDwarfGalaxy_AddTracerMaxN_1Cell, MAX( 1, std::round( GasMass/WLMDwarfGalaxy_TracerMass ) ) );
 
             if ( NTracer == 8 )
             {
