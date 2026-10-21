@@ -159,7 +159,7 @@ void Init_Field()
    if ( Idx_ADV_VY    != ADV_VY    )    Aux_Error( ERROR_INFO, "inconsistent Idx_ADV_VY    (%d != %d) !!\n", Idx_ADV_VY,    ADV_VY    );
    if ( Idx_ADV_VX    != ADV_VX    )    Aux_Error( ERROR_INFO, "inconsistent Idx_ADV_VX    (%d != %d) !!\n", Idx_ADV_VX,    ADV_VX    );
    if ( Idx_ADV_SIGMA != ADV_SIGMA )    Aux_Error( ERROR_INFO, "inconsistent Idx_ADV_SIGMA (%d != %d) !!\n", Idx_ADV_SIGMA, ADV_SIGMA );
-   // CR flux fields
+   // CR fields
    Idx_CR_F3 = AddField( "CR_F3", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_NO, NORMALIZE_NO, INTERP_FRAC_NO );
    Idx_CR_F2 = AddField( "CR_F2", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_NO, NORMALIZE_NO, INTERP_FRAC_NO );
    Idx_CR_F1 = AddField( "CR_F1", FIXUP_FLUX_YES, FIXUP_REST_YES, FLOOR_NO, NORMALIZE_NO, INTERP_FRAC_NO );

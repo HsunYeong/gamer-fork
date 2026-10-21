@@ -135,18 +135,18 @@ CR_DIFF_MIN_B                 0.0         # disable diffusion locally when B fie
 # cosmic rays with two-moment method (CR_TWOMOMENT only)
 # --> GAMMA_CR is used only by the classic module (COSMIC_RAY)
 #     the two-moment module (CR_TWOMOMENT) hardcodes P_cr = E_cr/3 (i.e., gamma_cr = 4/3)
-CR_SOURCE                     0           # Include source feedback [0/1]
-CR_STREAM                     1           # Turn on streaming [0/1]
+CR_SOURCE                     0           # Include source feedback [0]
+CR_STREAM                     1           # Turn on streaming [1]
 CR_EC_SOURCE                  1           # include the CR-energy source term; 0 solves the conservative
                                           # dEc/dt = -div(Fc) (Eq. 19 of Jiang & Oh 2018, streaming tests) [1]
-CR_VMAX                       1e2         # Maximum velocity on the streaming direction (effective speed of light)
-CR_SIGMA                      1e6         # inverse diffusion coefficient in PAPER units: kappa = 1/(3*CR_SIGMA)
+CR_VMAX                       1e2         # Maximum velocity on the streaming direction (effective speed of light) [1e2]
+CR_SIGMA                      1e6         # inverse diffusion coefficient in PAPER units: kappa = 1/(3*CR_SIGMA) [1e6]
                                           # (internal/Athena-input sigma = CR_SIGMA*CR_VMAX)
-CR_SIGMA_PERP                 1e6         # perpendicular to B, same units as CR_SIGMA [1e8]
+CR_SIGMA_PERP                 1e6         # perpendicular to B, same units as CR_SIGMA [1e6]
 CR_MAX_OPACITY                1e10        # Maximum opacity for cosmic-ray streaming [1e10]
 CR_TAU_ASYM_LIM               1e-3        # optical depth limit for asymptotic expansion [1e-3]
 CR_TAUFACT                    1.0         # tau factor for optical depth calculation [1.0]
-CR_VEL_FLX_FLAG               0           # add CR sound speed to v_diff [0/1]
+CR_VEL_FLX_FLAG               0           # add CR sound speed to v_diff [0]
 CR_CFL                        0.3         # CFL safety factor for two-moment cosmic-ray [0.3]
 
 # fluid solver in HYDRO (MODEL==HYDRO only)

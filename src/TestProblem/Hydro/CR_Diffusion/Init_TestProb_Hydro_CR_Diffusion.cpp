@@ -235,7 +235,7 @@ void SetParameter()
 
 // (1-3) check the runtime parameters
 // --> Type 0/3 (Gaussian ball/plane, uniform B) are allowed to run for the two-moment-vs-classic
-//     comparison (example/test_problem/Hydro/CR_Classic_Diffusion): the gas is kept static via a
+//     comparison (CR_Classic_Diffusion): the gas is kept static via a
 //     large background pressure instead of being explicitly fixed, so CRay diffuses cleanly.
 // --> Type 1 (step ring, Jiang & Oh 2018 Sec 4.1.5 / Tseng et al. 2024 Fig 19) is allowed when the gas is kept
 //     quasi-static with a very inert background (large CR_Diffusion_Rho0): the circular field B=(-y/r,x/r)/|MagX|

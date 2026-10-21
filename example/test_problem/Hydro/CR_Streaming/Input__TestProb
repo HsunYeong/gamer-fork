@@ -15,7 +15,7 @@
 #   11 = 3D CR-driven blast wave          (3D generalization of Test 6)
 
 CR_Streaming_Test          0              # selects which test problem to run (see above)
-CR_Streaming_Dir           0              # streaming/diffusion axis for the 1D tests (0/1/2 = x/y/z)
+CR_Streaming_Dir           0              # streaming/diffusion axis for the 1D tests (0/1/2/3 = x/y/z/diag)
 CR_Streaming_FlowV         0.0            # uniform background flow velocity along CR_Streaming_Dir
 CR_Streaming_GradOutflowBC 0              # 1 = gradient-preserving CR outflow BC on both faces (paper-faithful, Fig. 3; auto-sets OPT__BC_FLU_XM/XP=4)
 CR_Streaming_Ec0           1.0            # uniform CR energy density for Test 10 (paper: 1, 50, or 200) [1.0]

@@ -417,7 +417,7 @@ double DT__CR_DIFFUSION;
 double CR_DIFF_MIN_B;
 #endif
 
-// c. cosmic-ray streaming
+// c. cosmic-ray two-moment
 #ifdef CR_TWOMOMENT
 bool CR_SOURCE;
 bool CR_STREAM;

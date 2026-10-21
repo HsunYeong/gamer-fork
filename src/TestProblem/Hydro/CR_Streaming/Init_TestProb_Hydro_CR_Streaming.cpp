@@ -4,9 +4,6 @@
 
 // =======================================================================================
 // CR_Streaming_Test : initial-condition geometry selector (Jiang & Oh 2018, Section 4)
-// --> the CR *physics* parameters (CR_SIGMA, CR_SIGMA_PERP, CR_STREAM, CR_SOURCE, CR_VMAX, ...)
-//     are taken from Input__Parameter, NOT set here.  Each example directory carries the
-//     Input__Parameter/Input__TestProb appropriate for one paper test.
 // =======================================================================================
 #define CR_TEST_TRIANGULAR_1D     0     // Sec 4.1.1 : 1D triangular Ec profile      (streaming)
 #define CR_TEST_GAUSSIAN_1D       1     // Sec 4.1.1 / 4.1.4 : 1D Gaussian Ec         (streaming or diffusion)
@@ -29,7 +26,7 @@
 // problem-specific global variables
 // =======================================================================================
 static int    CR_Streaming_Test;        // test selector (one of the CR_TEST_* macros above)
-static int    CR_Streaming_Dir;          // streaming/diffusion axis for the 1D tests (0/1/2 = x/y/z)
+static int    CR_Streaming_Dir;          // streaming/diffusion axis for the 1D tests (0/1/2/3 = x/y/z/diag)
 static double CR_Streaming_FlowV;        // uniform background flow velocity along CR_Streaming_Dir
                                          // (e.g. the moving-fluid diffusion test, Sec 4.1.4);
                                          // also the collision half-speed for the shock test (Sec 4.2.2, |v|=10)
@@ -115,7 +112,6 @@ void Validate()
 
 
 
-// replace HYDRO by the target model (e.g., MHD/ELBDM) and also check other compilation flags if necessary (e.g., GRAVITY/PARTICLE)
 #if ( MODEL == HYDRO  &&  defined CR_TWOMOMENT )
 //-------------------------------------------------------------------------------------------------------
 // Function    :  SetParameter
@@ -404,7 +400,7 @@ void SetGridIC( real fluid[], const double x, const double y, const double z, co
 //         rho = 1, Pgas = 5/3 (classic CR_Diffusion_PGas0 default).
 //       The classic parallel coefficient kappa_para is matched in Input__Parameter via the two-moment
 //       inverse-diffusion convention kappa = 1/(3*CR_SIGMA)  -->  CR_SIGMA = 1/(3*kappa_classic);
-//       kappa_perp = 0 is emulated with a large-but-stable CR_SIGMA_PERP (see the example input).
+//       kappa_perp = 0 is emulated with a large-but-stable CR_SIGMA_PERP.
 //       CR_SOURCE selects the physics: 1 = CR back-reacts on the gas exactly like the classic
 //       module's EoS coupling (matched live-gas comparison); 0 = no coupling --> the gas stays
 //       static (uniform Pgas) and the center line follows the pure-diffusion analytic (Eq. 25).
@@ -826,7 +822,6 @@ void Init_TestProb_Hydro_CR_Streaming()
    Validate();
 
 
-// replace HYDRO by the target model (e.g., MHD/ELBDM) and also check other compilation flags if necessary (e.g., GRAVITY/PARTICLE)
 #  if ( MODEL == HYDRO  &&  defined CR_TWOMOMENT )
 // set the problem-specific runtime parameters
    SetParameter();

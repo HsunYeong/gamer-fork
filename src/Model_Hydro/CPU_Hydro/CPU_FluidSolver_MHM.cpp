@@ -1098,11 +1098,7 @@ void Hydro_RiemannPredict( const real g_ConVar_In[][ CUBE(FLU_NXT) ],
 
 
 //  update opacity after half-step source computation (DefaultOpacity)
-//  Uses CENTRAL DIFFERENCE grad(Pc) for next step's flux calculation
 //  output: g_PriVar_Half, input: same array for Ec neighbors, B from g_PriVar_Half[MAG_OFFSET+*]
-//  NOTE: g_PriVar_Half[] holds PRIMITIVE variables here (Con2Pri already applied in the loop above);
-//        safe because CR_UpdateOpacity() only reads DENS/CR_E/B, which are identical in the
-//        conserved and primitive representations
 #  ifdef CR_TWOMOMENT
 #  ifdef __CUDACC__
    __syncthreads();
