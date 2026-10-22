@@ -397,8 +397,8 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
                   Pres[k][j][i] += EoS_CREint2CRPres_CPUPtr( Fluid[CRAY][k][j][i], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
 #                 endif // COSMIC_RAY
 
-#                 if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-                  Pres[k][j][i] += EoS_CREint2CRPres_CPUPtr( Fluid[CR_E][k][j][i], EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#                 ifdef CR_TWOMOMENT
+                  Pres[k][j][i] += Fluid[CR_E][k][j][i] / 3.0;
 #                 endif
 #                 elif ( DUAL_ENERGY == DE_EINT )
 #                 error : DE_EINT is NOT supported yet !!
@@ -446,12 +446,10 @@ void Flag_Real( const int lv, const UseLBFunc_t UseLBFunc )
                   const real *Passive = NULL;
 #                 endif
 
-#                 if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-                  Cs2[k][j][i] = EoS_DensPresCR2CSqr_CPUPtr( Fluid[DENS][k][j][i], Pres[k][j][i], Fluid[CR_E][k][j][i],
-                                                             EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
-#                 else
                   Cs2[k][j][i] = EoS_DensPres2CSqr_CPUPtr( Fluid[DENS][k][j][i], Pres[k][j][i], Passive,
                                                            EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#                 ifdef CR_TWOMOMENT
+                  Cs2[k][j][i] += (4.0/9.0) * Fluid[CR_E][k][j][i] / Fluid[DENS][k][j][i];
 #                 endif
                } // k,j,i
             } // if ( NeedCs2 )

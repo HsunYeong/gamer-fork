@@ -344,10 +344,6 @@ extern EoS_CRE2CRP_t EoS_CREint2CRPres_CPUPtr;
 extern EoS_GP2GE_t   EoS_GasPres2GasEint_CPUPtr;
 extern EoS_GE2GP_t   EoS_GasEint2GasPres_CPUPtr;
 #endif
-#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-extern EoS_DPC2C_t   EoS_DensPresCR2CSqr_CPUPtr;
-#endif
-
 #ifdef GPU
 extern EoS_GUESS_t   EoS_GuessHTilde_GPUPtr;
 extern EoS_H2TEM_t   EoS_HTilde2Temp_GPUPtr;
@@ -363,9 +359,6 @@ extern EoS_CRE2CRP_t EoS_CREint2CRPres_GPUPtr;
 #ifdef COSMIC_RAY
 extern EoS_GP2GE_t   EoS_GasPres2GasEint_GPUPtr;
 extern EoS_GE2GP_t   EoS_GasEint2GasPres_GPUPtr;
-#endif
-#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-extern EoS_DPC2C_t   EoS_DensPresCR2CSqr_GPUPtr;
 #endif
 #endif
 extern EoS_t EoS;

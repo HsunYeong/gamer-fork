@@ -59,7 +59,9 @@ void Par_Init_ByFunction_SNFeedbackBlastWave( const long NPar_ThisRank, const lo
 
 
    long NPar_All = 1;
+#  ifdef TRACER
    if ( SNBlast_Use_Tracers ) NPar_All += SNBlast_NPar[0]*SNBlast_NPar[1]*SNBlast_NPar[2];
+#  endif
 
    if ( NPar_All != NPar_AllRank )
       Aux_Error( ERROR_INFO, "total number of particles found [%ld] != expect [%ld] !!\n",

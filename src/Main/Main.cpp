@@ -325,10 +325,6 @@ EoS_CRE2CRP_t EoS_CREint2CRPres_CPUPtr   = NULL;   // declare for Hydro_Con2Dual
 EoS_GP2GE_t   EoS_GasPres2GasEint_CPUPtr = NULL;
 EoS_GE2GP_t   EoS_GasEint2GasPres_CPUPtr = NULL;
 #endif
-#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-EoS_DPC2C_t   EoS_DensPresCR2CSqr_CPUPtr = NULL;
-#endif
-
 #ifdef GPU
 EoS_GUESS_t   EoS_GuessHTilde_GPUPtr     = NULL;
 EoS_H2TEM_t   EoS_HTilde2Temp_GPUPtr     = NULL;
@@ -344,9 +340,6 @@ EoS_CRE2CRP_t EoS_CREint2CRPres_GPUPtr   = NULL;   // declare for Hydro_Con2Dual
 #ifdef COSMIC_RAY
 EoS_GP2GE_t   EoS_GasPres2GasEint_GPUPtr = NULL;
 EoS_GE2GP_t   EoS_GasEint2GasPres_GPUPtr = NULL;
-#endif
-#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-EoS_DPC2C_t   EoS_DensPresCR2CSqr_GPUPtr = NULL;
 #endif
 #endif
 

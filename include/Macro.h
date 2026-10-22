@@ -478,6 +478,9 @@
 #  define _FLUX_CRAY          ( 1L << FLUX_CRAY )
 # endif
 
+# ifdef EXACT_COOLING
+#  define _FLUX_TCOOL         ( 1L << FLUX_TCOOL )
+# endif
 
 #endif // #if ( NFLUX_PASSIVE > 0 )
 
@@ -941,7 +944,7 @@
 // --> can be changed manually
 // --> set to 0 if applicable to improve performance
 #ifdef FEEDBACK
-#        define FB_GHOST_SIZE       8
+#        define FB_GHOST_SIZE       0
 #endif
 
 
