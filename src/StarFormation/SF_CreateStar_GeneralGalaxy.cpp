@@ -10,25 +10,19 @@ extern RandomNumber_t *FB_RNG;
 
 //-------------------------------------------------------------------------------------------------------
 // Function    :  SF_CreateStar_GeneralGalaxy
-// Description :  Create new star particles in the general methods where ther star formation is independent
+// Description :  Create new star particles using general methods where star formation is independent
 //
-// Note        :  1. Ref: (1) Nathan Goldbaum, et al., 2015, ApJ, 814, 131 (arXiv: 1510.08458), sec. 2.4
-//                        (2) Ji-hoon Kim, et al., 2016, ApJ, 833, 202 (arXiv: 1610.03066), sec. 3.2
-//                2. One must turn on STORE_POT_GHOST when adopting STORE_PAR_ACC
+// Note        :  1. One must turn on STORE_POT_GHOST when adopting STORE_PAR_ACC
 //                   --> It is because, currently, this function always uses the pot_ext[] array of each patch
 //                       to calculate the gravitationally acceleration of the new star particles
-//                3. One must invoke Buf_GetBufferData( ..., _TOTAL, ... ) after calling this function
-//                4. Currently this function does not check whether the cell mass exceeds the Jeans mass
-//                   --> Ref: "jeanmass" in star_maker_ssn.F of Enzo
-//                5. The new particle UID should be initialized as PUID_TBA. The actual PUID will be assigned later in SF_CreateStar()
+//                2. One must invoke Buf_GetBufferData( ..., _TOTAL, ... ) after calling this function
+//                3. The new particle UID should be initialized as PUID_TBA. The actual PUID will be assigned later in SF_CreateStar()
 //
-// Parameter   :  lv             : Target refinement level
-//                TimeNew        : Current physical time (after advancing solution by dt)
-//                dt             : Time interval to advance solution
-//                                 --> Currently this function does not distinguish dt and the physical time interval (dTime)
-//                                 --> Does NOT support COMOVING yet
-//                RNG            : Random number generator
-//                UseMetal       : Store the metal mass fraction in star particles
+// Parameter   :  lv       : Target refinement level
+//                TimeNew  : Current physical time (after advancing solution by dt)
+//                dt       : Time interval to advance solution
+//                RNG      : Random number generator
+//                UseMetal : Store the metal mass fraction in star particles
 //
 // Return      :  1. Particle repository will be updated
 //                2. fluid[] array of gas will be updated
@@ -43,10 +37,6 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
 
 #  ifndef GRAVITY
    Aux_Error( ERROR_INFO, "Must turn on GRAVITY for %s() !!\n", __FUNCTION__ );
-#  endif
-
-#  ifdef COMOVING
-   Aux_Error( ERROR_INFO, "%s() does not support COMOVING yet !!\n", __FUNCTION__ );
 #  endif
 
 #  ifdef GAMER_DEBUG
@@ -74,6 +64,12 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
 // const real   GraConst       = ( OPT__GRA_P5_GRADIENT ) ? -1.0/(12.0*dh) : -1.0/(2.0*dh);
    const real   GraConst       = ( false                ) ? -1.0/(12.0*dh) : -1.0/(2.0*dh); // P5 is NOT supported yet
 
+#  ifdef COMOVING
+   const real CosmoScaleFactor = TimeNew;
+#  else
+   const real CosmoScaleFactor = 1.0;
+#  endif
+
 
 // start of OpenMP parallel region
 #  pragma omp parallel
@@ -89,24 +85,24 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
    double x0, y0, z0, x, y, z;
    real   GasDens, _GasDens, GasMass, StarMFrac, StarMass, GasMFracLeft;
    real   (*fluid)[PS1][PS1][PS1]      = NULL;
-   real   (*MagCC)[PS1][PS1][PS1]      = NULL;
+   real   (*Temp)[PS1][PS1]            = NULL;
    real   (*Pres)[PS1][PS1]            = NULL;
    real   (*Cs2)[PS1][PS1]             = NULL;
 #  ifdef STORE_POT_GHOST
    real   (*pot_ext)[GRA_NXT][GRA_NXT] = NULL;
 #  endif
 
+   bool NeedTemp = false;
    bool NeedPres = false;
    bool NeedCs2  = false;
 
-   if ( SF_CREATE_STAR_SCHEME == SF_CREATE_STAR_SCHEME_DWARFGALAXY )   NeedCs2 = true;
+   if ( SF_CREATE_STAR_CRITERIA & SF_CREATE_STAR_CRITERIA_LOW_GAS_TEMPERATURE     )   NeedTemp = true;
+   if ( SF_CREATE_STAR_CRITERIA & SF_CREATE_STAR_CRITERIA_UNRESOLVED_JEANS_LENGTH )   NeedCs2  = true;
    if ( NeedCs2 )   NeedPres = true;
 
-#  ifdef MHD
-   if ( NeedPres )   MagCC = new real [3][PS1][PS1][PS1];
-#  endif
-   if ( NeedPres )   Pres  = new real    [PS1][PS1][PS1];
-   if ( NeedCs2  )   Cs2   = new real    [PS1][PS1][PS1];
+   if ( NeedTemp )   Temp = new real [PS1][PS1][PS1];
+   if ( NeedPres )   Pres = new real [PS1][PS1][PS1];
+   if ( NeedCs2  )   Cs2  = new real [PS1][PS1][PS1];
 
    const int    MaxNewParPerPatch = CUBE(PS1);
    real_par   (*NewParAttFlt)[PAR_NATT_FLT_TOTAL] = new real_par [MaxNewParPerPatch][PAR_NATT_FLT_TOTAL];
@@ -149,22 +145,36 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
       pot_ext = amr->patch[PotSg][lv][PID]->pot_ext;
 #     endif
 
-#     ifdef MHD
-//    evaluate cell-centered B field
-      if ( NeedPres )
+//    evaluate temperature
+      if ( NeedTemp )
       {
-         real MagCC_1Cell[NCOMP_MAG];
+         const bool CheckMinTemp_No = false;
 
          for (int k=0; k<PS1; k++)
          for (int j=0; j<PS1; j++)
          for (int i=0; i<PS1; i++)
          {
-            MHD_GetCellCenteredBFieldInPatch( MagCC_1Cell, lv, PID, i, j, k, amr->MagSg[lv] );
 
-            for (int v=0; v<NCOMP_MAG; v++)  MagCC[v][k][j][i] = MagCC_1Cell[v];
-         }
-      } // if ( NeedPres )
-#     endif // #ifdef MHD
+#           ifdef MHD
+            const real Emag = MHD_GetCellCenteredBEnergyInPatch( lv, PID, i, j, k, amr->MagSg[lv] );
+#           else
+            const real Emag = NULL_REAL;
+#           endif
+
+#           if ( EOS != EOS_GAMMA  &&  EOS != EOS_ISOTHERMAL  &&  NCOMP_PASSIVE > 0 )
+            real Passive[NCOMP_PASSIVE];
+            for (int v=0; v<NCOMP_PASSIVE; v++)    Passive[v] = fluid[ NCOMP_FLUID + v ][k][j][i];
+#           else
+            const real *Passive = NULL;
+#           endif
+
+            Temp[k][j][i] = Hydro_Con2Temp( fluid[DENS][k][j][i], fluid[MOMX][k][j][i], fluid[MOMY][k][j][i],
+                                            fluid[MOMZ][k][j][i], fluid[ENGY][k][j][i], Passive,
+                                            CheckMinTemp_No, NULL_REAL, PassiveFloorMask, Emag,
+                                            EoS_DensEint2Temp_CPUPtr, EoS_GuessHTilde_CPUPtr, EoS_HTilde2Temp_CPUPtr,
+                                            EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+         } // k,j,i
+      } // if ( NeedTemp )
 
 //    evaluate pressure
       if ( NeedPres )
@@ -188,9 +198,7 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
 #           else // #ifdef DUAL_ENERGY
 
 #           ifdef MHD
-            const real Emag = (real)0.5*(  SQR( MagCC[MAGX][k][j][i] )
-                                         + SQR( MagCC[MAGY][k][j][i] )
-                                         + SQR( MagCC[MAGZ][k][j][i] )  );
+            const real Emag = MHD_GetCellCenteredBEnergyInPatch( lv, PID, i, j, k, amr->MagSg[lv] );
 #           else
             const real Emag = NULL_REAL;
 #           endif
@@ -226,12 +234,10 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
             const real *Passive = NULL;
 #           endif
 
-#           if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-            Cs2[k][j][i] = EoS_DensPresCR2CSqr_CPUPtr( fluid[DENS][k][j][i], Pres[k][j][i], fluid[CR_E][k][j][i],
-                                                       EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
-#           else
             Cs2[k][j][i] = EoS_DensPres2CSqr_CPUPtr( fluid[DENS][k][j][i], Pres[k][j][i], Passive,
                                                      EoS_AuxArray_Flt, EoS_AuxArray_Int, h_EoS_Table );
+#           ifdef CR_TWOMOMENT
+            Cs2[k][j][i] += (4.0/9.0) * fluid[CR_E][k][j][i] / fluid[DENS][k][j][i];
 #           endif
 
          } // k,j,i
@@ -254,15 +260,14 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
 //       ===========================================================================================================
 
 //       1-1. check star formation criteria
-         if ( !SF_CreateStar_Check( lv, PID, i, j, k, dh, fluid, Pres, Cs2 ) )   continue;
+         if ( !SF_CreateStar_Check( lv, PID, i, j, k, dh, CosmoScaleFactor, fluid, Temp, Pres, Cs2 ) )   continue;
 
 //       1-2. get the star mass
-         StarMass = SF_CreateStar_GetStarMass( GasDens, dv, dt, RNG, TID );
+         StarMass = SF_CreateStar_GetStarMass( GasDens, CosmoScaleFactor, dv, dt, RNG, TID );
          if ( StarMass <= 0.0 )   continue;
 
-//       check the maximum gas mass fraction allowed to convert to stars
-         StarMFrac = MIN( StarMass/GasMass, SF_CREATE_STAR_MAX_STAR_MFRAC );
-         StarMass  = GasMass*StarMFrac;
+//       gas mass fraction to be converted to stars
+         StarMFrac = StarMass/GasMass;
 
 
 
@@ -373,6 +378,7 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
 //       ===========================================================================================================
          GasMFracLeft = (real)1.0 - StarMFrac;
 
+//###REVISE: skip non-density fields (e.g., temperature, cooling time, potential)
          for (int v=0; v<NCOMP_TOTAL; v++)   fluid[v][k][j][i] *= GasMFracLeft;
       } // i,j,k
 
@@ -412,11 +418,9 @@ void SF_CreateStar_GeneralGalaxy( const int lv, const real TimeNew, const real d
    } // for (int PID=0; PID<amr->NPatchComma[lv][1]; PID++)
 
 // free memory
-#  ifdef MHD
-   if ( NeedPres )   delete [] MagCC;
-#  endif
-   if ( NeedPres )   delete [] Pres;
-   if ( NeedCs2  )   delete [] Cs2;
+   delete [] Temp;
+   delete [] Pres;
+   delete [] Cs2;
    delete [] NewParAttFlt;
    delete [] NewParAttInt;
    delete [] NewParID;

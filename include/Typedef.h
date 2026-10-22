@@ -562,9 +562,34 @@ const GrackleFieldBIdx_t
 // schemes of creating new star particles
 typedef int SF_CreateStarScheme_t;
 const SF_CreateStarScheme_t
-   SF_CREATE_STAR_SCHEME_NONE        = 0,
-   SF_CREATE_STAR_SCHEME_AGORA       = 1,
-   SF_CREATE_STAR_SCHEME_DWARFGALAXY = 2;
+   SF_CREATE_STAR_SCHEME_NONE       =  0,
+   SF_CREATE_STAR_SCHEME_AGORA      =  1,
+   SF_CREATE_STAR_SCHEME_CUSTOMIZED = -1;
+
+// criteria for creating new star particles
+typedef long SF_CreateStarCriteria_t;
+const SF_CreateStarCriteria_t
+   SF_CREATE_STAR_CRITERIA_NONE                    =   0L,
+   SF_CREATE_STAR_CRITERIA_HIGH_GAS_DENSITY        = ( 1L << 0 ),
+   SF_CREATE_STAR_CRITERIA_LOW_GAS_TEMPERATURE     = ( 1L << 1 ),
+   SF_CREATE_STAR_CRITERIA_UNRESOLVED_JEANS_LENGTH = ( 1L << 2 ),
+   SF_CREATE_STAR_CRITERIA_CONVERGING_GAS_VELOCITY = ( 1L << 3 );   // not implemented yet
+
+// star mass formation rates for creating new star particles
+typedef int SF_CreateStarMassRate_t;
+const SF_CreateStarMassRate_t
+   SF_CREATE_STAR_MASS_RATE_NONE                = 0,
+   SF_CREATE_STAR_MASS_RATE_CONST_EFF_PER_TFF   = 1,
+   SF_CREATE_STAR_MASS_RATE_CONST_DEPLETION_T   = 2,   // not implemented yet
+   SF_CREATE_STAR_MASS_RATE_CONST_RATE          = 3,   // not implemented yet
+   SF_CREATE_STAR_MASS_RATE_MASS_GT_DENS_THRESH = 4;   // not implemented yet
+
+// particle spawning methods for creating new star particles
+typedef int SF_CreateStarParSpawn_t;
+const SF_CreateStarParSpawn_t
+   SF_CREATE_STAR_PAR_SPAWN_NONE                = 0,
+   SF_CREATE_STAR_PAR_SPAWN_STOCHASTIC_MIN_MASS = 1,
+   SF_CREATE_STAR_PAR_SPAWN_DETERMINISTIC       = 2;   // not implemented yet
 #endif
 
 
@@ -647,11 +672,6 @@ typedef real (*EoS_GP2GE_t)    ( const real Pres_Gas,
                                  const double AuxArray_Flt[], const int AuxArray_Int[],
                                  const real *const Table[EOS_NTABLE_MAX] );
 typedef real (*EoS_GE2GP_t)    ( const real Eint_Gas,
-                                 const double AuxArray_Flt[], const int AuxArray_Int[],
-                                 const real *const Table[EOS_NTABLE_MAX] );
-#endif
-#if ( defined CR_TWOMOMENT && !defined COSMIC_RAY )
-typedef real (*EoS_DPC2C_t)    ( const real Dens, const real Pres, const real E_CR,
                                  const double AuxArray_Flt[], const int AuxArray_Int[],
                                  const real *const Table[EOS_NTABLE_MAX] );
 #endif

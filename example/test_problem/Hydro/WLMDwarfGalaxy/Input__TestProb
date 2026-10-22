@@ -17,4 +17,3 @@ WLMDwarfGalaxy_AddTracerMinLv         7            # minimum level to add tracer
 WLMDwarfGalaxy_AddTracerMaxN_1Cell    64           # maximum number of tracer particles per cell [64]
 WLMDwarfGalaxy_TracerMass             1.25e-10     # effective mass per tracer particle (in code_mass) [1.25e-10]
                                                    # -> number of tracer per cell = CellMass/TracerMass
-

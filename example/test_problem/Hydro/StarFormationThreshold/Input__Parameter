@@ -24,7 +24,7 @@ END_STEP                     -1           # end step (<0=auto -> must be set by 
 
 # test problems
 TESTPROB_ID                   26          # test problem ID [0]
-                                          #   26: HYDRO Star Formation Threshold (+GRAVITY)
+                                          #   26: HYDRO star formation threshold (+GRAVITY & PARTICLE & STAR_FORMATION)
 
 
 # code units (in cgs)
@@ -37,13 +37,13 @@ UNIT_D                       -1.0               # mass density unit  (<=0 -> set
 
 
 # boundary conditions
-OPT__BC_FLU_XM                2           # fluid boundary condition at the -x face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_FLU_XP                2           # fluid boundary condition at the +x face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_FLU_YM                2           # fluid boundary condition at the -y face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_FLU_YP                2           # fluid boundary condition at the +y face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_FLU_ZM                2           # fluid boundary condition at the -z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_FLU_ZP                2           # fluid boundary condition at the +z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
-OPT__BC_POT                   2           # gravity boundary condition: (1=periodic, 2=isolated)
+OPT__BC_FLU_XM                1           # fluid boundary condition at the -x face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_FLU_XP                1           # fluid boundary condition at the +x face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_FLU_YM                1           # fluid boundary condition at the -y face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_FLU_YP                1           # fluid boundary condition at the +y face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_FLU_ZM                1           # fluid boundary condition at the -z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_FLU_ZP                1           # fluid boundary condition at the +z face: (1=periodic, 2=outflow, 3=reflecting, 4=user, 5=diode)
+OPT__BC_POT                   1           # gravity boundary condition: (1=periodic, 2=isolated)
 
 
 # particle (PARTICLE only)
@@ -57,6 +57,12 @@ PAR_REMOVE_CELL               0.0         # remove particles X-root-cells from t
 OPT__FREEZE_PAR               1           # do not update particles (except for tracers) [0]
 
 
+# cosmology (COMOVING only)
+A_INIT                        0.20        # initial scale factor
+OMEGA_M0                      0.30        # omega matter at the present time
+HUBBLE0                       0.70        # dimensionless Hubble parameter (currently only for converting ELBDM_MASS to code units)
+
+
 # time-step
 DT__FLUID                     0.5         # dt criterion: fluid solver CFL factor (<0=auto) [-1.0]
 DT__FLUID_INIT               -1.0         # dt criterion: DT__FLUID at the first step (<0=auto) [-1.0]
@@ -65,6 +71,7 @@ DT__PARVEL                    0.5         # dt criterion: particle velocity safe
 DT__PARVEL_MAX               -1.0         # dt criterion: maximum allowed dt from particle velocity (<0=off) [-1.0]
 DT__PARACC                    0.0         # dt criterion: particle acceleration safety factor (0=off) [0.5] ##STORE_PAR_ACC ONLY##
 DT__SYNC_PARENT_LV            0.05        # dt criterion: allow dt to adjust by (1.0+DT__SYNC_PARENT) in order to synchronize
+DT__MAX_DELTA_A               0.01        # dt criterion: maximum variation of the cosmic scale factor [0.01]
                                           #               with the parent level (for OPT__DT_LEVEL==3 only) [0.1]
 DT__SYNC_CHILDREN_LV          0.1         # dt criterion: allow dt to adjust by (1.0-DT__SYNC_CHILDREN) in order to synchronize
                                           #               with the children level (for OPT__DT_LEVEL==3 only; 0=off) [0.1]
@@ -132,14 +139,18 @@ CHE_GPU_NPGROUP              -1           # number of patch groups sent into the
 
 
 # star formation (STAR_FORMATION only)
-SF_CREATE_STAR_SCHEME         2           # star formation schemes (0=off, 1=AGORA, 2=DwarfGalaxy) [0]
+SF_CREATE_STAR_SCHEME        -1           # star formation schemes (-1=customized, 0=off, 1=AGORA) [0]
+SF_CREATE_STAR_CRITERIA       1           # star formation criteria (<0=auto, 0=none, +1=high gas density, +2=low gas temperature, +4=unresolved Jeans length) [-1]
+SF_CREATE_STAR_MASS_RATE      1           # star formation rate models (<0=auto, 0=off, 1=constant efficiency per free-fall time) [-1]
+SF_CREATE_STAR_PAR_SPAWN      1           # star particle spawning methods (<0=auto, 0=off, 1=stochastic with a minimum mass) [-1]
 SF_CREATE_STAR_RSEED          123         # random seed [123]
 SF_CREATE_STAR_DET_RANDOM    -1           # make random numbers deterministic (i.e., independent of OpenMP and MPI, <0=auto) [-1]
 SF_CREATE_STAR_MIN_LEVEL     -1           # minimum AMR level allowed to form stars (<0=auto -> MAX_LEVEL) [0]
-SF_CREATE_STAR_MIN_GAS_DENS   5.0e0       # minimum gas density allowed to form stars (in HI count/cm^3) (for SF_CREATE_STAR_SCHEME=1 only) [1.0e1]
-SF_CREATE_STAR_MAX_GAS_JEANSL 1.0         # maximum gas Jeans length allowed to form stars (in dh of each level) (for SF_CREATE_STAR_SCHEME=2 only) [1.0]
-SF_CREATE_STAR_MASS_EFF       1.0e-2      # Gas-to-star mass conversion efficiency [1.0e-2]
-SF_CREATE_STAR_MIN_STAR_MASS  1.0e3       # minimum star particle mass for the stochastical star formation (in Msun) [0.0]
+SF_CREATE_STAR_MIN_GAS_DENS   5.0e0       # minimum gas density allowed to form stars (in m_H/cm^3) (for SF_CREATE_STAR_CRITERIA&1 only) [1.0e1]
+SF_CREATE_STAR_MAX_GAS_TEMP   1.0e4       # maximum gas temperature allowed to form stars (in K) (for SF_CREATE_STAR_CRITERIA&2 only) [1.0e4]
+SF_CREATE_STAR_MAX_GAS_JEANSL 1.0         # maximum gas Jeans length allowed to form stars (in dh of each level) (for SF_CREATE_STAR_CRITERIA&4 only) [1.0]
+SF_CREATE_STAR_MASS_EFF       1.0e-2      # Gas-to-star mass conversion efficiency (for SF_CREATE_STAR_MASS_RATE==1 only) [1.0e-2]
+SF_CREATE_STAR_MIN_STAR_MASS  1.0e3       # minimum star particle mass for the stochastical star formation (in Msun) (for SF_CREATE_STAR_PAR_SPAWN==1 only) [0.0]
 SF_CREATE_STAR_MAX_STAR_MFRAC 0.5         # maximum gas mass fraction allowed to convert to stars per substep [0.5]
 
 
@@ -170,7 +181,7 @@ MIN_DENS                      0.0         # minimum mass density    (must >= 0.0
 MIN_PRES                      0.0         # minimum pressure        (must >= 0.0) [0.0] ##HYDRO and MHD ONLY##
 MIN_EINT                      0.0         # minimum internal energy (must >= 0.0) [0.0] ##HYDRO and MHD ONLY##
 MIN_ENTR                      0.0         # minimum entropy         (must >= 0.0) [0.0] ##HYDRO and MHD ONLY##
-JEANS_MIN_PRES                1           # minimum pressure estimated from the Jeans length [0] ##HYDRO/MHD and GRAVITY ONLY##
+JEANS_MIN_PRES                0           # minimum pressure estimated from the Jeans length [0] ##HYDRO/MHD and GRAVITY ONLY##
 JEANS_MIN_PRES_LEVEL         -1           # for JEANS_MIN_PRES; ensure Jeans length is resolved by JEANS_MIN_PRES_NCELL*dh[JEANS_MIN_PRES_LEVEL]
                                           # (<0=auto -> MAX_LEVEL) [-1]
 JEANS_MIN_PRES_NCELL          4           # for JEANS_MIN_PRES; see JEANS_MIN_PRES_LEVEL [4]
@@ -230,7 +241,7 @@ OUTPUT_STEP                   5           # output data every OUTPUT_STEP step #
 OUTPUT_DT                     1.0e1       # output data every OUTPUT_DT time interval ##OPT__OUTPUT_MODE==2 ONLY##
 OUTPUT_PART_X                -1.0         # x coordinate for OPT__OUTPUT_PART [-1.0]
 OUTPUT_PART_Y                -1.0         # y coordinate for OPT__OUTPUT_PART [-1.0]
-OUTPUT_PART_Z                 1.0         # z coordinate for OPT__OUTPUT_PART [-1.0]
+OUTPUT_PART_Z                 0.0         # z coordinate for OPT__OUTPUT_PART [-1.0]
 INIT_DUMPID                  -1           # set the first dump ID (<0=auto) [-1]
 
 
